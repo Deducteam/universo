@@ -1,59 +1,37 @@
+open Parser
 open Basic
 open Cic
 
-module UVarElaboration =
-struct
-  let rec elaboration term =
-    let open Term in
-    if is_prop term then
-      term
-    else if  is_type term then
-      Uvar.fresh_uvar ()
-    else
-      match term with
-      | App(f, a, al) ->
-        let f' = elaboration f in
-        let a' = elaboration a in
-        let al' = List.map elaboration al in
-        mk_App f' a' al'
-      | Lam(loc, id, t_opt, t) ->
-        let t' = elaboration t in
-        begin
-          match t_opt with
-          | None -> mk_Lam loc id t_opt t'
-          | Some x -> let x' = elaboration x in
-            mk_Lam loc id (Some x') t'
-        end
-      | Pi(loc, id, ta, tb) ->
-        let ta' = elaboration ta in
-        let tb' = elaboration tb in
-        mk_Pi loc id ta' tb'
-      | _ ->     term
+let mk_entry md e =
+  let e = Uvar.Elaboration.elaboration_entry e in
+  ignore(Constraints.Basic.generate e);
+  Indent.indent_entry e
 
-  let elaboration_entry e =
-    let open Parser in
-    match e with
-    | Decl(l,id,st,t) -> Decl(l,id,st, elaboration t)
-    | Def(l,id,op,pty,te) -> Def(l,id,op, Basic.map_opt elaboration pty, elaboration te)
-    | Rules(rs) -> failwith "todo rules"
-    | _ -> failwith "unsupported"
-end
-
-let mk_entry md =
-
-let run_on_file file =
+let run_on_file export file =
   let input = open_in file in
   debug 1 "Processing file '%s'..." file;
   let md = mk_mident file in
   Env.init md;
+  Parser.handle_channel md (mk_entry md) input;
+  Errors.success "File '%s' was successfully checked." file;
+  if export && not (Env.export ()) then
+    Errors.fail dloc "Fail to export module '%a@." pp_mident (Env.get_name ());
+  close_in input
 
 
 
 let _ =
+  let export = ref false in
   let options = Arg.align
       [ ( "-d"
         , Arg.Int Basic.set_debug_mode
-        , "N sets the debuging level to N" ) ]
+        , "N sets the debuging level to N" )
+      ; ( "-e"
+      , Arg.Set export
+        , " Generates an object file (\".dko\")" )
+      ; ( "--prop"
+      , Arg.Set Uvar.Elaboration.prop_elaboration
+      , " Turn Prop universes to variables" ) ]
   in
   let usage = "Usage: " ^ Sys.argv.(0) ^ " [OPTION]... [FILE]... \n" in
   let files =
@@ -61,8 +39,9 @@ let _ =
     Arg.parse options (fun f -> files := f :: !files) usage;
     List.rev !files
   in
+  Rule.allow_non_linear := true;
   try
-    List.iter run_on_file files;
+    List.iter (run_on_file !export) files;
   with
   | Sys_error err -> Printf.eprintf "ERROR %s.\n" err; exit 1
   | Exit          -> exit 3

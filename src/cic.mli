@@ -18,7 +18,13 @@ val max  : Basic.name
 
 val rule : Basic.name
 
+val term : Basic.name
+
 val is_prop : Term.term -> bool
+
+val is_z    : Term.term -> bool
+
+val is_s    : Term.term -> bool
 
 val is_type : Term.term -> bool
 
@@ -30,9 +36,19 @@ val is_max  : Term.term -> bool
 
 val is_rule : Term.term -> bool
 
+val is_univ : Term.term -> bool
+
+val is_term : Term.term -> bool
+
+val extract_s : Term.term -> Term.term
+
 val extract_type : Term.term -> Term.term
 
 val extract_succ : Term.term -> Term.term
+
+val extract_univ : Term.term -> Term.term
+
+val extract_term : Term.term -> (Term.term * Term.term)
 
 val extract_lift : Term.term -> (Term.term * Term.term)
 
