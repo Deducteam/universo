@@ -2,6 +2,6 @@ S src
 
 B _build/src
 
-PKG dedukti.kernel dedukti.parser Z3
+PKG dedukti.kernel dedukti.parser z3
 
 FLG -w -3

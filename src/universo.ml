@@ -2,9 +2,16 @@ open Parser
 open Basic
 open Cic
 
+let c = ref 0
+
+module CS = Constraints.Basic.CS
+
+let cs = ref CS.empty
+
 let mk_entry md e =
   let e = Uvar.Elaboration.elaboration_entry e in
-  ignore(Constraints.Basic.generate e);
+  let cs' = Constraints.Basic.generate e in
+  cs := CS.union !cs cs';
   Indent.indent_entry e
 
 let run_on_file export file =
@@ -13,7 +20,9 @@ let run_on_file export file =
   let md = mk_mident file in
   Env.init md;
   Parser.handle_channel md (mk_entry md) input;
-  Errors.success "File '%s' was successfully checked." file;
+  Errors.success "File '%s' was successfully checked generating %d constraints." file !c;
+  Export.solve !cs;
+  c := 0;
   if export && not (Env.export ()) then
     Errors.fail dloc "Fail to export module '%a@." pp_mident (Env.get_name ());
   close_in input
