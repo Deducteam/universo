@@ -2,27 +2,27 @@ open Parser
 open Basic
 open Cic
 
-let c = ref 0
-
 module CS = Constraints.Basic.CS
 
-let cs = ref CS.empty
-
-let mk_entry md e =
-  let e = Uvar.Elaboration.elaboration_entry e in
+let mk_entry md cs e =
   let cs' = Constraints.Basic.generate e in
-  cs := CS.union !cs cs';
-  Indent.indent_entry e
+  CS.union cs cs'
 
 let run_on_file export file =
   let input = open_in file in
   debug 1 "Processing file '%s'..." file;
   let md = mk_mident file in
   Env.init md;
-  Parser.handle_channel md (mk_entry md) input;
-  Errors.success "File '%s' was successfully checked generating %d constraints." file !c;
-  Export.solve !cs;
-  c := 0;
+  let entries = Parser.parse_channel md input in
+  let entries = List.map Uvar.Elaboration.elaboration_entry entries in
+  (*  List.iter Indent.indent_entry entries; *)
+  Errors.success "File '%s' was successfully parsed." file;
+  let cs = List.fold_left (mk_entry md) CS.empty entries in
+  Errors.success "File '%s' was successfully checked." file;
+  let model = Export.solve cs in
+  Errors.success "Constraints solved.";
+  let entries' = List.map (Reconstruction.entry_reconstruction model) entries in
+  List.iter Indent.indent_entry entries';
   if export && not (Env.export ()) then
     Errors.fail dloc "Fail to export module '%a@." pp_mident (Env.get_name ());
   close_in input

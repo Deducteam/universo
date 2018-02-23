@@ -148,6 +148,7 @@ let var_solution model var =
   else
     failwith (Format.sprintf "Variable %s not found" var)
 
+type model = Basic.ident -> Term.term
 
 let rec check constraints i =
   let open Symbol in
@@ -170,8 +171,11 @@ let rec check constraints i =
     Log.append "Problem solved!";
     match Solver.get_model solver with
     | None -> assert false
-    | Some model -> Format.printf "A model has been found@."
-      (* Format.printf "%s@." (Model.to_string model) *)
+    | Some model ->  (* Format.printf "%s@." (Model.to_string model); *)
+      fun uvar ->
+        let id = Basic.string_of_ident uvar in
+        let n = var_solution model id in
+        univ_of_int n
         (*
         fun uvar ->
           let var' = uvar

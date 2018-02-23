@@ -133,8 +133,8 @@ struct
 
 
   (* Create as many necessary variable to handle complicated constraints *)
-  (* Issue : to not create new rule *)
   let rec to_variable t =
+    let term_of_ident id = Term.mk_Const dloc (mk_name (Env.get_name ()) id) in
     let open Uvar in
     let open Cic  in
     if is_uvar t then
@@ -142,23 +142,27 @@ struct
     else if is_succ t then
       let t', cs = to_variable (extract_succ t) in
       let nv = ident_of_uvar @@ Uvar.fresh_uvar () in
+      mk_rule t (term_of_ident nv);
       nv, CS.add (Succ(t',nv)) cs
     else if is_rule t then
       let l,r = extract_rule t in
       let l',cs = to_variable l in
       let r',cs' = to_variable r in
       let nv = ident_of_uvar @@ Uvar.fresh_uvar () in
+      mk_rule t (term_of_ident nv);
       nv, CS.add (Rule(l',r',nv)) (CS.union cs cs')
     else if is_max t then
       let l,r = extract_max t in
       let l',cs = to_variable l in
       let r',cs' = to_variable r in
       let nv = ident_of_uvar @@ Uvar.fresh_uvar () in
+      mk_rule t (term_of_ident nv);
       nv, CS.add (Rule(l',r',nv)) (CS.union cs cs')
     else if is_type t then
-      let t = extract_type t in
-      let i = int_of_type t in
+      let t' = extract_type t in
+      let i = int_of_type t' in
       let nv = ident_of_uvar @@ Uvar.fresh_uvar () in
+      mk_rule (term_of_ident nv) t;
       nv, CS.singleton (Univ(nv,i))
     else
       begin
