@@ -157,7 +157,7 @@ struct
       let r',cs' = to_variable r in
       let nv = ident_of_uvar @@ Uvar.fresh_uvar () in
       mk_rule t (term_of_ident nv);
-      nv, CS.add (Rule(l',r',nv)) (CS.union cs cs')
+      nv, CS.add (Max(l',r',nv)) (CS.union cs cs')
     else if is_type t then
       let t' = extract_type t in
       let i = int_of_type t' in
@@ -172,6 +172,8 @@ struct
 
   (* Invariant : l and r are two terms that represent a universe on the algebra Succ, Max, Rule *)
   let rec get_constraint l r : CS.t option =
+(*    Format.printf "left: %a@." Pp.print_term l;
+      Format.printf "right: %a@." Pp.print_term r; *)
     let open Cic in
     let open Uvar in
     let l,r =

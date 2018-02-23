@@ -22,7 +22,7 @@ let run_on_file export file =
   let model = Export.solve cs in
   Errors.success "Constraints solved.";
   let entries' = List.map (Reconstruction.entry_reconstruction model) entries in
-  List.iter Indent.indent_entry entries';
+  (* List.iter Indent.indent_entry entries'; *)
   if export && not (Env.export ()) then
     Errors.fail dloc "Fail to export module '%a@." pp_mident (Env.get_name ());
   close_in input
