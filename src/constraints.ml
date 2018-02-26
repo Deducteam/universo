@@ -13,7 +13,7 @@ sig
 
   module CS : Set.S with type elt = constraints
 
-  val generate : Parser.entry -> CS.t
+  val generate : Basic.ident list -> Parser.entry -> CS.t
 
 end
 
@@ -51,32 +51,37 @@ struct
 
   let rec add_to_list2 l1 l2 lst =
     match l1, l2 with
-    | [], [] -> Some lst
+    | [], [] -> OK lst
     | s1::l1, s2::l2 -> add_to_list2 l1 l2 ((s1,s2)::lst)
-    | _,_ -> None
+    | _,_ -> assert false
 
-  let rec are_convertible_lst : (term*term) list -> bool = function
-  | [] -> true
-  | (t1,t2)::lst ->
-    begin
-      match (
-        if term_eq t1 t2 then Some lst
-        else
-          match whnf t1, whnf t2 with
-          | Kind, Kind | Type _, Type _ -> Some lst
-          | Const (_,n), Const (_,n') when name_eq n n' -> Some lst
-          | DB (_,_,n), DB (_,_,n') when  n==n' -> Some lst
-          | App (f,a,args), App (f',a',args') ->
-            add_to_list2 args args' ((f,f')::(a,a')::lst)
-          | Lam (_,_,_,b), Lam (_,_,_,b') -> Some ((b,b')::lst)
-          | Pi (_,_,a,b), Pi (_,_,a',b') -> Some ((a,a')::(b,b')::lst)
-          | t1, t2 -> None
-      ) with
-      | None -> false
-      | Some lst2 -> are_convertible_lst lst2
-    end
+  let rec are_convertible_lst to_check not_convertible =
+    match to_check with
+    | [] -> not_convertible
+    | (t1,t2)::lst ->
+      begin
+        match (
+          if term_eq t1 t2 then OK lst
+          else
+            match whnf t1, whnf t2 with
+            | Kind, Kind | Type _, Type _ -> OK lst
+            | Const (_,n), Const (_,n') when name_eq n n' -> OK lst
+            | DB (_,_,n), DB (_,_,n') when  n==n' -> OK lst
+            | App (f,a,args), App (f',a',args') when List.length args = List.length args' ->
+              add_to_list2 args args' ((f,f')::(a,a')::lst)
+            | Lam (_,_,_,b), Lam (_,_,_,b') -> OK ((b,b')::lst)
+            | Pi (_,_,a,b), Pi (_,_,a',b') -> OK ((a,a')::(b,b')::lst)
+            | t1, t2 -> Err(t1,t2)
+        ) with
+        | Err(t1,t2) -> are_convertible_lst lst ((t1,t2)::not_convertible)
+        | OK lst2 -> are_convertible_lst lst2 not_convertible
+      end
 
-  let are_convertible l r = are_convertible_lst [(l,r)]
+  let are_convertible l r =
+    let l = are_convertible_lst [(l,r)] [] in
+    match l with
+    | [] -> None
+    | _ -> Some l
 end
 
 module Basic =
@@ -126,10 +131,10 @@ struct
     else
       assert false
 
-  let are_convertible ?ctx:(ctx=[]) l r =
-    match Env.are_convertible ~ctx:ctx l r with
-    | OK t -> t
-    | Err _ -> false
+  let are_convertible  l r =
+    match Red.are_convertible l r with
+    | Some l -> false
+    | None -> true
 
 
   (* Create as many necessary variable to handle complicated constraints *)
@@ -173,13 +178,15 @@ struct
   (* Invariant : l and r are two terms that represent a universe on the algebra Succ, Max, Rule *)
   let rec get_constraint l r : CS.t option =
 (*    Format.printf "left: %a@." Pp.print_term l;
-      Format.printf "right: %a@." Pp.print_term r; *)
+n      Format.printf "right: %a@." Pp.print_term r; *)
     let open Cic in
     let open Uvar in
     let l,r =
-      match Env.reduction l, Env.reduction r with
-      | OK l, OK r -> (l,r)
-      | _, _ -> assert false
+      if Cic.is_univ l && Cic.is_univ r then
+        let l' = Cic.extract_univ l in
+        let r' = Cic.extract_univ r in
+        l',r'
+      else l,r
     in
     if are_convertible l r then None
     else
@@ -256,103 +263,20 @@ struct
     | None -> cs
     | Some c -> CS.union c cs
 
+  (* Two cases might happen when the convertibility fails *)
+  let check_convertibility l r =
+    match Red.are_convertible l r with
+    | None -> assert false
+    | Some l -> Some (List.fold_left (fun cs (l,r) -> add_opt cs (get_constraint l r)) CS.empty l)
+
   (* A wrapper around the convertibility error of the kernel *)
   let rec constraint_of_error err =
     match err with
     | Typing.ConvertibilityError(term,ctx,l,r) ->
 (*      Format.printf "left:%a@." Pp.print_term l;
         Format.printf "right:%a@." Pp.print_term r; *)
-      constraint_of_convertibility_test ctx l r
+      check_convertibility l r
     | _ -> Errors.fail_typing_error err
-
-  (* Inspect the term to generate constraints. *)
-  (* FIXME: Not independent of the representation of Dedukti terms *)
-  and constraint_of_convertibility_test ctx l r =
-    if Uvar.is_uvar l && Uvar.is_uvar r then
-      get_constraint l r
-    else if Cic.is_univ l && Cic.is_univ r then
-        let l' = Cic.extract_univ l in
-        let r' = Cic.extract_univ r in
-        get_constraint l' r'
-    else if Cic.is_cuni l && Cic.is_cuni r then
-        let l' = Cic.extract_cuni l in
-        let r' = Cic.extract_cuni r in
-        get_constraint l' r'
-    else if Cic.is_term l && Cic.is_term r then
-      let s,l' = Cic.extract_term l in
-      let s',r' = Cic.extract_term r in
-      if are_convertible ~ctx:ctx l' r' then
-        get_constraint s s'
-      else
-        check_convertibility ctx l' r'
-    else if Cic.is_prod l && Cic.is_prod r then
-      let s1,s2,a,f = Cic.extract_prod l in
-      let s1',s2',a',f' = Cic.extract_prod r in
-      if are_convertible ~ctx:ctx f f' then
-        if are_convertible ~ctx:ctx a a' then
-          if are_convertible ~ctx:ctx s2 s2' then
-            get_constraint s1 s1'
-          else
-            get_constraint s2 s2'
-        else
-          check_convertibility ctx a a'
-      else
-        check_convertibility ctx f f'
-    else if Cic.is_lam l && Cic.is_lam r then
-      let x,ty,te = Cic.extract_lam l in
-      let x',ty',te' = Cic.extract_lam r in
-      if are_convertible ~ctx:ctx ty ty' then
-        let ctx' = (dloc,x,ty)::ctx in
-        check_convertibility ctx' te te'
-      else
-        check_convertibility ctx ty ty'
-    else if Dk.is_prod l && Dk.is_prod r then (* this a a bug due to calling Env *)
-      let x,ty,te = Dk.extract_prod l in
-      let x',ty',te' = Dk.extract_prod r in
-      if are_convertible ~ctx:ctx ty ty' then
-        let ctx' = (dloc,x,ty)::ctx in
-        check_convertibility ctx' te te'
-      else
-        check_convertibility ctx ty ty'
-    else
-      match Env.reduction ~ctx:ctx l, Env.reduction ~ctx:ctx r with
-      | OK(l'), OK(r') ->
-        if Term.term_eq l l' && Term.term_eq r r' then
-          if Dk.is_app l && Dk.is_app r then
-            let f,a,args    = Dk.extract_app l in
-            let f',a',args' = Dk.extract_app r in
-            if are_convertible ~ctx:ctx f f' then
-              Some(List.fold_left2 (fun cs l r ->
-                  if are_convertible ~ctx:ctx l r then
-                    cs
-                  else
-                    add_opt cs (check_convertibility ctx l r)) CS.empty (a::args) (a'::args'))
-            else
-              check_convertibility ctx f f'
-          else
-            begin
-              Format.printf "left:%a@." Pp.print_term l;
-              Format.printf "right:%a@." Pp.print_term r;
-              begin
-                match Env.are_convertible ~ctx:ctx l r with
-                | Err(Env.EnvErrorType(ty)) -> failwith "yes"
-                | OK false -> failwith "bizarre"
-                | _ -> assert false
-              end
-            end
-        else
-          check_convertibility ctx l' r'
-      | Err(Env.EnvErrorType(ty)) ,_ -> constraint_of_error ty
-      | _, Err(Env.EnvErrorType(ty)) -> constraint_of_error ty
-      | _, _ -> assert false
-
-  (* Two cases might happen when the convertibility fails *)
-  and check_convertibility ctx l r =
-    match Env.are_convertible ~ctx:ctx l r with
-    | Err(Env.EnvErrorType(ty)) -> constraint_of_error ty
-    | OK false -> constraint_of_convertibility_test ctx l r
-    | _ -> assert false
-
 
   (* Generate constraints from an entry *)
   let rec generate e cs =
@@ -388,5 +312,5 @@ struct
     | Name (l,id) -> cs
     | _ -> failwith "unsupported"
 
-  let generate e = generate e CS.empty
+  let generate _ e = generate e CS.empty
 end

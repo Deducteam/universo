@@ -111,7 +111,7 @@ struct
         if n = !old_c then
           (old_c := c; [])
         else
-          let d = Decl(dloc, ident_of_counter n, Signature.Definable, Term.mk_Const dloc Cic.sort) in
+          let d = ident_of_counter n in
           d::(aux (n - 1))
       in
       if c = !old_c then
@@ -133,5 +133,5 @@ struct
 
   let elaboration_entry e =
     let e' = elaboration_entry e in
-    e'
+    generate_var (), e'
 end

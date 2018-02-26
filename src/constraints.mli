@@ -12,7 +12,7 @@ sig
 
   module CS : Set.S with type elt = constraints
 
-  val generate : Parser.entry -> CS.t
+  val generate : Basic.ident list -> Parser.entry -> CS.t
 
 end
 
