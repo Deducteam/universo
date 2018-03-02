@@ -13,5 +13,5 @@ val fresh_uvar : unit -> Term.term
 module Elaboration :
 sig
   val prop_elaboration  : bool ref
-  val elaboration_entry : Parser.entry -> Basic.ident list * Parser.entry
+  val elaboration_entry : Entry.entry -> Basic.ident list * Entry.entry
 end

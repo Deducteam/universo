@@ -20,6 +20,12 @@ val rule : Basic.name
 
 val term : Basic.name
 
+val prod : Basic.name
+
+val cuni : Basic.name
+
+val univ : Basic.name
+
 val is_prop : Term.term -> bool
 
 val is_z    : Term.term -> bool
@@ -46,6 +52,12 @@ val is_prod : Term.term -> bool
 
 val is_lam  : Term.term -> bool
 
+val is_var  : Term.term -> bool
+
+val is_app  : Term.term -> bool
+
+val extract_var  : Term.term -> Basic.ident
+
 val extract_s    : Term.term -> Term.term
 
 val extract_type : Term.term -> Term.term
@@ -61,6 +73,8 @@ val extract_term : Term.term -> (Term.term * Term.term)
 val extract_max  : Term.term -> (Term.term * Term.term)
 
 val extract_rule : Term.term -> (Term.term * Term.term)
+
+val extract_app  : Term.term -> (Term.term * Term.term * Term.term list)
 
 val extract_lam  : Term.term -> (Basic.ident * Term.term * Term.term)
 

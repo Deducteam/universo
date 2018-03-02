@@ -110,7 +110,7 @@ let add_constraint_rule var var' var'' =
   Solver.add solver [ite]
 
 let add_constraint c =
-  let open Constraints.Basic in
+  let open Constraints in
   let sofi = Basic.string_of_ident in
   match c with
   | Univ(n,u) -> add_constraint_univ (sofi n) u
@@ -120,7 +120,7 @@ let add_constraint c =
   | Rule(n,n',n'') -> add_constraint_rule (sofi n) (sofi n') (sofi n'')
 
 let import cs =
-  Constraints.Basic.CS.iter add_constraint cs
+  Constraints.CS.iter add_constraint cs
 
 let rec univ_of_int n =
   if n = 0 then

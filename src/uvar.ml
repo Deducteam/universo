@@ -1,5 +1,5 @@
 open Basic
-open Parser
+open Entry
 
 type uvar = ident
 
@@ -107,6 +107,7 @@ struct
     let old_c = ref 0 in
     fun () ->
       let c = next () in
+      let c = c - 1 in
       let rec aux n =
         if n = !old_c then
           (old_c := c; [])

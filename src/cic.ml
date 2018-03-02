@@ -95,10 +95,30 @@ let is_prod t =
   | Term.App(c, s1, [s2;a;f]) when is_const prod c -> true
   | _ -> false
 
+let is_var t =
+  match t with
+  | Term.DB _ -> true
+  | _ -> false
+
 let is_lam t =
   match t with
   | Term.Lam _ -> true
   | _ -> false
+
+let is_app t =
+  match t with
+  | Term.App _ -> true
+  | _ -> false
+
+let extract_app t =
+  match t with
+  | Term.App (f,a,args) -> f,a,args
+  | _ -> failwith "is not an app"
+
+let extract_var t =
+  match t with
+  | Term.DB(_,id,_) -> id
+  | _ -> failwith "is not a local variable"
 
 let extract_s t =
   match t with

@@ -1,19 +1,19 @@
 open Basic
 
+
+type constraints =
+  | Univ of ident * int
+  | Eq of ident * ident
+  | Max of ident * ident * ident
+  | Succ of ident * ident
+  | Rule of ident * ident * ident
+
+
 module type Generation =
 sig
 
-  type constraints =
-    | Univ of ident * int
-    | Eq of ident * ident
-    | Max of ident * ident * ident
-    | Succ of ident * ident
-    | Rule of ident * ident * ident
-
-
-  module CS : Set.S with type elt = constraints
-
-  val generate : Basic.ident list -> Parser.entry -> CS.t
+  type t
+  val generate : Basic.ident list -> Parser.entry -> t
 
 end
 
@@ -84,20 +84,15 @@ struct
     | _ -> Some l
 end
 
-module Basic =
+module CS  = Set.Make(struct type t = constraints let compare = compare end)
+
+module Naive : Generation with type t = CS.t =
 struct
   open Basic
   open Parser
   open Rule
 
-  type constraints =
-    | Univ of ident * int
-    | Eq of ident * ident
-    | Max of ident * ident * ident
-    | Succ of ident * ident
-    | Rule of ident * ident * ident
-
-  module CS = Set.Make(struct type t = constraints let compare = compare end)
+  type t = CS.t
 
   let rec pattern_of_term t =
     match t with
@@ -313,4 +308,146 @@ n      Format.printf "right: %a@." Pp.print_term r; *)
     | _ -> failwith "unsupported"
 
   let generate _ e = generate e CS.empty
+end
+
+module Test =
+struct
+
+  open Parser
+
+  type t = unit
+
+  let sg = ref (Signature.make (mk_mident "no name"))
+
+  let rec univ_of_int n =
+    if n = 0 then
+      Term.mk_Const dloc Cic.z
+    else
+      Term.mk_App (Term.mk_Const dloc Cic.s) (univ_of_int (n-1)) []
+
+  let univ_of_int n =
+    if n = -1 then
+      Term.mk_Const dloc Cic.prop
+    else
+      Term.mk_App (Term.mk_Const dloc Cic.typ) (univ_of_int n) []
+
+  let rule_name id i =
+    mk_ident (string_of_ident id ^ (string_of_int i))
+
+  let uvar_md = mk_mident "uvar"
+
+  let mk_rule id i =
+    let open Rule in
+    let md = Env.get_name () in
+    let r : untyped_rule =
+      {
+        name = Gamma(true, mk_name uvar_md (rule_name id i));
+        ctx = [];
+        pat = Pattern(dloc, (mk_name md id), []);
+        rhs = univ_of_int i
+      }
+    in
+    match Env.add_rules [r] with
+    | OK _ -> ()
+    | Err err ->  Errors.fail_env_error err
+
+  let red_cfg = ref {Reduction.default_cfg with Reduction.select = Some (fun _ -> true)}
+
+  let ignore_rule ident i =
+    let open Reduction in
+    let open Rule in
+    let f =
+      match !red_cfg.select with
+      | Some f -> f
+      | None -> assert false
+    in
+    red_cfg := {!red_cfg with
+                select = Some (fun x -> x <> Gamma(true, mk_name uvar_md (rule_name ident i)) && f x)}
+
+  let rec int_of_univ te =
+    if Cic.is_prop te then
+      -1
+    else if Cic.is_z te then
+      0
+    else if Cic.is_s te then
+      let te' = Cic.extract_s te in
+      1+(int_of_univ te')
+    else
+      assert false
+
+  let incr l =
+    let u = Env.unsafe_reduction l in
+    let i = int_of_univ u in
+    let ident = Uvar.ident_of_uvar l in
+    mk_rule ident (i+1);
+    ignore_rule ident i
+
+  let get_constraint l r =
+    let open Cic in
+    let open Uvar in
+    if is_uvar l && is_succ r then
+      incr l
+    else
+      failwith "todo"
+
+  let get_constraint_wrapper l r =
+    if Cic.is_univ l && Cic.is_univ r then
+      let l = Cic.extract_univ l in
+      let r = Cic.extract_univ r in
+      get_constraint l r
+    else
+      begin
+        Format.printf "left:%a@." Pp.print_term l;
+        Format.printf "right:%a@." Pp.print_term r;
+        assert false
+      end
+
+  let error_handler err =
+    match err with
+    | Typing.ConvertibilityError(term,ctx,l,r) ->
+      Format.printf "left:%a@." Pp.print_term l;
+      Format.printf "right:%a@." Pp.print_term r;
+      get_constraint_wrapper l r
+    | _ -> Errors.fail_typing_error err
+
+  let rec generate e =
+    match e with
+    | Decl(l,id,st,t) ->
+      begin
+        match Env.declare l id st t with
+        | OK () -> ()
+        | Err(Env.EnvErrorType(ty)) ->
+          error_handler ty;
+          generate e
+        | Err(_) -> assert false
+      end
+    | Def(l,id,op,pty,te) ->
+      let define = if op then Env.define_op else Env.define in
+      begin
+        match define l id te pty with
+        | OK () -> ()
+        | Err(Env.EnvErrorType(ty)) ->
+          error_handler ty;
+          generate e
+        | Err(_) -> assert false
+      end
+    | Rules(rs) ->
+      begin
+        match Env.add_rules rs with
+        | OK _ -> ()
+        | Err(Env.EnvErrorType(ty)) ->
+          error_handler ty;
+          generate e
+        | Err _ -> assert false
+      end
+    | Name (l,id) -> ()
+    | _ -> failwith "unsupported"
+
+  let generate vars e =
+    if Env.get_name () <> Signature.get_name !sg then
+      sg := Signature.make (Env.get_name ());
+    List.iter (fun id -> mk_rule id (-1)) vars;
+    generate e
+
+
 end
