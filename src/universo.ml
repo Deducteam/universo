@@ -1,6 +1,7 @@
 open Basic
 open Meta
 open Uvar
+open Elaboration
 
 let run_on_file file = failwith "todo"
 
