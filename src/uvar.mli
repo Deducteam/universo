@@ -1,17 +1,15 @@
-type uvar
 
-exception NotUvar
+exception Not_uvar
 
-val is_uvar : Term.term -> bool
-
-val ident_of_uvar : Term.term -> Basic.ident
-(** may raise NotUvar exception *)
-
-val fresh_uvar : unit -> Term.term
-(** Add a fresh definable variable to the current environment and returns the fresh variable as a term.*)
-
-module Elaboration :
+module type S =
 sig
-  val prop_elaboration  : bool ref
-  val elaboration_entry : Entry.entry -> Basic.ident list * Entry.entry
+  val is_uvar      : Term.term -> bool
+
+  val uvar_of_term : Term.term -> Basic.name
+
+  val fresh_uvar   : Signature.t -> Basic.name
+
+  val count        : unit -> int
 end
+
+module UVar : S

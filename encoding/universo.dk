@@ -1,0 +1,23 @@
+Sort : Type.
+
+var : Sort.
+
+prop : Sort.
+
+set : Sort.
+
+sort : Sort.
+
+Nat : Type.
+
+0 : Nat.
+
+S : Nat -> Nat.
+
+type : Nat -> Sort.
+
+max : Sort -> Sort -> Sort.
+
+rule : Sort -> Sort -> Sort.
+
+succ : Sort -> Sort.
