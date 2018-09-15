@@ -6,4 +6,8 @@ sig
 end
 
 
-module Make(U:Uvar.S) : S
+module MakeUniv(U:Uvar.S) : S
+
+module MakePre(T:Theory.Compat) : S
+
+module Make(T:Theory.Compat)(U:Uvar.S) : S

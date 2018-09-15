@@ -12,4 +12,4 @@ sig
   val count        : unit -> int
 end
 
-module UVar : S
+module Uvar : S

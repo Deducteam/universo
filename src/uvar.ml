@@ -15,7 +15,7 @@ sig
   val count        : unit -> int
 end
 
-module UVar =
+module Uvar =
 struct
   let basename = "?"
 
