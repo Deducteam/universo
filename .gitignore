@@ -5,6 +5,8 @@ _build/
 
 # Dedukti files.
 *.dko
+.depend
+experiments/matita/output/*.dk
 
 # Editor temporary files.
 *~

@@ -54,6 +54,7 @@ struct
 
   let elab_term sg (t:Term.term) =
     let open Config in
+    Signature.import_signature sg Encoding.LF.signature;
     List.iter (fun r -> Signature.add_rules sg [Rule.to_rule_infos r]) constructors;
     config.meta_rules <- List.map (fun (r:Rule.untyped_rule) -> r.Rule.name) constructors;
     Meta.normalize ~sg:(Some sg) t

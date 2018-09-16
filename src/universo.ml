@@ -3,6 +3,20 @@ open Meta
 open Elaboration
 open Configuration
 
+let universo : Signature.t =
+  let open Entry in
+  let file = "encodings/universo.dk" in
+  let ic = open_in file in
+  let md = Env.init file in
+  let entries = Parser.parse_channel md ic in
+  let mk_entry = function
+    | Decl(lc,id,st,ty) -> Env.declare lc id st ty
+    | Def(lc,id,opaque,ty,te) -> Env.define lc id opaque te ty
+    | _ -> assert false
+  in
+  List.iter mk_entry entries;
+  Env.get_signature ()
+
 let elab_entry (module Elab:Elaboration.S) sg e =
   let e =  Elab.elab_entry sg e in
   Format.printf "%a@." Pp.print_entry e
@@ -12,7 +26,7 @@ let run_on_file (module Elab:Elaboration.S)file =
   let md = Env.init file in
   let md_univ = "univ" ^ (string_of_mident md) in
   let sg = Signature.make  md_univ in
-  Signature.import sg Basic.dloc (mk_mident "universo");
+  Signature.import_signature sg universo;
   let entries  = Parser.parse_channel md ic in
   let entries' = List.map (elab_entry (module Elab) sg) entries in
   ignore(entries');
