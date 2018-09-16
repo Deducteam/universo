@@ -1,23 +1,23 @@
-Sort : Type.
+def Sort : Type.
 
-var : Sort.
+def var : Sort.
 
-prop : Sort.
+def prop : Sort.
 
-set : Sort.
+def set : Sort.
 
-sort : Sort.
+def sort : Sort.
 
-Nat : Type.
+def Nat : Type.
 
-0 : Nat.
+def 0 : Nat.
 
-S : Nat -> Nat.
+def S : Nat -> Nat.
 
-type : Nat -> Sort.
+def type : Nat -> Sort.
 
-max : Sort -> Sort -> Sort.
+def max : Sort -> Sort -> Sort.
 
-rule : Sort -> Sort -> Sort.
+def rule : Sort -> Sort -> Sort.
 
-succ : Sort -> Sort.
+def succ : Sort -> Sort.

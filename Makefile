@@ -10,13 +10,12 @@ MATITA_PATH=experiments/matita
 
 TEST=matita_basics_logic.dk
 .PHONY:
-test:
-	$(Q)./universo.native --in $(MATITA_PATH)/compatibility/in.dk $(MATITA_PATH)/input/$(TEST) \
+test: universo
+	$(Q)./universo.native -I $(MATITA_PATH)/theory --in $(MATITA_PATH)/compatibility/in.dk --out $(MATITA_PATH)/compatibility/out.dk $(MATITA_PATH)/input/$(TEST) \
 	> $(MATITA_PATH)/output/$(TEST)
 
 .PHONY: check_input
 check_input:
-
 	$(Q)cd $(MATITA_PATH)/input && make
 
 check_output:
