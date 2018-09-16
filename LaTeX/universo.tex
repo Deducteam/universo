@@ -1,0 +1,49 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+
+\usepackage{amsthm}
+
+\usepackage{amssymb}
+
+\usepackage{mathpartir}
+
+\usepackage{mdframed}
+
+\newtheorem{definition}{Definition}
+
+\newtheorem{lemma}{Lemma}
+
+\newcommand{\lfmt}{\ensuremath{\lambda\Pi\text{-modulo theory}}}
+
+\newcommand{\defn}{\ensuremath{:=}}
+
+\newcommand{\tabs}[3]{\ensuremath{\lambda{#1}\,{:}\,{#2}.\,{#3}}}
+
+\newcommand{\tapp}[2]{\ensuremath{{#1}~{#2}}}
+
+\newcommand{\tpi}[3]{\ensuremath{\Pi{#1}\,{:}\,{#2}.\,{#3}}}
+
+\newcommand{\ttype}{\ensuremath{\mathbf{Type}}}
+
+\newcommand{\tkind}{\ensuremath{\mathbf{Kind}}}
+
+\begin{document}
+
+\section{The algorithm}
+
+Minimization of universes can be presented in an abstract way on a simpler theory than the one implemented in Coq. We are going to use a variant of the Calculus of Constructions with Universes as presented in~\ref{fig:sttsyntax}. Then, in TODO, we will present how we can extend this algorithm for a theory implemented in a system such as Coq or Matita.
+
+\begin{figure}
+  \centering
+  \begin{tabular}{lccl}
+    \textbf{Variables} & \(x,y,z,\dots\) & & \\
+    \textbf{Terms} & \(A,B,t,u\) & \(\defn\) & \(x~|~\tpi{x}{A}{B} ~|~\tabs{x}{A}{u} ~|~ \tapp{t}{u} \)\\
+
+  \end{tabular}
+  \caption{\lfmt{}}
+  \label{fig:sttsyntax}
+\end{figure}
+\end{document}
