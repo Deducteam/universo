@@ -1,0 +1,19 @@
+[s] cic.Univ s --> s.
+
+[] cic.Sort --> universo.Sort.
+
+[] cic.zype --> universo.type.
+
+[] cic.prop --> universo.prop.
+
+[] cic.Nat --> universo.Nat.
+
+[] cic.z --> universo.0.
+
+[] cic.s --> universo.S.
+
+[] cic.succ --> universo.succ.
+
+[] cic.rule --> universo.rule.
+
+[] cic.max --> universo.max.

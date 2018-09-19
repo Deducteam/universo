@@ -1,7 +1,6 @@
 open Basic
 open Entry
 
-
 exception Not_uvar
 
 module type S =
@@ -10,13 +9,13 @@ sig
 
   val name_of_uvar : Term.term -> name
 
-  val fresh_uvar   : ?oc:out_channel option -> Signature.t ->  Term.term
+  val fresh_uvar   : Configuration.t ->  Term.term
 
   val count        : unit -> int
 end
 
-module Uvar =
-struct
+module Make(TO:Theory.Out) : S =
+  struct
   let basename = "?"
 
   let is_uvar t =
@@ -42,44 +41,20 @@ struct
     let name = Format.sprintf "%s%d" basename !counter in
     incr counter; mk_ident name
 
-  let fresh_uvar ?(oc=None) sg =
+  let fresh_uvar : Configuration.t -> Term.term = fun cfg ->
+    let open Configuration in
+    let open Rule in
     let id = fresh () in
-    let md = Signature.get_name sg in
-    let name = mk_name md id in
+    let name = mk_name cfg.md_univ id in
     let cst = Term.mk_Const dloc name in
     let ty = Term.mk_Const dloc (mk_name (mk_mident "universo") (mk_ident "Sort")) in
-    Signature.add_declaration sg dloc id Signature.Definable ty;
+    Signature.add_declaration cfg.sg_univ dloc id Signature.Definable ty;
+    let cfg_meta = Dkmeta.({default_config with encoding = None; sg = cfg.sg_meta}) in
+    Dkmeta.(cfg_meta.meta_rules <- Some (List.map (fun (r:untyped_rule) -> r.name) TO.rules));
+    let ty' = Dkmeta.mk_term cfg_meta ty in
+    begin
+      Format.fprintf (Format.formatter_of_out_channel cfg.oc_univ) "%a@."
+        Pp.print_entry (Entry.Decl(dloc, id, Signature.Definable, ty'))
+    end;
     cst
-end
-
-module Make(TO:Theory.Out) : S =
-  struct
-    include Uvar
-
-    let init = ref false
-
-    let fresh_uvar ?(oc=None) sg =
-      let open Config in
-      let id = fresh () in
-      let md = Signature.get_name sg in
-      let name = mk_name md id in
-      let cst = Term.mk_Const dloc name in
-      let ty = Term.mk_Const dloc (mk_name (mk_mident "universo") (mk_ident "Sort")) in
-      Signature.add_declaration sg dloc id Signature.Definable ty;
-      if not !init then
-        begin
-          List.iter (fun r -> Signature.add_rules sg [Rule.to_rule_infos r]) TO.out;
-          init := true
-        end;
-      config.encoding <- None;
-      config.meta_rules <-  List.map (fun (r:Rule.untyped_rule) -> r.Rule.name) TO.out;
-      let ty' = Meta.normalize ~sg:(Some sg) ty in
-      begin
-        match oc with
-        | None -> assert false;
-        | Some oc ->
-           Format.fprintf (Format.formatter_of_out_channel oc) "%a@."
-             Pp.print_entry (Entry.Decl(dloc, id, Signature.Definable, ty'))
-      end;
-      cst
   end

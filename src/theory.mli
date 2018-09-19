@@ -1,11 +1,12 @@
-module type In =
+module type S =
 sig
-  val constructors : Rule.untyped_rule list
-
-  val sorts : Rule.untyped_rule list
+  val rules : Rule.untyped_rule list
 end
 
-module type Out =
-sig
-  val out : Rule.untyped_rule list
-end
+module type In = S
+
+module type Th = S
+
+module type Out = S
+
+val from_file : string -> (module S)

@@ -1,0 +1,13 @@
+[] universo.Sort --> cic.Sort.
+
+[] universo.type --> cic.type.
+
+[] universo.S    --> cic.s.
+
+[] universo.0    --> cic.z.
+
+[] universo.prop --> cic.prop.
+
+[] universo.max  --> cic.max.
+
+[] universo.rule --> universo.rule.
