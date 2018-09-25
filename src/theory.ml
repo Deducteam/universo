@@ -1,21 +1,21 @@
 module type S =
 sig
-  val rules : Rule.untyped_rule list
+  val meta : Dkmeta.cfg
 end
 
-module type In = S
+let sg md = Signature.make md
 
-module type Th = S
+let metaify rs = List.map Dkmeta.LF.encode_rule rs
 
-module type Out = S
+let add_rule sg r =
+  Signature.add_rules sg [(Rule.to_rule_infos r)]
 
-module Default : In =
-  struct
-    let rules = []
-  end
+(* Several rules might be bound to different constant *)
+let add_rules sg rs = List.iter (add_rule sg) rs
 
-let from_file : string -> (module S) = fun file ->
-  if file = "" then (module Default) else
+let from_file : Signature.t list -> bool -> string -> (module S) =
+  let open Dkmeta in
+  fun dep_sgs encode file ->
   let ic = open_in file in
   let md = Env.init file in
   let mk_entry = function
@@ -24,6 +24,24 @@ let from_file : string -> (module S) = fun file ->
   in
   let entries = Parser.parse_channel md ic in
   let rules = List.fold_left (fun r e -> r@mk_entry e) [] entries in
+  let sg = sg (Basic.string_of_mident md) in
+  List.iter (fun ext -> Signature.import_signature sg ext) dep_sgs;
+  begin
+    if encode then
+      begin
+        Signature.import_signature sg (Dkmeta.LF.signature);
+        add_rules sg (metaify rules)
+      end
+    else
+        add_rules sg rules
+  end;
+  Format.eprintf "%a@." Dtree.pp_dforest (Signature.get_dtree (List.hd dep_sgs) None Basic.dloc (Basic.mk_name (Basic.mk_mident "universo") (Basic.mk_ident "rule")));
   match rules with
   | [] -> assert false
-  | _ -> (module struct let rules = rules end)
+  | _ -> (module struct let meta =
+    {
+      beta = true;
+      encoding = Some (module Dkmeta.LF);
+      sg = sg;
+      meta_rules = Some (List.map (fun (r:Rule.untyped_rule) -> r.Rule.name) rules)
+    } end)

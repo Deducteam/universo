@@ -12,3 +12,8 @@ experiments/matita/output/*.dk
 *~
 \#*\#
 .\#*
+
+# LaTeX files
+*.aux
+*.log
+*.pdf

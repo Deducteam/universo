@@ -1,5 +1,3 @@
-val init : Signature.t -> Basic.mident -> unit
-
 module type S =
   sig
     include Typing.Typer
@@ -7,4 +5,4 @@ module type S =
     val mk_entry : Configuration.t -> Entry.entry -> unit
   end
 
-module Make(TH:Theory.Th) : S
+module Make(T:Theory.S) : S

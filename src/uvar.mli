@@ -11,4 +11,4 @@ sig
   val count        : unit -> int
 end
 
-module Make(TO:Theory.Out) : S
+module Make(T:Theory.S) : S

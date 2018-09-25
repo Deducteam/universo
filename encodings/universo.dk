@@ -1,5 +1,7 @@
 def Sort : Type.
 
+def Univ : Sort -> Type.
+
 def var : Sort.
 
 def prop : Sort.

@@ -1,13 +1,6 @@
 open Basic
 open Term
 
-let sg_meta = ref (Signature.make "")
-let md_theory = ref (mk_mident "")
-
-let init : Signature.t -> Basic.mident -> unit = fun sg md ->
-  sg_meta := sg;
-  md_theory := md
-
 module type S =
   sig
     include Typing.Typer
@@ -15,35 +8,25 @@ module type S =
     val mk_entry : Configuration.t -> Entry.entry -> unit
   end
 
-module MakeRE(TH:Theory.Th) : Reduction.RE =
+module MakeRE(T:Theory.S) : Reduction.RE =
   struct
     open Reduction
     open Configuration
 
-    let theory () = !md_theory
-
     let metaify t =
       let open Dkmeta in
-      let cfg_meta = {default_config with encoding = Some (module LF); sg = !sg_meta} in
-      cfg_meta.meta_rules <- Some(List.map (fun (r:Rule.untyped_rule) -> r.Rule.name) TH.rules);
-      Dkmeta.mk_term cfg_meta t
+      Dkmeta.mk_term T.meta t
 
     let whnf = Reduction.REDefault.whnf
     let snf = Reduction.REDefault.snf
 
-    let rec zip_lists l1 l2 lst =
-      match l1, l2 with
-      | [], [] -> lst
-      | s1::l1, s2::l2 -> zip_lists l1 l2 ((s1,s2)::lst)
-      | _,_ -> raise NotConvertible
-
     let univ_conversion l r =
       if Term.term_eq l r then
-        []
+        true
       else
         (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
-          failwith "yes"
+          (*          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r; *)
+          true
         )
 
     let rec are_convertible_lst sg : (term*term) list -> bool = function
@@ -52,18 +35,24 @@ module MakeRE(TH:Theory.Th) : Reduction.RE =
          if term_eq l r then are_convertible_lst sg lst
          else
            let l',r' = whnf sg l, whnf sg r in
-           Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r';
-           are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
+           (*           Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
+           if univ_conversion l' r' then
+             are_convertible_lst sg lst
+           else
+             begin
+               (*        Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
+               are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
+             end
 
     let are_convertible sg t1 t2 =
       try are_convertible_lst sg [(t1,t2)]
       with NotConvertible -> false
   end
 
-module Make(TH:Theory.Th) : S =
+module Make(T:Theory.S) : S =
   struct
 
-    module R = MakeRE(TH)
+    module R = MakeRE(T)
 
     module T = Typing.Make(R)
 
@@ -72,20 +61,22 @@ module Make(TH:Theory.Th) : S =
     let mk_entry : Configuration.t -> Entry.entry -> unit = fun cfg e ->
       let open Entry in
       let open Configuration in
-      let sg = cfg.sg in
-      let md = cfg.md in
+      let sg = cfg.sg_check in
+      let md = cfg.md_check in
       let _add_rules rs =
         let ris = List.map Rule.to_rule_infos rs in
         Signature.add_rules sg ris
       in
       match e with
       | Decl(lc,id,st,ty) ->
+         Format.eprintf "[CHECK] on :%a@." Pp.print_ident id;
          begin
            match inference sg ty with
            | Kind | Type _ -> Signature.add_declaration sg lc id st ty
            | s -> raise (Typing.TypingError (Typing.SortExpected (ty,[],s)))
          end
       | Def(lc,id,opaque,mty,te) ->
+        Format.eprintf "[CHECK] on :%a@." Pp.print_ident id;
          let open Rule in
          begin
            let ty = match mty with

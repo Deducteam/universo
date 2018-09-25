@@ -8,6 +8,6 @@ module type S =
 
 module MakeUniv(U:Uvar.S) : S
 
-module MakePre(T:Theory.In) : S
+module MakePre(T:Theory.S) : S
 
-module Make(T:Theory.In)(U:Uvar.S) : S
+module Make(T:Theory.S)(U:Uvar.S) : S

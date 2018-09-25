@@ -2,25 +2,13 @@ open Basic
 open Dkmeta
 open Elaboration
 
-let metaify rs = List.map Dkmeta.LF.encode_rule rs
-
-let add_rule sg r =
-  Signature.add_rules sg [(Rule.to_rule_infos r)]
-(* Several rules might be bound to different constant *)
-let add_rules sg rs = List.iter (add_rule sg) rs
-
 type t =
   {
-    uvar          : (module Uvar.S);
-    theory_input  : (module Theory.In);
-    theory        : (module Theory.Th);
-    theory_output : (module Theory.Out);
-    elaboration   : (module Elaboration.S);
-    checker       : (module Uconv.S);
-    sg            : Signature.t;
-    sg_theory     : Signature.t;
-    md_theory     : Basic.mident;
-    output_dir    : string
+    uvar           : (module Uvar.S);
+    elaboration    : (module Elaboration.S);
+    checker        : (module Uconv.S);
+    sg_univ_theory : Signature.t;
+    output_dir     : string
   }
 
 let universo : Signature.t =
@@ -37,42 +25,38 @@ let universo : Signature.t =
   List.iter mk_entry entries;
   Env.get_signature ()
 
-let mk_entry : t -> Configuration.t -> Entry.entry -> Entry.entry = fun env cfg e ->
+let mk_elab_entry : t -> Configuration.t -> Entry.entry -> Entry.entry = fun env cfg e ->
   let open Configuration in
   let (module E:Elaboration.S) = (module (val env.elaboration)) in
+  E.elab_entry cfg e
+
+let mk_check_entry : t -> Configuration.t ->Entry.entry -> unit = fun env cfg e ->
   let (module C:Uconv.S) = (module (val env.checker)) in
-  let e' =  E.elab_entry cfg e in
-  Signature.import_signature cfg.sg cfg.sg_univ;
-  let _ = C.mk_entry cfg e' in
-  Format.printf "%a@." Pp.print_entry e';
-  e'
+  C.mk_entry cfg e
 
 let run_on_file (env:t) file =
   let open Configuration in
   let ic = open_in file in
-  let md = Env.init file in
-  let uf = (env.output_dir ^ "/" ^ (string_of_mident md) ^ "_univ.dk") in
-  let oc_univ = open_out uf in
-  let md_univ = mk_mident (string_of_mident md ^"_univ") in
-  let sg_univ = Signature.make (string_of_mident md_univ) in
-  let sg = Env.get_signature () in
-  let (module TH:Theory.Th) = (module (val env.theory)) in
-  Signature.import_signature sg (Dkmeta.LF.signature);
-  Signature.import_signature sg env.sg_theory;
-  add_rules sg (metaify TH.rules);
+  let md_check = Env.init file in
+  let uf = (env.output_dir ^ "/" ^ (string_of_mident md_check) ^ "_univ.dk") in
+  let oc_univ  = open_out uf in
+  let md_univ  = mk_mident (string_of_mident md_check ^"_univ") in
+  let sg_univ  = Signature.make (string_of_mident md_univ) in
+  let sg_check = Env.get_signature () in
+  Signature.import_signature sg_check (Dkmeta.LF.signature);
+  Signature.import_signature sg_check env.sg_univ_theory;
   let cfg = {
-      md_theory = env.md_theory;
-      sg_meta = env.sg;
-      md = md;
-      sg = sg;
-      md_univ;
-      sg_univ;
-      oc_univ
-    }
+    md_univ;
+    oc_univ;
+    sg_univ;
+    md_check;
+    sg_check;
+  }
   in
-  let entries  = Parser.parse_channel md ic in
-  let entries' = List.map (mk_entry env cfg) entries in
-  ignore(entries');
+  let entries  = Parser.parse_channel md_check ic in
+  let entries' = List.map (mk_elab_entry env cfg) entries in
+  Signature.import_signature sg_check sg_univ;
+  List.iter (mk_check_entry env cfg) entries';
   close_in ic
 
 
@@ -93,10 +77,6 @@ let _ =
   let set_output_dir d =
     output_dir := d
   in
-  let md_theory = ref (mk_mident "") in
-  let set_md_theory s =
-    md_theory := (mk_mident s)
-  in
   let theory = "experiments/matita/theory/cic.dk" in
   let export = ref false in
   let options = Arg.align
@@ -115,9 +95,6 @@ let _ =
       ; ( "-o"
       , Arg.String set_output_dir
       , " Set the output directory" )
-      ; ( "--md-theory"
-      , Arg.String set_md_theory
-      , " Set the module of the theory" )
       ; ( "--theory"
         , Arg.String set_compatibility_theory_file
       , " Rewrite rules mapping theory's universes to Universo's universes" )
@@ -135,44 +112,45 @@ let _ =
     Arg.parse options (fun f -> files := f :: !files) usage;
     List.rev !files
   in
+  let check _ _ _ = () in (* *)
+  check !compatibility_input_file !compatibility_output_file !compatibility_theory_file;
   try
-    let (module TI:Theory.In) = Theory.from_file !compatibility_input_file in
-    let (module TH:Theory.Th) = Theory.from_file !compatibility_theory_file in
-    let (module TO:Theory.Out) = Theory.from_file !compatibility_output_file in
-    let (module U:Uvar.S) = (module Uvar.Make(TO)) in
-    let (module E:Elaboration.S) = (module Elaboration.Make(TI)(U)) in
-    let (module TYP:Uconv.S) = (module Uconv.Make(TH)) in
-    let mk_theory sg to_universo theory =
+    let sg_of_theory theory =
+      let ic = open_in theory in
+      let md = Env.init theory in
+      let entries = Parser.parse_channel md ic in
+      let sg = Signature.make (string_of_mident md) in
+      Dkmeta.to_signature md ~sg entries
+    in
+    let (module Ti : Theory.S) =
+      Theory.from_file [sg_of_theory theory] true !compatibility_input_file in
+    let (module To : Theory.S) =
+      Theory.from_file [universo] false !compatibility_output_file in
+    let (module Th : Theory.S) =
+      Theory.from_file [sg_of_theory theory] true !compatibility_theory_file in
+    let mk_theory sg theory =
       let ic = open_in theory in
       let md = Env.init theory in
       let entries  = Parser.parse_channel md ic in
-      let meta_cfg = Dkmeta.({default_config with encoding = Some (module LF); sg=sg}) in
-      meta_cfg.meta_rules <- Some (List.map (fun (r:Rule.untyped_rule) -> r.Rule.name) to_universo);
-      let entries' = List.map (Dkmeta.mk_entry meta_cfg md) entries in
+      let entries' = List.map (Dkmeta.mk_entry Th.meta md) entries in
       let sg = Signature.make (string_of_mident md) in
       Signature.import_signature sg universo;
       Dkmeta.to_signature md ~sg entries'
     in
-    let sg = Signature.make "meta" in (* The name is not important here *)
-    Signature.import_signature sg universo;
-    Signature.import_signature sg (Dkmeta.LF.signature);
-    add_rules sg (metaify TI.rules);
-    add_rules sg (metaify TH.rules);
-    add_rules sg TO.rules;
-    let cfg =
-      {uvar          = (module U);
-       theory_input  = (module TI);
-       theory        = (module TH);
-       theory_output = (module TO);
-       elaboration   = (module E);
-       checker       = (module TYP);
-       sg            = sg;
-       sg_theory     = mk_theory sg (metaify TH.rules) theory;
-       md_theory     = !md_theory;
-       output_dir    = !output_dir}
+    let theory_universo = mk_theory (Signature.make (string_of_mident (Env.init theory))) theory in
+    let (module U:Uvar.S) = (module Uvar.Make(To)) in
+    let (module E:Elaboration.S) = (module Elaboration.Make(Ti)(U)) in
+    let (module TYP:Uconv.S) = (module Uconv.Make(Th)) in
+    let env =
+      {
+        uvar           = (module U);
+        elaboration    = (module E);
+        checker        = (module TYP);
+        sg_univ_theory = theory_universo;
+        output_dir     = !output_dir
+      }
     in
-    Uconv.init sg !md_theory;
-    List.iter (run_on_file cfg) files;
+    List.iter (run_on_file env) files;
   with
   | Env.EnvError(l,e) -> Errors.fail_env_error l e
   | Signature.SignatureError e ->

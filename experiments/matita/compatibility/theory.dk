@@ -1,10 +1,12 @@
-[s] cic.Univ s --> s.
+[s] cic.Univ s --> universo.Univ s.
 
 [] cic.Sort --> universo.Sort.
 
 [] cic.zype --> universo.type.
 
 [] cic.prop --> universo.prop.
+
+[] cic.type --> universo.type.
 
 [] cic.Nat --> universo.Nat.
 

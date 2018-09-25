@@ -30,10 +30,14 @@
 
 \newcommand{\tkind}{\ensuremath{\mathbf{Kind}}}
 
+\newcommand{\universo}{\textsc{Universo}}
+
+\newcommand{\dkmeta}{\textsc{Dkmeta}}
+
 \begin{document}
 
 \section{The algorithm}
-
+\label{sec:algo}
 Minimization of universes can be presented in an abstract way on a simpler theory than the one implemented in Coq. We are going to use a variant of the Calculus of Constructions with Universes as presented in~\ref{fig:sttsyntax}. Then, in TODO, we will present how we can extend this algorithm for a theory implemented in a system such as Coq or Matita.
 
 \begin{figure}
@@ -46,4 +50,23 @@ Minimization of universes can be presented in an abstract way on a simpler theor
   \caption{\lfmt{}}
   \label{fig:sttsyntax}
 \end{figure}
+
+\section{Being independent from the theory}
+
+Universes are implemented in several systems: Coq, Agda, Lean, Matita... However, each system implements a variant of this hierarchy: Agda does not have an impredicative universe, Coq has a predicative universe Set, etc... However, the algorithm presented above can be easely adapted for all these variants. While implemented \universo{}, we had the goal that it should be easy to use \universo{} in one variant or an other without having to fork the whole software. The idea is that \universo{} has its own hierarchy of universes, and all the hierarchies of the systems enumerated above can be embedded in the one of \universo. This embedding can be given by the user as rewrite rules directly expressed in the Dedukti syntax. This technique may be used for other goals than \universo{}. In the case of \universo{}. this embedding requires the user to write three files:
+\begin{itemize}
+\item An input file to translate universes from its own theory to the one of \universo{}. This is used while elaborating the terms.
+\item A theory file used to translate universes of the theory file to the one of \universo{}.
+\item An output file to translate back universes{} from \universo{} to the one of the original theory.
+\end{itemize}
+
+If you want to use \universo{} with your theory, you just need to give these three files to make \universo{} works.
+
+\paragraph{Signatures}
+
+\universo{} manipulates differente signatures at the same time:
+\begin{itemize}
+\item \textbf{lf} is a signature that comes from \dkmeta{}
+\end{itemize}
+
 \end{document}

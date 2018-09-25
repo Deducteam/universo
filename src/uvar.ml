@@ -14,7 +14,7 @@ sig
   val count        : unit -> int
 end
 
-module Make(TO:Theory.Out) : S =
+module Make(T:Theory.S) : S =
   struct
   let basename = "?"
 
@@ -49,9 +49,7 @@ module Make(TO:Theory.Out) : S =
     let cst = Term.mk_Const dloc name in
     let ty = Term.mk_Const dloc (mk_name (mk_mident "universo") (mk_ident "Sort")) in
     Signature.add_declaration cfg.sg_univ dloc id Signature.Definable ty;
-    let cfg_meta = Dkmeta.({default_config with encoding = None; sg = cfg.sg_meta}) in
-    Dkmeta.(cfg_meta.meta_rules <- Some (List.map (fun (r:untyped_rule) -> r.name) TO.rules));
-    let ty' = Dkmeta.mk_term cfg_meta ty in
+    let ty' = Dkmeta.mk_term T.meta ty in
     begin
       Format.fprintf (Format.formatter_of_out_channel cfg.oc_univ) "%a@."
         Pp.print_entry (Entry.Decl(dloc, id, Signature.Definable, ty'))
