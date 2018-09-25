@@ -1371,6 +1371,25 @@ def match_eq :
     (matita_basics_logic.refl A _x) -->
   case_refl.
 
+
+def test : cic.Term cic.prop (eq (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z)) (cic.univ (cic.type cic.z))) := refl (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z)).
+
+ttrue : cic.Term (cic.type cic.z) (cic.univ cic.prop).
+
+II : cic.Term cic.prop ttrue.
+
+def foo := match_eq (cic.type (cic.z))
+    (cic.univ (cic.type (cic.s cic.z)))
+    (cic.univ (cic.type cic.z))
+    (_ : cic.Term (cic.type (cic.s (cic.s cic.z))) (cic.univ (cic.type (cic.s cic.z))) =>
+     z :  cic.Term cic.prop
+             (matita_basics_logic.eq (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z)) _)  => cic.univ cic.prop)
+    ttrue
+    (cic.univ (cic.type cic.z))
+    (refl (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z))).
+
+def bar : cic.Term cic.prop foo := II.
+
 def filter_eq :
       return_sort : cic.Sort ->
       A : cic.Univ (cic.type (cic.s (cic.s cic.z))) ->
@@ -1420,7 +1439,7 @@ def filter_eq :
 [  ] filter_eq (cic.type cic.z) --> matita_basics_logic.filter_eq_Type0.
 
 [ return_sort1, A, x, return_type, return ]
-  filter_eq return_sort1 (A) (x) (x) return_type return
+  filter_eq return_sort1 A (x) (x) return_type return
     (matita_basics_logic.refl A x) -->
   return
     (matita_basics_logic.refl
@@ -65221,5 +65240,3 @@ def streicherK :
            (cic.lift (cic.type (cic.s (cic.s cic.z)))
               (cic.type (cic.s (cic.s cic.z))) T)
            t p).
-
-

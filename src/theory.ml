@@ -35,7 +35,6 @@ let from_file : Signature.t list -> bool -> string -> (module S) =
     else
         add_rules sg rules
   end;
-  Format.eprintf "%a@." Dtree.pp_dforest (Signature.get_dtree (List.hd dep_sgs) None Basic.dloc (Basic.mk_name (Basic.mk_mident "universo") (Basic.mk_ident "rule")));
   match rules with
   | [] -> assert false
   | _ -> (module struct let meta =

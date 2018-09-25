@@ -19,3 +19,5 @@
 [] cic.rule --> universo.rule.
 
 [] cic.max --> universo.max.
+
+[] cic.lift --> universo.lift.

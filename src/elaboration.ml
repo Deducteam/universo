@@ -61,10 +61,7 @@ struct
       let mty' = match mty with None -> None | Some ty -> Some (elab_term env ty) in
       let te' = elab_term env te in
       Def(lc, id, op, mty', te')
-    | Rules(lc, rs) ->
-      let open Rule in
-      let rhs : untyped_rule -> untyped_rule = fun r -> {r with rhs = elab_term env r.rhs} in
-      Rules(lc, List.map rhs rs)
+    | Rules(lc, rs) -> Dkmeta.mk_entry T.meta env.Configuration.md_check e
     | _ -> e
 end
 

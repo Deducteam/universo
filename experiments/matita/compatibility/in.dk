@@ -5,3 +5,5 @@
 [] cic.prop --> universo.prop.
 
 [] cic.Univ --> universo.Univ.
+
+[] cic.lift --> universo.lift.

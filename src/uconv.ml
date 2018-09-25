@@ -8,6 +8,8 @@ module type S =
     val mk_entry : Configuration.t -> Entry.entry -> unit
   end
 
+let md_univ = ref (mk_mident "")
+
 module MakeRE(T:Theory.S) : Reduction.RE =
   struct
     open Reduction
@@ -20,13 +22,54 @@ module MakeRE(T:Theory.S) : Reduction.RE =
     let whnf = Reduction.REDefault.whnf
     let snf = Reduction.REDefault.snf
 
+    let universo = mk_mident "universo"
+
+    let univ = mk_name universo (mk_ident "Univ")
+
+    let max = mk_name universo (mk_ident "max")
+
+    let lift = mk_name universo (mk_ident "lift")
+    let is_const cst t =
+      match t with
+      | Const(_,n) -> name_eq cst n
+      | _ -> false
+
+    let is_univ t =
+      match t with
+      | Const(_,n) -> md n = !md_univ
+      | Term.App(f,_,[]) when is_const univ f -> true
+      | Term.App(f,_,[_]) when is_const max f -> true
+      | _ -> false
+
+    let is_lift t =
+      match t with
+      | Const(_,n) -> md n = !md_univ
+      | Term.App(f,_,[_;_]) when is_const lift f -> true
+      | _ -> false
+
     let univ_conversion l r =
       if Term.term_eq l r then
         true
+      else if is_univ l && is_univ r then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          true
+        )
+
+      else if is_lift l && not (is_lift r) then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          true
+        )
+      else if not (is_lift l) && is_lift r then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          true
+        )
       else
         (
-          (*          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r; *)
-          true
+          Format.eprintf "FAIL: l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          false
         )
 
     let rec are_convertible_lst sg : (term*term) list -> bool = function
@@ -63,6 +106,7 @@ module Make(T:Theory.S) : S =
       let open Configuration in
       let sg = cfg.sg_check in
       let md = cfg.md_check in
+      md_univ := cfg.md_univ;
       let _add_rules rs =
         let ris = List.map Rule.to_rule_infos rs in
         Signature.add_rules sg ris
