@@ -61,7 +61,27 @@ struct
       let mty' = match mty with None -> None | Some ty -> Some (elab_term env ty) in
       let te' = elab_term env te in
       Def(lc, id, op, mty', te')
-    | Rules(lc, rs) -> Dkmeta.mk_entry T.meta env.Configuration.md_check e
+    | Rules(lc, rs) -> (* FIXME: Nasty stuff due to optimization. *)
+      let open Rule in
+      let meta_pattern : Dkmeta.cfg =
+        let filter n =
+          match n with
+          | Gamma(true,_) -> false (* left pattern are not elaborated with variables *)
+          | _ -> true
+        in
+        match T.meta.Dkmeta.meta_rules with
+        | None -> T.meta
+        | Some rs ->
+          {T.meta with Dkmeta.meta_rules = Some (List.filter filter rs)}
+      in
+      let e' = Dkmeta.mk_entry meta_pattern env.Configuration.md_check e in
+      begin
+        match e' with
+        | Rules(lc,rs) ->
+          Rules(lc,
+                List.map (fun (r:untyped_rule) -> {r with Rule.rhs = Dkmeta.mk_term T.meta r.rhs}) rs)
+        | _ -> assert false
+      end
     | _ -> e
 end
 

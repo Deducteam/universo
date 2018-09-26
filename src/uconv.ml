@@ -8,6 +8,7 @@ module type S =
     val mk_entry : Configuration.t -> Entry.entry -> unit
   end
 
+let sg_check = ref (Signature.make "")
 let md_univ = ref (mk_mident "")
 
 module MakeRE(T:Theory.S) : Reduction.RE =
@@ -24,51 +25,81 @@ module MakeRE(T:Theory.S) : Reduction.RE =
 
     let universo = mk_mident "universo"
 
-    let univ = mk_name universo (mk_ident "Univ")
-
-    let max = mk_name universo (mk_ident "max")
-
-    let lift = mk_name universo (mk_ident "lift")
-    let is_const cst t =
-      match t with
-      | Const(_,n) -> name_eq cst n
-      | _ -> false
-
-    let is_univ t =
-      match t with
-      | Const(_,n) -> md n = !md_univ
-      | Term.App(f,_,[]) when is_const univ f -> true
-      | Term.App(f,_,[_]) when is_const max f -> true
-      | _ -> false
-
-    let is_lift t =
-      match t with
-      | Const(_,n) -> md n = !md_univ
-      | Term.App(f,_,[_;_]) when is_const lift f -> true
-      | _ -> false
-
-    let univ_conversion l r =
+(*
+    let cpt_var = ref 0
+    let cpt_var_left = ref 0
+    let cpt_var_right = ref 0
+    let cpt_max = ref 0
+*)
+    let rec univ_conversion l r =
+      let open Universes in
+      let snf = snf !sg_check in
       if Term.term_eq l r then
         true
-      else if is_univ l && is_univ r then
+      else if is_uvar l && is_uvar r then
         (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
+          let var = match r with | Const(_,n) -> n | _ -> assert false in
+          let lhs = Rule.Pattern(Basic.dloc, var, []) in
+          let rhs = l in
+          let rule : Rule.untyped_rule = Rule.(
+            {
+              ctx = [];
+              pat = lhs;
+              rhs;
+              name = Gamma(false, mk_name !md_univ (mk_ident "coucou"))
+            })
+          in
+          Signature.add_rules !sg_check [(Rule.to_rule_infos rule)];
           true
         )
-
+      else if is_uvar l && is_max r then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
+          true
+        )
+      else if is_uvar r && is_max l then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
+          univ_conversion r l
+        )
+      else if is_uvar r then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
+          (*  univ_conversion r l *)
+          true
+        )
+      else if is_max l && is_max r then
+        (
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r); (*
+          let ul = to_universo (snf l) in
+          let lhs = pattern_of_univ ul in
+          let rhs = snf r in
+          let rule : Rule.untyped_rule = Rule.(
+            {
+              ctx = [];
+              pat = lhs;
+              rhs;
+              name = Gamma(false, mk_name !md_univ (mk_ident "coucou"))
+            })
+          in
+          Signature.add_rules !sg_check [(Rule.to_rule_infos rule)]; *)
+          true
+        )
       else if is_lift l && not (is_lift r) then
         (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
           true
         )
       else if not (is_lift l) && is_lift r then
         (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
           true
         )
       else
         (
-          Format.eprintf "FAIL: l:%a@.r:%a@." Pp.print_term l Pp.print_term r;
+          Format.eprintf "FAIL: l:%a@.r:%a@."
+            Pp.print_term (snf l) Pp.print_term (snf r);
           false
         )
 
@@ -77,15 +108,18 @@ module MakeRE(T:Theory.S) : Reduction.RE =
       | (l,r)::lst ->
          if term_eq l r then are_convertible_lst sg lst
          else
-           let l',r' = whnf sg l, whnf sg r in
-           (*           Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
-           if univ_conversion l' r' then
-             are_convertible_lst sg lst
-           else
-             begin
-               (*        Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
-               are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
-             end
+           begin
+             Format.eprintf "left:%a@.right:%a@." Pp.print_term l Pp.print_term r;
+             let l',r' = whnf sg l, whnf sg r in
+             (*           Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
+             if univ_conversion l' r' then
+               are_convertible_lst sg lst
+             else
+               begin
+                 (*        Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
+                 are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
+               end
+           end
 
     let are_convertible sg t1 t2 =
       try are_convertible_lst sg [(t1,t2)]
@@ -106,7 +140,9 @@ module Make(T:Theory.S) : S =
       let open Configuration in
       let sg = cfg.sg_check in
       let md = cfg.md_check in
+      sg_check := cfg.sg_check;
       md_univ := cfg.md_univ;
+      Universes.md_univ := cfg.md_univ;
       let _add_rules rs =
         let ris = List.map Rule.to_rule_infos rs in
         Signature.add_rules sg ris
