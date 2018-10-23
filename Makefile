@@ -8,11 +8,15 @@ all: universo
 
 MATITA_PATH=experiments/matita
 
-TEST=matita_basics_logic.dk
 .PHONY:
+
 test: universo
-	$(Q)./universo.native -I $(MATITA_PATH)/theory --in $(MATITA_PATH)/compatibility/in.dk --out $(MATITA_PATH)/compatibility/out.dk $(MATITA_PATH)/input/$(TEST) -o $(MATITA_PATH)/output \
-	--theory $(MATITA_PATH)/compatibility/theory.dk > $(MATITA_PATH)/output/$(TEST)
+	$(Q)./universo.native -I $(MATITA_PATH)/theory --in $(MATITA_PATH)/compatibility/in.dk --out $(MATITA_PATH)/compatibility/out.dk $(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output \
+	--theory $(MATITA_PATH)/compatibility/theory.dk > $(MATITA_PATH)/output/test.dk
+
+logic: universo
+	$(Q)./universo.native -I $(MATITA_PATH)/theory --in $(MATITA_PATH)/compatibility/in.dk --out $(MATITA_PATH)/compatibility/out.dk $(MATITA_PATH)/input/matita_basics_logic.dk \
+-o $(MATITA_PATH)/output -theory $(MATITA_PATH)/compatibility/theory.dk > $(MATITA_PATH)/output/matita_basics_logic.dk
 
 .PHONY: check_input
 check_input:

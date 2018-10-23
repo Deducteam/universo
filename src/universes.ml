@@ -90,7 +90,6 @@ let rec extract_univ t =
   | Term.Const(_,n) when md n = !md_univ -> Var n
   | Term.Const(_,n) when Basic.name_eq n prop -> Prop
   | Term.Const(_,n) when Basic.name_eq n set -> Set
-  | Term.App(f,u,[]) when is_const univ f -> extract_univ u
   | Term.App(f,l,[]) when is_const typ f -> Type (extract_level l)
   | Term.App(f,l,[r]) when is_const max f -> Max(extract_univ l, extract_univ r)
   | Term.App(f,l,[r]) when is_const rule f -> Rule(extract_univ l, extract_univ r)

@@ -117,34 +117,50 @@ refl :
 After the first elaboration step, we get these terms (that are ill-typed):
 \begin{minted}{dedukti}
 eq :
-  cic.Term ?1
-    (cic.prod ?2 ?3 (cic.univ ?4)
-       (A : cic.Univ ?5 =>
-        cic.prod ?6 ?7 A
-          (_x : cic.Term ?8 A =>
-           cic.prod ?9 ?10 A
-             (__ : cic.Term ?11 A =>
+  cic.Term ?0
+    (cic.prod ?1 ?2 (cic.univ ?3)
+       (A : cic.Univ ?10 =>
+        cic.prod ?4 ?5 A
+          (_x : cic.Term ?9 A =>
+           cic.prod ?6 ?7 A
+             (__ : cic.Term ?8 A =>
               cic.univ cic.prop)))).
 
 refl :
   cic.Term cic.prop
-    (cic.prod ?12 cic.prop
-       (cic.univ ?13)
-       (A : cic.Univ ?14 =>
-        cic.prod ?15 cic.prop A
+    (cic.prod ?11 cic.prop
+       (cic.univ ?12)
+       (A : cic.Univ ?17 =>
+        cic.prod ?13 cic.prop A
           (x : cic.Term ?16 A =>
            matita_basics_logic.eq
-             (cic.lift ?17 ?18 A) x x))).
+             (cic.lift ?14 ?15 A) x x))).
 \end{minted}
 
 Notice that \mintinline{dedukti}{cic.prop} is not replaced by a variable because we know that it will stay \mintinline{dedukti}{cic.prop} through the normalization process. Notice also that the encoding creates \(18\) variables while there is only one in the original term. This is not a big issue and we will see later how we can resolve this problem.
 
 Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, Dedukti will eventually fail. For example, while type checking the terms, Dedukti tries to check whether \mintinline{dedukti}{cic.succ ?4} and \mintinline{dedukti}{?2} are convertible. In that case, \universo{} takes over, generate the constraint: \(?2 \stackrel{?}{=} ?4 + 1\) and returns \texttt{true}. Once the terms are type-checked, \universo{} has generated the following constraints:
-\begin{minted}{bash}
-  TODO
-\end{minted}
+\begin{align*}
+  ?1 &= ?3 + 1 \\
+  ?9 &= ?4     & ?10 &= ?3\\
+  ?8 &= ?6     & ?10 &= ?4\\
+  ?7 &= \mathtt{Type0} & ?10 &= ?9\\
+  ?5 &= \mathbf{rule}(?6,?7)     & ?10 &= ?6\\
+  ?2 &= \mathbf{rule}(?4,?5)     & ?10 &= ?8\\
+  ?0 &= \mathbf{rule}(?1,?2)\\
+  \\
+  ?11 &= ?12 + 1 & ?17 &= ?12\\
+  ?16 &= ?13 & ?17 &= ?13\\
+  ?16 &= ?14 & ?17 &= ?16\\
+  ?3 &= \mathbf{max}(?14,?15) & ?17 &= ?14\\
+\end{align*}
 
-We can see easely that the minimal solution is given by TODO. Then, replacing the solution to our original term give us:
+We can see easely that the minimal solution is given by
+\begin{align*}
+  \{?0,?1,?2,?5,?7,?11\} \to \mathtt{Type0}\\
+  \{?3,?4,?6,?8,?9,?10,?12, ?13, ?14, ?15, ?16, ?17\} \to \mathtt{Prop}
+\end{align*}
+Then, replacing the solution to our original term give us:
 
 \begin{minted}{dedukti}
 eq :
@@ -170,5 +186,9 @@ refl :
 
 \section{Correction}
 
+
+
 \section{Optimization}
+
+
 \end{document}
