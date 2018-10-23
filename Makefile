@@ -2,7 +2,7 @@ Q = @
 
 .PHONY: universo
 universo: $(wildcard src/*.ml)
-	$(Q)ocamlbuild -quiet -package dedukti -package dkmeta -package z3 -use-ocamlfind src/universo.native
+	$(Q)ocamlbuild -I src/ -I src/solving -quiet -package dedukti -package dkmeta -package z3 -use-ocamlfind src/universo.native
 
 all: universo
 
@@ -23,6 +23,6 @@ check_output:
 
 .PHONY: clean
 clean:
-	$(Q)ocamlbuild -quiet -clean
+	$(Q)ocamlbuild -clean
 	$(Q)cd $(MATITA_PATH)/input && make clean
 	$(Q)cd $(MATITA_PATH)/output && make clean

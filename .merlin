@@ -1,6 +1,8 @@
 S src
+S src/solving
 
 B _build/src
+B _build/src/solving
 
 PKG dkmeta dedukti.api dedukti.kernel dedukti.parser z3
 

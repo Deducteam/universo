@@ -10,7 +10,7 @@ module type S =
 
 let sg_check = ref (Signature.make "")
 let md_univ = ref (mk_mident "")
-
+(*
 module MakeRE(T:Theory.S) : Reduction.RE =
   struct
     open Reduction
@@ -20,111 +20,141 @@ module MakeRE(T:Theory.S) : Reduction.RE =
       let open Dkmeta in
       Dkmeta.mk_term T.meta t
 
-    let whnf = Reduction.REDefault.whnf
-    let snf = Reduction.REDefault.snf
+    let cpt = ref 0
 
-    let universo = mk_mident "universo"
-
-(*
-    let cpt_var = ref 0
-    let cpt_var_left = ref 0
-    let cpt_var_right = ref 0
-    let cpt_max = ref 0
-*)
-    let rec univ_conversion l r =
-      let open Universes in
-      let snf = snf !sg_check in
-      if Term.term_eq l r then
-        true
-      else if is_uvar l && is_uvar r then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
-          let var = match r with | Const(_,n) -> n | _ -> assert false in
-          let lhs = Rule.Pattern(Basic.dloc, var, []) in
-          let rhs = l in
-          let rule : Rule.untyped_rule = Rule.(
-            {
-              ctx = [];
-              pat = lhs;
-              rhs;
-              name = Gamma(false, mk_name !md_univ (mk_ident "coucou"))
-            })
-          in
-          Signature.add_rules !sg_check [(Rule.to_rule_infos rule)];
-          true
-        )
-      else if is_uvar l && is_max r then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
-          true
-        )
-      else if is_uvar r && is_max l then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
-          univ_conversion r l
-        )
-      else if is_uvar r then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
-          (*  univ_conversion r l *)
-          true
-        )
-      else if is_max l && is_max r then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r); (*
-          let ul = to_universo (snf l) in
-          let lhs = pattern_of_univ ul in
-          let rhs = snf r in
-          let rule : Rule.untyped_rule = Rule.(
-            {
-              ctx = [];
-              pat = lhs;
-              rhs;
-              name = Gamma(false, mk_name !md_univ (mk_ident "coucou"))
-            })
-          in
-          Signature.add_rules !sg_check [(Rule.to_rule_infos rule)]; *)
-          true
-        )
-      else if is_lift l && not (is_lift r) then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
-          true
-        )
-      else if not (is_lift l) && is_lift r then
-        (
-          Format.eprintf "l:%a@.r:%a@." Pp.print_term (snf l) Pp.print_term (snf r);
-          true
-        )
-      else
-        (
-          Format.eprintf "FAIL: l:%a@.r:%a@."
-            Pp.print_term (snf l) Pp.print_term (snf r);
+    let rec matching_test r sg t1 t2 =
+      match r with
+      | Rule.Gamma(_,rn) ->
+        if md rn = Basic.mk_mident "cic" then
           false
-        )
+        else
+          are_convertible sg t1 t2
+      | _ -> are_convertible sg t1 t2
 
-    let rec are_convertible_lst sg : (term*term) list -> bool = function
+    and whnf sg t= Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
+    and snf sg t = Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
+
+    and mk_rule ?(name=Rule.Gamma(false, mk_name !md_univ (mk_ident "universo"))) l r =
+      let pat = Universes.pattern_of_univ l in
+      let rhs = snf !sg_check (Universes.term_of_univ r) in
+      let rule = Rule.(
+      {
+        ctx = [];
+        pat;
+        rhs;
+        name;
+      })
+      in
+      rule
+
+    and add_rule rule = Signature.add_rules !sg_check [Rule.to_rule_infos rule]
+
+    and univ_conversion l r =
+      let snf = snf !sg_check in
+      let open Universes in
+      if Term.term_eq l r then
+          true
+      else
+        let l = snf l in
+        let r = snf r in
+        if Term.term_eq l r then
+          true
+        else
+        if Universes.is_uvar l && is_uvar r then (
+          let l = Universes.extract_univ l in
+          let r = Universes.extract_univ r in
+          add_rule (mk_rule l r);
+          true)
+        else
+          try
+            (* TODO: Fix Universes.is_lift and elaboration *)
+            let l = Universes.extract_univ l in
+            let r = Universes.extract_univ r in
+            if Universes.gt l r then
+              (* add_rule (mk_rule l r); *)
+              true
+            else if Universes.gt r l then
+              true
+            else
+                assert false (* Order should be total *)
+          with Universes.Not_univ ->
+            if is_lift l && not (is_lift r) then
+              true
+            else if not (is_lift l) && (is_lift r) then
+              univ_conversion r l
+            else
+              false
+
+    and are_convertible_lst sg : (term*term) list -> bool = function
       | [] -> true
       | (l,r)::lst ->
          if term_eq l r then are_convertible_lst sg lst
          else
            begin
-             Format.eprintf "left:%a@.right:%a@." Pp.print_term l Pp.print_term r;
              let l',r' = whnf sg l, whnf sg r in
-             (*           Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
              if univ_conversion l' r' then
                are_convertible_lst sg lst
              else
-               begin
-                 (*        Format.eprintf "left:%a@.right:%a@." Pp.print_term l' Pp.print_term r'; *)
-                 are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
-               end
+               are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
            end
 
-    let are_convertible sg t1 t2 =
+    and are_convertible sg t1 t2 =
       try are_convertible_lst sg [(t1,t2)]
       with NotConvertible -> false
+
   end
+  *)
+
+module MakeRE(T:Theory.S) : Reduction.RE =
+struct
+  let rec whnf sg t= Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
+  and snf sg t = Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
+
+  and univ_conversion l r =
+    let open Universes in
+    if Term.term_eq l r then
+      true
+    else
+      try
+        let l' = Universes.extract_univ l in
+        let r' = Universes.extract_univ r in
+        ignore(l');
+        ignore(r');
+        true
+      with Universes.Not_univ ->
+        if is_lift l && not (is_lift r) then
+          true
+        else if not (is_lift l) && (is_lift r) then
+          true
+        else
+          false
+
+  and are_convertible_lst sg : (term*term) list -> bool = function
+    | [] -> true
+    | (l,r)::lst ->
+      if term_eq l r then are_convertible_lst sg lst
+      else
+        begin
+          let l',r' = whnf sg l, whnf sg r in
+          if univ_conversion l' r' then
+            are_convertible_lst sg lst
+          else
+            are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
+        end
+
+  and are_convertible sg t1 t2 =
+    try are_convertible_lst sg [(t1,t2)]
+    with Reduction.NotConvertible -> false
+
+  and matching_test r sg t1 t2 =
+    match r with
+    | Rule.Gamma(_,rn) ->
+      if md rn = Basic.mk_mident "cic" then (* Bug to fix: cic should not be here *)
+        false
+      else
+        are_convertible sg t1 t2
+    | _ -> are_convertible sg t1 t2
+end
 
 module Make(T:Theory.S) : S =
   struct
@@ -145,6 +175,7 @@ module Make(T:Theory.S) : S =
       Universes.md_univ := cfg.md_univ;
       let _add_rules rs =
         let ris = List.map Rule.to_rule_infos rs in
+        let ris = List.map (fun rs -> {rs with Rule.constraints = []}) ris in
         Signature.add_rules sg ris
       in
       match e with

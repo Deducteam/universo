@@ -1,6 +1,7 @@
 open Basic
 open Dkmeta
 open Elaboration
+open Solver
 
 type t =
   {
@@ -16,7 +17,7 @@ let universo : Signature.t =
   let file = "encodings/universo.dk" in
   let ic = open_in file in
   let md = Env.init file in
-  let entries = Parser.parse_channel md ic in
+  let entries = Parser.Parse_channel.parse md ic in
   let mk_entry = function
     | Decl(lc,id,st,ty) -> Env.declare lc id st ty
     | Def(lc,id,opaque,ty,te) -> Env.define lc id opaque te ty
@@ -53,7 +54,7 @@ let run_on_file (env:t) file =
     sg_check;
   }
   in
-  let entries  = Parser.parse_channel md_check ic in
+  let entries  = Parser.Parse_channel.parse md_check ic in
   let entries' = List.map (mk_elab_entry env cfg) entries in
   Signature.import_signature sg_check sg_univ;
   List.iter (mk_check_entry env cfg) entries';
@@ -118,7 +119,7 @@ let _ =
     let sg_of_theory theory =
       let ic = open_in theory in
       let md = Env.init theory in
-      let entries = Parser.parse_channel md ic in
+      let entries = Parser.Parse_channel.parse md ic in
       let sg = Signature.make (string_of_mident md) in
       Dkmeta.to_signature md ~sg entries
     in
@@ -131,7 +132,7 @@ let _ =
     let mk_theory sg theory =
       let ic = open_in theory in
       let md = Env.init theory in
-      let entries  = Parser.parse_channel md ic in
+      let entries  = Parser.Parse_channel.parse md ic in
       let entries' = List.map (Dkmeta.mk_entry Th.meta md) entries in
       let sg = Signature.make (string_of_mident md) in
       Signature.import_signature sg universo;

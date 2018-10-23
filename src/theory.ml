@@ -22,7 +22,7 @@ let from_file : Signature.t list -> bool -> string -> (module S) =
     | Entry.Rules(_,rs) -> rs
     | _ -> assert false
   in
-  let entries = Parser.parse_channel md ic in
+  let entries = Parser.Parse_channel.parse md ic in
   let rules = List.fold_left (fun r e -> r@mk_entry e) [] entries in
   let sg = sg (Basic.string_of_mident md) in
   List.iter (fun ext -> Signature.import_signature sg ext) dep_sgs;
