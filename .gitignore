@@ -17,3 +17,4 @@ experiments/matita/output/*.dk
 *.aux
 *.log
 *.pdf
+_minted-universo/

@@ -20,7 +20,6 @@ let md_univ = ref (mk_mident "")
 
 exception Not_univ
 
-
 let typ = mk_name md_universo (mk_ident "type")
 
 let set = mk_name md_universo (mk_ident "set")

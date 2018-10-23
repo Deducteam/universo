@@ -1,10 +1,12 @@
+open Entry
+
 let rec reconstruction model term =
   let open Term in
-  if Uvar.is_uvar term then
+  if Universes.is_uvar term then
     begin
       let t' = (Env.unsafe_reduction term) in
-      if Uvar.is_uvar t' then
-        let var = Uvar.ident_of_uvar t' in
+      if Universes.is_uvar t' then
+        let var = failwith "todo" in
         model var
       else
         t'
@@ -37,8 +39,8 @@ let entry_reconstruction model e =
   | Decl(l,id,st,t) -> Decl(l,id,st, reconstruction model t)
   | Def(l,id,op,pty,te) -> Def(l,id,op,
                                Basic.map_opt (reconstruction model) pty, reconstruction model te)
-  | Rules(rs) ->
+  | Rules(sub,rs) ->
     let rs' = List.map (fun (r: untyped_rule) -> {r  with rhs = reconstruction model r.rhs}) rs in
-    Rules(rs')
+    Rules(sub,rs')
   | Name (l,id) -> Name(l,id)
   | _ -> failwith "unsupported"

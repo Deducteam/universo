@@ -12,6 +12,9 @@
 
 \usepackage{mdframed}
 
+\usepackage{minted}
+\renewcommand{\MintedPygmentize}{/home/fthire/Mercurial/pygmentize-fork/pygmentize}
+
 \newtheorem{definition}{Definition}
 
 \newtheorem{lemma}{Lemma}
@@ -51,22 +54,121 @@ Minimization of universes can be presented in an abstract way on a simpler theor
   \label{fig:sttsyntax}
 \end{figure}
 
-\section{Being independent from the theory}
+% \section{Being independent from the theory}
 
-Universes are implemented in several systems: Coq, Agda, Lean, Matita... However, each system implements a variant of this hierarchy: Agda does not have an impredicative universe, Coq has a predicative universe Set, etc... However, the algorithm presented above can be easely adapted for all these variants. While implemented \universo{}, we had the goal that it should be easy to use \universo{} in one variant or an other without having to fork the whole software. The idea is that \universo{} has its own hierarchy of universes, and all the hierarchies of the systems enumerated above can be embedded in the one of \universo. This embedding can be given by the user as rewrite rules directly expressed in the Dedukti syntax. This technique may be used for other goals than \universo{}. In the case of \universo{}. this embedding requires the user to write three files:
-\begin{itemize}
-\item An input file to translate universes from its own theory to the one of \universo{}. This is used while elaborating the terms.
-\item A theory file used to translate universes of the theory file to the one of \universo{}.
-\item An output file to translate back universes{} from \universo{} to the one of the original theory.
-\end{itemize}
+% Universes are implemented in several systems: Coq, Agda, Lean, Matita... However, each system implements a variant of this hierarchy: Agda does not have an impredicative universe, Coq has a predicative universe Set, etc... However, the algorithm presented above can be easely adapted for all these variants. While implemented \universo{}, we had the goal that it should be easy to use \universo{} in one variant or an other without having to fork the whole software. The idea is that \universo{} has its own hierarchy of universes, and all the hierarchies of the systems enumerated above can be embedded in the one of \universo. This embedding can be given by the user as rewrite rules directly expressed in the Dedukti syntax. This technique may be used for other goals than \universo{}. In the case of \universo{}. this embedding requires the user to write three files:
+% \begin{itemize}
+% \item An input file to translate universes from its own theory to the one of \universo{}. This is used while elaborating the terms.
+% \item A theory file used to translate universes of the theory file to the one of \universo{}.
+% \item An output file to translate back universes{} from \universo{} to the one of the original theory.
+% \end{itemize}
 
-If you want to use \universo{} with your theory, you just need to give these three files to make \universo{} works.
+% If you want to use \universo{} with your theory, you just need to give these three files to make \universo{} works.
 
-\paragraph{Signatures}
+\section{Universo}
 
-\universo{} manipulates differente signatures at the same time:
-\begin{itemize}
-\item \textbf{lf} is a signature that comes from \dkmeta{}
-\end{itemize}
+\universo{} is a tool written in OCaml that was designed to minimize the number of universes needed in a proof written in the Calculus Of Inductive Constructions. However, the current implementation works only if proofs are expressed first in Dedukti. The idea behind \universo{} is quite simple and works in \(4\) steps:
+\begin{enumerate}
+\item Elaborate the terms by replacing each occurence of a universe by a variable
+\item Use Dedukti to type checks the elaborated terms and generate constraints over these variables
+\item Solve the constraints (using a SMT solver for example)
+\item Reconstruct the terms with the solution given at the previous step
+\end{enumerate}
 
+In practice, the number of variables or constraints can be fairly large: about hundreds of thousands of variables and thousands of constraints. This is because we use an encoding of the Calculus of Inductive Constructions in Dedukti. However, we noticed that with some well-suited optimizations, an SMT solver could solve the problem quickly (in a few seconds).
+
+The correction of our method relies on the second step: We \textit{hack} the convertibility test of Dedukti to generate constraints over universes. Let us see how it works. Suppose we have the following term:
+
+\begin{minted}{coq}
+  Parameter eq : forall (A:Type[5]), A -> A -> Prop.
+
+  Axiom refl forall (A:Type[5]), forall (x:A), eq A x x.
+\end{minted}
+
+It will be enconded this way in Dedukti :
+
+\begin{minted}{dedukti}
+eq :
+  cic.Term (cic.type (cic.s (cic.s (cic.s cic.z))))
+    (cic.prod (cic.type (cic.s (cic.s (cic.s cic.z))))
+       (cic.type (cic.s (cic.s cic.z)))
+       (cic.univ (cic.type (cic.s (cic.s cic.z))))
+       (A : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+        cic.prod (cic.type (cic.s (cic.s cic.z)))
+          (cic.type (cic.s (cic.s cic.z))) A
+          (_x : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+           cic.prod (cic.type (cic.s (cic.s cic.z))) (cic.type cic.z) A
+             (__ : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+              cic.univ cic.prop)))).
+
+refl :
+  cic.Term cic.prop
+    (cic.prod (cic.type (cic.s (cic.s (cic.s cic.z)))) cic.prop
+       (cic.univ (cic.type (cic.s (cic.s cic.z))))
+       (A : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+        cic.prod (cic.type (cic.s (cic.s cic.z))) cic.prop A
+          (x : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+           matita_basics_logic.eq
+             (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                (cic.type (cic.s (cic.s cic.z))) A)
+             x x))).
+\end{minted}
+
+After the first elaboration step, we get these terms (that are ill-typed):
+\begin{minted}{dedukti}
+eq :
+  cic.Term ?1
+    (cic.prod ?2 ?3 (cic.univ ?4)
+       (A : cic.Univ ?5 =>
+        cic.prod ?6 ?7 A
+          (_x : cic.Term ?8 A =>
+           cic.prod ?9 ?10 A
+             (__ : cic.Term ?11 A =>
+              cic.univ cic.prop)))).
+
+refl :
+  cic.Term cic.prop
+    (cic.prod ?12 cic.prop
+       (cic.univ ?13)
+       (A : cic.Univ ?14 =>
+        cic.prod ?15 cic.prop A
+          (x : cic.Term ?16 A =>
+           matita_basics_logic.eq
+             (cic.lift ?17 ?18 A) x x))).
+\end{minted}
+
+Notice that \mintinline{dedukti}{cic.prop} is not replaced by a variable because we know that it will stay \mintinline{dedukti}{cic.prop} through the normalization process. Notice also that the encoding creates \(18\) variables while there is only one in the original term. This is not a big issue and we will see later how we can resolve this problem.
+
+Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, Dedukti will eventually fail. For example, while type checking the terms, Dedukti tries to check whether \mintinline{dedukti}{cic.succ ?4} and \mintinline{dedukti}{?2} are convertible. In that case, \universo{} takes over, generate the constraint: \(?2 \stackrel{?}{=} ?4 + 1\) and returns \texttt{true}. Once the terms are type-checked, \universo{} has generated the following constraints:
+\begin{minted}{bash}
+  TODO
+\end{minted}
+
+We can see easely that the minimal solution is given by TODO. Then, replacing the solution to our original term give us:
+
+\begin{minted}{dedukti}
+eq :
+  cic.Term (cic.type cic.z)
+    (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.univ cic.prop)
+       (A : cic.Univ cic.prop =>
+        cic.prod cic.prop (cic.type cic.z) A
+          (_x : cic.Term cic.prop A =>
+           cic.prod cic.prop (cic.type cic.z) A
+             (__ : cic.Term cic.prop A =>
+              cic.univ cic.prop)))).
+
+refl :
+  cic.Term cic.prop
+    (cic.prod (cic.type cic.z) cic.prop
+       (cic.univ cic.prop)
+       (A : cic.Univ cic.prop =>
+        cic.prod cic.prop cic.prop A
+          (x : cic.Term cic.prop A =>
+           matita_basics_logic.eq
+             (cic.lift cic.prop cic.prop A) x x))).
+\end{minted}
+
+\section{Correction}
+
+\section{Optimization}
 \end{document}
