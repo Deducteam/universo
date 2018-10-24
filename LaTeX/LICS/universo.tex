@@ -1,10 +1,12 @@
-\documentclass{article}
+\documentclass[conference]{IEEEtran}
 
 \usepackage[utf8]{inputenc}
 
 \usepackage{amsmath}
 
 \usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+
 
 \usepackage{amssymb}
 
@@ -12,7 +14,8 @@
 
 \usepackage{mdframed}
 
-\usepackage{minted}
+\usepackage[finalizecache]{minted}
+%\usepackage[frozencache]{minted}
 \renewcommand{\MintedPygmentize}{/home/fthire/Mercurial/pygmentize-fork/pygmentize}
 
 \newtheorem{definition}{Definition}
@@ -38,21 +41,30 @@
 \newcommand{\dkmeta}{\textsc{Dkmeta}}
 
 \begin{document}
+\title{Minimization of Universes for Interoperability in Dedukti}
+\author{\IEEEauthorblockN{François Thiré}
+\IEEEauthorblockA{LSV, ENS Paris-Saclay, CNRS, Université Paris-Saclay, INRIA\\
+Email: francois.thire@lsv.fr}}
+\maketitle
 
-\section{The algorithm}
-\label{sec:algo}
-Minimization of universes can be presented in an abstract way on a simpler theory than the one implemented in Coq. We are going to use a variant of the Calculus of Constructions with Universes as presented in~\ref{fig:sttsyntax}. Then, in TODO, we will present how we can extend this algorithm for a theory implemented in a system such as Coq or Matita.
+\begin{abstract}
+The abstract goes here.
+\end{abstract}
 
-\begin{figure}
-  \centering
-  \begin{tabular}{lccl}
-    \textbf{Variables} & \(x,y,z,\dots\) & & \\
-    \textbf{Terms} & \(A,B,t,u\) & \(\defn\) & \(x~|~\tpi{x}{A}{B} ~|~\tabs{x}{A}{u} ~|~ \tapp{t}{u} \)\\
+% \section{The algorithm}
+% \label{sec:algo}
+% Minimization of universes can be presented in an abstract way on a simpler theory than the one implemented in Coq. We are going to use a variant of the Calculus of Constructions with Universes as presented in~\ref{fig:sttsyntax}. Then, in TODO, we will present how we can extend this algorithm for a theory implemented in a system such as Coq or Matita.
 
-  \end{tabular}
-  \caption{\lfmt{}}
-  \label{fig:sttsyntax}
-\end{figure}
+% \begin{figure}
+%   \centering
+%   \begin{tabular}{lccl}
+%     \textbf{Variables} & \(x,y,z,\dots\) & & \\
+%     \textbf{Terms} & \(A,B,t,u\) & \(\defn\) & \(x~|~\tpi{x}{A}{B} ~|~\tabs{x}{A}{u} ~|~ \tapp{t}{u} \)\\
+
+%   \end{tabular}
+%   \caption{\lfmt{}}
+%   \label{fig:sttsyntax}
+% \end{figure}
 
 % \section{Being independent from the theory}
 
@@ -79,43 +91,40 @@ In practice, the number of variables or constraints can be fairly large: about h
 
 The correction of our method relies on the second step: We \textit{hack} the convertibility test of Dedukti to generate constraints over universes. Let us see how it works. Suppose we have the following term:
 
-\begin{minted}{coq}
-  Parameter eq : forall (A:Type[5]), A -> A -> Prop.
+\begin{minted}[breaklines]{coq}
+  Parameter eq : forall (A:Type[2]), A -> A -> Prop.
 
-  Axiom refl forall (A:Type[5]), forall (x:A), eq A x x.
+  Axiom refl forall (A:Type[2]), forall (x:A), eq A x x.
 \end{minted}
 
-It will be enconded this way in Dedukti :
+It will be enconded this way in Dedukti\footnote{For esthetic reasons, this is not really Dedukti code} :
 
-\begin{minted}{dedukti}
+\begin{minted}[breaklines]{dedukti}
 eq :
-  cic.Term (cic.type (cic.s (cic.s (cic.s cic.z))))
-    (cic.prod (cic.type (cic.s (cic.s (cic.s cic.z))))
-       (cic.type (cic.s (cic.s cic.z)))
-       (cic.univ (cic.type (cic.s (cic.s cic.z))))
-       (A : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
-        cic.prod (cic.type (cic.s (cic.s cic.z)))
-          (cic.type (cic.s (cic.s cic.z))) A
-          (_x : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
-           cic.prod (cic.type (cic.s (cic.s cic.z))) (cic.type cic.z) A
-             (__ : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
-              cic.univ cic.prop)))).
+  cic.Term Univ.3
+    (cic.prod Univ.3 Univ.2
+       (cic.univ Univ.2)
+       (A : cic.Univ Univ.2 =>
+        cic.prod Univ.2
+          (cic.type Univ.2 A
+          (_x : cic.Term Univ.2 A =>
+           cic.prod Univ.2 Univ.0 A
+             (__ : cic.Term Univ.2 A =>
+              cic.univ Univ.Prop)))).
 
 refl :
-  cic.Term cic.prop
-    (cic.prod (cic.type (cic.s (cic.s (cic.s cic.z)))) cic.prop
-       (cic.univ (cic.type (cic.s (cic.s cic.z))))
-       (A : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
-        cic.prod (cic.type (cic.s (cic.s cic.z))) cic.prop A
-          (x : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+  cic.Term Univ.Prop
+    (cic.prod Univ.3 Univ.Prop
+       (cic.univ Univ.2)
+       (A : cic.Univ Univ.2 =>
+        cic.prod Univ.2 cic.prop A
+          (x : cic.Term Univ.2 A =>
            matita_basics_logic.eq
-             (cic.lift (cic.type (cic.s (cic.s cic.z)))
-                (cic.type (cic.s (cic.s cic.z))) A)
-             x x))).
+             (cic.lift Univ.2 Univ.2 A) x x))).
 \end{minted}
 
 After the first elaboration step, we get these terms (that are ill-typed):
-\begin{minted}{dedukti}
+\begin{minted}[breaklines]{dedukti}
 eq :
   cic.Term ?0
     (cic.prod ?1 ?2 (cic.univ ?3)
@@ -133,13 +142,12 @@ refl :
        (A : cic.Univ ?17 =>
         cic.prod ?13 cic.prop A
           (x : cic.Term ?16 A =>
-           matita_basics_logic.eq
-             (cic.lift ?14 ?15 A) x x))).
+           matita_basics_logic.eq (cic.lift ?14 ?15 A) x x))).
 \end{minted}
 
 Notice that \mintinline{dedukti}{cic.prop} is not replaced by a variable because we know that it will stay \mintinline{dedukti}{cic.prop} through the normalization process. Notice also that the encoding creates \(18\) variables while there is only one in the original term. This is not a big issue and we will see later how we can resolve this problem.
 
-Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, Dedukti will eventually fail. For example, while type checking the terms, Dedukti tries to check whether \mintinline{dedukti}{cic.succ ?4} and \mintinline{dedukti}{?2} are convertible. In that case, \universo{} takes over, generate the constraint: \(?2 \stackrel{?}{=} ?4 + 1\) and returns \texttt{true}. Once the terms are type-checked, \universo{} has generated the following constraints:
+Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, Dedukti will eventually fail. For example, while type checking the terms, Dedukti tries to check whether \mintinline{dedukti}{cic.succ ?4} and \mintinline{dedukti}{?2} are convertible. In that case, \universo{} takes over, generates the constraint: \(?2 \stackrel{?}{=} ?4 + 1\) and returns \texttt{true}. Once the terms are type-checked, \universo{} has generated the following constraints:
 \begin{align*}
   ?1 &= ?3 + 1 \\
   ?9 &= ?4     & ?10 &= ?3\\
@@ -162,7 +170,7 @@ We can see easely that the minimal solution is given by
 \end{align*}
 Then, replacing the solution to our original term give us:
 
-\begin{minted}{dedukti}
+\begin{minted}[breaklines]{dedukti}
 eq :
   cic.Term (cic.type cic.z)
     (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.univ cic.prop)
@@ -184,11 +192,97 @@ refl :
              (cic.lift cic.prop cic.prop A) x x))).
 \end{minted}
 
+We have decided to delegate the solving of the constraint system to an SMT instead of having an ad-hoc algorithm for several reasons:
+\begin{itemize}
+\item SMT are good to handles thousands of variables and constraints in an efficient way
+\item In our examples SMT are fast enough
+\item We can use the incremental feature of SMT solvers to solve partially a system
+\end{itemize}
+
 \section{Correction}
 
+Proving the correction of \universo{} is a little bit tricky for two reasons:
+\begin{itemize}
+\item What is the statement that we want to prove?
+\item How we can relate constraints and typing judgement through an encoding in Dedukti?
+\end{itemize}
 
+First of all, we want to say that \universo{} preserves the typing:
+\[ \Gamma \vdash a : T \Rightarrow \Gamma' \vdash a' : T'\]
+But how \(T\) and \(T'\) are related for example? And what is the specification of \(T'\)?
+
+We solve this issues in three steps:
+\begin{itemize}
+\item We define an erasure function \(| \phantom{A}|\) that replaces each occurence of a universe by a variable, the same way it is done in \universo{} during the first step
+\item Then we define a judgment \(\Gamma \vdash_{\sigma} t : T\) defined for the terms erased where \(\sigma\) is a substitution that mapped universe variables to concrete universes
+\item To prove the minimality, we define an order these substitutions
+\end{itemize}
+
+Finally, the statement that we want to prove is the following:
+
+\begin{theorem}
+  Let's denote \(\sigma_u\) the substitution computed by \universo, then forall \(\Gamma, t, A\) such that \(\Gamma \vdash t : A\) we have
+  \begin{enumerate}
+  \item \[ |\Gamma| \vdash_{\sigma_U} |t| : |A| \]
+  \item If \[ |\Gamma| \vdash_{\sigma} |t| : |A| \] then \(\sigma_U \preceq \sigma \)
+  \end{enumerate}
+\end{theorem}
+
+\subsection{Adding the cumulativity}
+
+\section{To a predicative theory}
+
+While doing interoperability, we might be interesting to translate proofs from an impredicative system to a predicative one when it is possible. To achieve that purpose, one may use \universo. Indeed, to do that, we just need to make three subtle changes in \universo:
+\begin{itemize}
+\item During the elaboration step, also elaborate the universo \texttt{Prop}
+\item Tell to the solver that no variable can be assigned to \texttt{Prop}
+\item Remove the upper bound on the variables
+\end{itemize}
+
+\section{An encoding of floatting universes}
+
+Finally, notice that \universo{} gives us a way to represent floatting universes in Dedukti. Indeed, each variable can be declared as a constant and each constraint as a rewrite rule.
+
+Then the consistency of the theory encoded this way can be given in two different ways:
+
+\begin{itemize}
+\item Run a \universo{} on the rules
+\item Check that the rewrite system generated this way is convergent
+\end{itemize}
+
+However, this representation is not practical. This encoding would add thousands rules on the same symbol, something that Dedukti cannot handle right now due to technical details.
 
 \section{Optimization}
+
+\section{Implementation}
+
+\subsection{Dedukti}
+For each file \mintinline{bash}{A.dk}, our tool generate four files:
+\begin{itemize}
+\item \mintinline{bash}{A_elab.dk}
+\item \mintinline{bash}{A_univ_decl.dk}
+\item \mintinline{bash}{A_univ_constraints.dk}
+\item \mintinline{bash}{A_univ_solution.dk}
+\end{itemize}
+
+The first one is the file with all universes replaced by a variable. The second one, contains declarations for each universe variables. The third one contains constraints encoded as rewrite rules.
+Finally, the last one contains the solution given by the SMT solver.
+
+The first file can be type checked in two ways:
+\begin{itemize}
+\item By importing the declaration and the constraints (this corresponds to an encoding of floatting universes)
+\item By importing the declaration and the solution directly
+\end{itemize}
+
+Several options can be passed to \universo{} to parameterized the tool:
+\begin{itemize}
+\item \mintinline{bash}{--no-minimization} : do no try to minimize (use for the solver)
+\item \mintinline{bash}{--elaboration} : only generate the elaborated file
+\item \mintinline{bash}{--check} : generate the constraints file from the elaborated file
+\item \mintinline{bash}{--solve} : generate the solution file from the constraints files and all its dependencies
+\item \mintinline{bash}{--predicative} : prop is elaborated and is not part of the model. Implies \mintinline{bash}{--no-minimization}.
+\end{itemize}
+
 
 
 \end{document}
