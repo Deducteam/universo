@@ -1,0 +1,20 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{eq} \PYG{o+ow}{:}
+  \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{err}{?}\PYG{n}{0}
+    \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{err}{?}\PYG{n}{1} \PYG{err}{?}\PYG{n}{2} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{univ} \PYG{err}{?}\PYG{n}{3}\PYG{k+kp}{)}
+       \PYG{k+kp}{(}\PYG{n}{A} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Univ} \PYG{err}{?}\PYG{n}{10} \PYG{o}{=\PYGZgt{}}
+        \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{err}{?}\PYG{n}{4} \PYG{err}{?}\PYG{n}{5} \PYG{n}{A}
+          \PYG{k+kp}{(}\PYG{n}{\PYGZus{}x} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{err}{?}\PYG{n}{9} \PYG{n}{A} \PYG{o}{=\PYGZgt{}}
+           \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{err}{?}\PYG{n}{6} \PYG{err}{?}\PYG{n}{7} \PYG{n}{A}
+             \PYG{k+kp}{(}\PYG{n}{\PYGZus{}\PYGZus{}} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{err}{?}\PYG{n}{8} \PYG{n}{A} \PYG{o}{=\PYGZgt{}}
+              \PYG{n}{cic}\PYG{o}{.}\PYG{n}{univ} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}\PYG{k+kp}{))))}\PYG{o}{.}
+
+\PYG{n+nf}{refl} \PYG{o+ow}{:}
+  \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}
+    \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{err}{?}\PYG{n}{11} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}
+       \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{univ} \PYG{err}{?}\PYG{n}{12}\PYG{k+kp}{)}
+       \PYG{k+kp}{(}\PYG{n}{A} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Univ} \PYG{err}{?}\PYG{n}{17} \PYG{o}{=\PYGZgt{}}
+        \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{err}{?}\PYG{n}{13} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{A}
+          \PYG{k+kp}{(}\PYG{n}{x} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{err}{?}\PYG{n}{16} \PYG{n}{A} \PYG{o}{=\PYGZgt{}}
+           \PYG{n}{matita\PYGZus{}basics\PYGZus{}logic}\PYG{o}{.}\PYG{n}{eq} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{lift} \PYG{err}{?}\PYG{n}{14} \PYG{err}{?}\PYG{n}{15} \PYG{n}{A}\PYG{k+kp}{)} \PYG{n}{x} \PYG{n}{x}\PYG{k+kp}{)))}\PYG{o}{.}
+\end{Verbatim}

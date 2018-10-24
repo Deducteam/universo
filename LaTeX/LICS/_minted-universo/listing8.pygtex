@@ -1,0 +1,21 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{eq} \PYG{o+ow}{:}
+  \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{type} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{z}\PYG{k+kp}{)}
+    \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{type} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{z}\PYG{k+kp}{)} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{type} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{z}\PYG{k+kp}{)} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{univ} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}\PYG{k+kp}{)}
+       \PYG{k+kp}{(}\PYG{n}{A} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Univ} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{o}{=\PYGZgt{}}
+        \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{type} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{z}\PYG{k+kp}{)} \PYG{n}{A}
+          \PYG{k+kp}{(}\PYG{n}{\PYGZus{}x} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{A} \PYG{o}{=\PYGZgt{}}
+           \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{type} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{z}\PYG{k+kp}{)} \PYG{n}{A}
+             \PYG{k+kp}{(}\PYG{n}{\PYGZus{}\PYGZus{}} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{A} \PYG{o}{=\PYGZgt{}}
+              \PYG{n}{cic}\PYG{o}{.}\PYG{n}{univ} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}\PYG{k+kp}{))))}\PYG{o}{.}
+
+\PYG{n+nf}{refl} \PYG{o+ow}{:}
+  \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}
+    \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{type} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{z}\PYG{k+kp}{)} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}
+       \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{univ} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop}\PYG{k+kp}{)}
+       \PYG{k+kp}{(}\PYG{n}{A} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Univ} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{o}{=\PYGZgt{}}
+        \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prod} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{A}
+          \PYG{k+kp}{(}\PYG{n}{x} \PYG{o}{:} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{Term} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{A} \PYG{o}{=\PYGZgt{}}
+           \PYG{n}{matita\PYGZus{}basics\PYGZus{}logic}\PYG{o}{.}\PYG{n}{eq}
+             \PYG{k+kp}{(}\PYG{n}{cic}\PYG{o}{.}\PYG{n}{lift} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{cic}\PYG{o}{.}\PYG{n}{prop} \PYG{n}{A}\PYG{k+kp}{)} \PYG{n}{x} \PYG{n}{x}\PYG{k+kp}{)))}\PYG{o}{.}
+\end{Verbatim}
