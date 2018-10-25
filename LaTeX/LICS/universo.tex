@@ -3,24 +3,20 @@
 \usepackage[utf8]{inputenc}
 
 \usepackage{amsmath}
-
-\usepackage{amsthm}
-\newtheorem{theorem}{Theorem}
-
-
 \usepackage{amssymb}
+
+
+\usepackage[standard]{ntheorem}
 
 \usepackage{mathpartir}
 
 \usepackage{mdframed}
-
+\iflocal
 \usepackage[finalizecache]{minted}
-%\usepackage[frozencache]{minted}
 \renewcommand{\MintedPygmentize}{/home/fthire/Mercurial/pygmentize-fork/pygmentize}
-
-\newtheorem{definition}{Definition}
-
-\newtheorem{lemma}{Lemma}
+\else
+\usepackage[frozencache]{minted}
+\fi
 
 \newcommand{\lfmt}{\ensuremath{\lambda\Pi\text{-modulo theory}}}
 
@@ -40,6 +36,9 @@
 
 \newcommand{\dkmeta}{\textsc{Dkmeta}}
 
+\newcommand{\erasure}[1]{\ensuremath{|#1|}}
+\newcommand{\absT}[3]{\lambda~#1^{#2}.#3}
+\newcommand{\PiT}[3]{\Pi~#1^{#2}.#3}
 \begin{document}
 \title{Minimization of Universes for Interoperability in Dedukti}
 \author{\IEEEauthorblockN{François Thiré}
@@ -76,6 +75,8 @@ The abstract goes here.
 % \end{itemize}
 
 % If you want to use \universo{} with your theory, you just need to give these three files to make \universo{} works.
+
+\section{PTS}
 
 \section{Universo}
 
@@ -147,7 +148,7 @@ refl :
 
 Notice that \mintinline{dedukti}{cic.prop} is not replaced by a variable because we know that it will stay \mintinline{dedukti}{cic.prop} through the normalization process. Notice also that the encoding creates \(18\) variables while there is only one in the original term. This is not a big issue and we will see later how we can resolve this problem.
 
-Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, Dedukti will eventually fail. For example, while type checking the terms, Dedukti tries to check whether \mintinline{dedukti}{cic.succ ?4} and \mintinline{dedukti}{?2} are convertible. In that case, \universo{} takes over, generates the constraint: \(?2 \stackrel{?}{=} ?4 + 1\) and returns \texttt{true}. Once the terms are type-checked, \universo{} has generated the following constraints:
+Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, Dedukti will eventually fail. For example, while type checking the terms, Dedukti tries to check whether \mintinline{dedukti}{cic.succ ?3} and \mintinline{dedukti}{?1} are convertible. In that case, \universo{} takes over, generates the constraint: \(?1 \stackrel{?}{=} ?3 + 1\) and returns \texttt{true}. Once the terms are type-checked, \universo{} has generated the following constraints:
 \begin{align*}
   ?1 &= ?3 + 1 \\
   ?9 &= ?4     & ?10 &= ?3\\
@@ -163,7 +164,7 @@ Then, we ask Dedukti to type check these terms. Since the terms are ill-typed, D
   ?3 &= \mathbf{max}(?14,?15) & ?17 &= ?14\\
 \end{align*}
 
-We can see easely that the minimal solution is given by
+We can see easily that the minimal solution is given by
 \begin{align*}
   \{?0,?1,?2,?5,?7,?11\} \to \mathtt{Type0}\\
   \{?3,?4,?6,?8,?9,?10,?12, ?13, ?14, ?15, ?16, ?17\} \to \mathtt{Prop}
@@ -194,41 +195,85 @@ refl :
 
 We have decided to delegate the solving of the constraint system to an SMT instead of having an ad-hoc algorithm for several reasons:
 \begin{itemize}
-\item SMT are good to handles thousands of variables and constraints in an efficient way
+\item SMT are good to handle thousands of variables and constraints in an efficient way
 \item In our examples SMT are fast enough
 \item We can use the incremental feature of SMT solvers to solve partially a system
+\item We can parameterized the SMT so that we can tweak easily our problem. For example, to go from an impredicative theory to a predicative one
 \end{itemize}
 
 \section{Correction}
 
-Proving the correction of \universo{} is a little bit tricky for two reasons:
-\begin{itemize}
-\item What is the statement that we want to prove?
-\item How we can relate constraints and typing judgement through an encoding in Dedukti?
-\end{itemize}
 
-First of all, we want to say that \universo{} preserves the typing:
-\[ \Gamma \vdash a : T \Rightarrow \Gamma' \vdash a' : T'\]
-But how \(T\) and \(T'\) are related for example? And what is the specification of \(T'\)?
+% Given a typing judgement \(\Gamma \vdash t : A\), \universo{} computes three things:
+% \begin{itemize}
+% \item A triple \(\Gamma', t', A'\)
+% \item A set of constraints \(\mathcal{C}\)
+% \item A substitution \(\sigma_U\)
+% \end{itemize}
 
-We solve this issues in three steps:
-\begin{itemize}
-\item We define an erasure function \(| \phantom{A}|\) that replaces each occurence of a universe by a variable, the same way it is done in \universo{} during the first step
-\item Then we define a judgment \(\Gamma \vdash_{\sigma} t : T\) defined for the terms erased where \(\sigma\) is a substitution that mapped universe variables to concrete universes
-\item To prove the minimality, we define an order these substitutions
-\end{itemize}
+% where \(\Gamma',t',A'\) is defined as:
+% \begin{itemize}
+% \item \(\Gamma' = \sigma_U(|\Gamma|)\)
+% \item \(t' = \sigma_U(|t|)\)
+% \item \(A' = \sigma_U(|A|)\)
+% \end{itemize}
+% \begin{definition}
+%   We define the erasure function \(\erasure{\cdot}\) inductively as follow
+% \begin{align*}
+%   \erasure{s} & = \mathtt{fresh}~uvar\\
+%   \\
+%   \erasure{x} & = x \\
+%   \erasure{M N} &= \erasure{M}~\erasure{N}\\
+%   \erasure{\absT{x}{A}{M}} &= \absT{x}{\erasure{A}}{\erasure{M}}\\
+%   \erasure{\PiT{x}{A}{M}} &= \PiT{x}{\erasure{A}}{\erasure{M}}\\
+%   \\
+%   \erasure{\emptyset} &= \emptyset\\
+%   \erasure{\Gamma,x : A} &= \erasure{\Gamma}, x : \erasure{A}
+% \end{align*}
+% \end{definition}
+% \begin{lemma}
+% If \(\Gamma \vdash t : A\) and \(\sigma \models \mathcal{C}\) then \[\sigma(|\Gamma|) \vdash \sigma(|t|) : \sigma(|A|)\]
+% \end{lemma}
 
-Finally, the statement that we want to prove is the following:
+% \begin{remark}
+%   There is always a \(\sigma\) such that \(\sigma(|\Gamma|) \vdash \sigma(|t|) : \sigma(|A|)\). This \(\sigma\) is the \textit{inverse} of the erasure function. Moreover, it has the property that \(\sigma \models \mathcal{C}\).
+% \end{remark}
 
-\begin{theorem}
-  Let's denote \(\sigma_u\) the substitution computed by \universo, then forall \(\Gamma, t, A\) such that \(\Gamma \vdash t : A\) we have
-  \begin{enumerate}
-  \item \[ |\Gamma| \vdash_{\sigma_U} |t| : |A| \]
-  \item If \[ |\Gamma| \vdash_{\sigma} |t| : |A| \] then \(\sigma_U \preceq \sigma \)
-  \end{enumerate}
-\end{theorem}
+% \begin{Lemma}
+% \(\sigma_U \models \mathcal{C}\)
+% \end{Lemma}
+%  \begin{proof}
+%    By definition of \(\sigma_U\)
+%  \end{proof}
 
-\subsection{Adding the cumulativity}
+% \begin{definition}
+%   We define \(\sigma \preceq \sigma'\) as \[\max_{x\in Dom(\sigma)}(\sigma(x)) \leq \max_{x\in Dom(\sigma)}(\sigma(x))\]
+% \end{definition}
+
+% \begin{lemma}
+%   Forall \(\sigma\), if \(\sigma(|\Gamma|) \vdash \sigma(|t|) : \sigma(|A|)\) then \[\sigma_U \preceq \sigma\]
+% \end{lemma}
+
+% \begin{lemma}
+%   Forall \(n\), \(\mathcal{C}^{cic}\) and \(\mathcal{C}^{n}\) are \(n\)-equisatisfiable.
+% \end{lemma}
+
+% Proving the correction of \universo{} is a little bit tricky for two reasons:
+% \begin{itemize}
+% \item What is the statement that we want to prove?
+% \item How we can relate constraints and typing judgement through an encoding in Dedukti?
+% \end{itemize}
+
+% First of all, we want to say that \universo{} preserves the typing:
+% \[ \Gamma \vdash a : T \Rightarrow \Gamma' \vdash a' : T'\]
+% But how \(T\) and \(T'\) are related for example? And what is the specification of \(T'\)?
+
+% We solve this issues in two steps:
+% \begin{itemize}
+% \item We define an erasure function \(| \phantom{A}|\) that replaces each occurence of a universe by a variable, the same way it is done in \universo{} during the first step
+% \item Then we define a judgment \(\Gamma \vdash_{\sigma} t : T\) defined for the terms erased where \(\sigma\) is a substitution that mapped universe variables to concrete universes
+% \item To prove the minimality, we define an order these substitutions
+% \end{itemize}
 
 \section{To a predicative theory}
 

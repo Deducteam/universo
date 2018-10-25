@@ -107,8 +107,25 @@ module MakeRE(T:Theory.S) : Reduction.RE =
 
 module MakeRE(T:Theory.S) : Reduction.RE =
 struct
-  let rec whnf sg t= Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
+
+
+  let rec mk_rule ?(name=Rule.Gamma(false, mk_name !md_univ (mk_ident "universo"))) l r =
+    let pat = Universes.pattern_of_univ l in
+    let rhs = Universes.term_of_univ r in
+    let rule = Rule.(
+        {
+          ctx = [];
+          pat;
+          rhs;
+          name;
+        })
+    in
+    rule
+
+  and whnf sg t= Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
   and snf sg t = Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
+
+  and add_rule rule = Signature.add_rules !sg_check [Rule.to_rule_infos rule]
 
   and univ_conversion l r =
     let open Universes in
