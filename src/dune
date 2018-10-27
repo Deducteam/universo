@@ -1,0 +1,6 @@
+(executable
+        (name universo)
+        (public_name universo)
+        (package universo)
+        (modules universo files)
+        (libraries dedukti elaboration))

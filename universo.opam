@@ -1,0 +1,19 @@
+synopsis: "A minimization for universes tool written for Dedukti proofs"
+description:
+"""
+Universo minimizes the maximal number of universes needed for CTS encoded in Dedukti
+"""
+opam-version: "0.1"
+maintainer: "francois.thire@lsv.fr"
+bug-reports: "https://github.com/francoisthire/universo/issues"
+homepage: "https://github.com/francoisthire/universo"
+dev-repo: "git+https://github.com/francoisthire/universo.git"
+authors: [ "François Thiré <francois.thire@lsv.fr>" ]
+license: "CeCILL"
+
+depends: [
+  "ocaml"        {         >= "4.04.0" }
+  "dedukti"
+]
+
+build: [ [ "dune" "build" "-p" name "-j" jobs ] ]

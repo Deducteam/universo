@@ -1,0 +1,3 @@
+(library
+        (name elaboration)
+        (libraries dkmeta dedukti))

@@ -1,0 +1,11 @@
+B /home/fthire/.opam/4.04.2/lib/dedukti
+B /home/fthire/.opam/4.04.2/lib/dkmeta
+B /home/fthire/.opam/4.04.2/lib/ocaml
+B ../_build/default/src/.universo.eobjs
+B ../_build/default/src/elaboration/.elaboration.objs
+S /home/fthire/.opam/4.04.2/lib/dedukti
+S /home/fthire/.opam/4.04.2/lib/dkmeta
+S /home/fthire/.opam/4.04.2/lib/ocaml
+S .
+S elaboration
+FLG -w @a-4-29-40-41-42-44-45-48-58-59-60-40 -strict-sequence -strict-formats -short-paths -keep-locs
