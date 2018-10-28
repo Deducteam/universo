@@ -1,7 +1,9 @@
-# OCamlbuild files.
+# Dune files.
 _build/
 *.native
 *.docdir
+.merlin
+*.install
 
 # Dedukti files.
 *.dko
@@ -12,6 +14,8 @@ experiments/matita/output/*.dk
 *~
 \#*\#
 .\#*
+*.bak
+*.baki
 
 # LaTeX files
 *.aux

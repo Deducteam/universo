@@ -5,12 +5,9 @@
 DKS = $(wildcard *.dk)
 DKOS=$(DKS:.dk=.dko)
 
-DKDEP=~/Git/dedukti/dkdep.native
-DKCHECK=dkcheck -q
+DKDEP=dkdep -I ../theory
+DKCHECK=dkcheck -I ../theory -q
 DKINDENT=dkindent
-KRAJONO=/tmp/krajono/matita/matitac
-LIB=/tmp/krajono/matita/lib/arithmetics/fermat_little_theorem.ma
-DIR=hol_lambda_typed
 all: $(DKOS)
 
 %.dko:

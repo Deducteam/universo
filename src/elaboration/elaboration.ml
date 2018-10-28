@@ -1,6 +1,6 @@
 type t =
   {
-    out_channel:out_channel;
+    out_fmt:Format.formatter;
     out_md:Basic.mident;
     theory_sort:Term.term;
     meta:Dkmeta.cfg (* Meta rules that translates universes to the Universo constructor "Var" *)
@@ -8,7 +8,7 @@ type t =
 
 
 let rec mk_term : t -> Term.term -> Term.term = fun env ->
-  let var_env : Var.t = {out_channel=env.out_channel;
+  let var_env : Var.t = {out_fmt=env.out_fmt;
                          theory_sort=env.theory_sort;
                          out_md=env.out_md} in
   fun t ->
@@ -31,6 +31,7 @@ let rec mk_term : t -> Term.term -> Term.term = fun env ->
 let mk_term : t -> Term.term -> Term.term = fun env t ->
   (* Make the term independent from the theory first *)
   let t = Dkmeta.mk_term env.meta t in
+  Format.eprintf "%a@." Pp.print_term t;
   mk_term env t
 
 let mk_rule : t -> 'a Rule.rule -> 'a Rule.rule = fun env rule -> Rule.(
@@ -42,13 +43,16 @@ let mk_entry : t -> Entry.entry -> Entry.entry = fun env e ->
   match e with
   | Decl(lc, id, st, ty) ->
     Format.eprintf "[ELAB] on %a@." Pp.print_ident id;
+    Format.fprintf env.out_fmt "(; %a ;)@." Pp.print_ident id;
     Decl(lc,id,st, mk_term env ty)
   | Def(lc, id, op, mty, te) ->
     Format.eprintf "[ELAB] on %a@." Pp.print_ident id;
+    Format.fprintf env.out_fmt "(; %a ;)@." Pp.print_ident id;
     let mty' = match mty with None -> None | Some ty -> Some (mk_term env ty) in
     let te' = mk_term env te in
     Def(lc, id, op, mty', te')
   | Rules(lc, rs) ->
+    Format.fprintf env.out_fmt "(; RULES ;)@.";
     Rules(lc,List.map (mk_rule env) rs)
   | _ -> e
 

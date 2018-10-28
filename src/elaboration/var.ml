@@ -2,7 +2,7 @@ exception Not_uvar
 
 type t =
   {
-    out_channel:out_channel;
+    out_fmt:Format.formatter;
     theory_sort:Term.term;
     out_md:Basic.mident
   }
@@ -46,7 +46,7 @@ let fresh_uvar : t -> unit -> Term.term =
   let name = Basic.mk_name env.out_md id in
   let cst = Term.mk_Const Basic.dloc name in
   begin
-    Format.fprintf (Format.formatter_of_out_channel env.out_channel) "%a@."
+    Format.fprintf env.out_fmt "%a@."
       Pp.print_entry (Entry.Decl(Basic.dloc, id, Signature.Definable, env.theory_sort))
   end;
   cst

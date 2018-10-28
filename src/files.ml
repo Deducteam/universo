@@ -2,18 +2,20 @@
 
 let output_directory = ref None
 
-let elaboration_suffix = "elab"
+let elaboration_suffix = "_univ"
 
-let checking_suffix = "cstr"
+let checking_suffix = "_cstr"
 
-let solution_suffix = "sol"
+let solution_suffix = "_sol"
 
-type step = [`Elaboration | `Checking | `Solution]
+let normal_suffix = ""
+
+type step = [`Normal | `Elaboration | `Checking | `Solution]
 
 let add_suffix : string -> string -> string = fun file suffix ->
   let ext = Filename.extension file in
   let name = Filename.chop_extension file in
-  name ^ "_" ^ suffix ^ ext
+  name ^ suffix ^ ext
 
 let add_dir : string -> string -> string = fun dir file ->
   let basename = Filename.basename file in
@@ -23,6 +25,7 @@ let suffix_of_step = function
   | `Elaboration -> elaboration_suffix
   | `Checking -> checking_suffix
   | `Solution -> solution_suffix
+  | `Normal -> normal_suffix
 
 let from_string : string -> step -> string = fun file step ->
   let file_suffix = add_suffix file (suffix_of_step step) in

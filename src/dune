@@ -2,5 +2,5 @@
         (name universo)
         (public_name universo)
         (package universo)
-        (modules universo files)
+        (modules universo files cmd)
         (libraries dedukti elaboration))

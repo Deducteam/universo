@@ -1,9 +1,10 @@
-[] cic.Sort --> universo.Sort.
+(; [] cic.Sort --> universo.Sort. ;)
 
 [s] cic.type s --> universo.var.
-
+(;
 [] cic.prop --> universo.prop.
 
 [] cic.Univ --> universo.Univ.
 
 [] cic.lift --> universo.lift.
+;)
