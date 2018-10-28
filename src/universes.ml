@@ -1,11 +1,5 @@
 open Basic
 
-let pre_univ = Basic.(mk_name (mk_mident "universo") (mk_ident "var"))
-
-let is_pre_univ = function
-  | Term.Const(_,n) -> Basic.name_eq n pre_univ
-  | _ -> false
-
 type univ =
     Var of name
   | Prop
@@ -95,53 +89,6 @@ let rec extract_univ t =
   | Term.App(f,l,[r]) when is_const rule f -> Rule(extract_univ l, extract_univ r)
   | Term.App(f,l, []) when is_const succ f -> Succ (extract_univ l)
   | _ -> raise Not_univ
-
-let rec occur n u =
-  match u with
-  | Prop
-  | Set
-  | Type _ -> false
-  | Var m -> Basic.name_eq m n
-  | Max(m,o)
-  | Rule(m,o) -> occur n m || occur n o
-  | Succ m -> occur n m
-
-let get_number s =
-  int_of_string (String.sub s 1 (String.length s - 1))
-
-let rec gt l r =
-  match (l,r) with
-  | Var n, Var m ->
-    let n = get_number (string_of_ident @@ id n) in
-    let m = get_number (string_of_ident @@ id m) in
-    n > m
-  | Var _, Prop
-  | Var _, Set
-  | Var _, Type _ -> true
-  | Var _, Max(m,n) ->
-    gt l m && gt l n
-  | Var _, Rule(m,n) ->
-    gt l m && gt l n
-  | Var _, Succ m ->
-    gt l m
-  | Max(l1,r1), Max(l2,r2) ->
-    gt l1 l2 || (l1 = l2 && gt r1 r2)
-  | Succ l, Succ m ->
-    gt l m
-  | Succ _, Max(m,n) ->
-    gt l m && gt l n
-  | Max(m,n), Succ _ ->
-    le m r || le n r
-  | Max(m,n), Var _ ->
-    le m r || le n r
-  | Rule(m,n), Var _ ->
-    le m r || le n r
-  | Succ m, Var _ ->
-    le m r
-  | _ -> false
-
-and le l r =
-  l = r || gt l r
 
 let rec pattern_of_level l =
   let lc = Basic.dloc in

@@ -31,7 +31,6 @@ let rec mk_term : t -> Term.term -> Term.term = fun env ->
 let mk_term : t -> Term.term -> Term.term = fun env t ->
   (* Make the term independent from the theory first *)
   let t = Dkmeta.mk_term env.meta t in
-  Format.eprintf "%a@." Pp.print_term t;
   mk_term env t
 
 let mk_rule : t -> 'a Rule.rule -> 'a Rule.rule = fun env rule -> Rule.(

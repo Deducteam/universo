@@ -1371,7 +1371,7 @@ def match_eq :
     (matita_basics_logic.refl A _x) -->
   case_refl.
 
-
+(;
 def test : cic.Term cic.prop (eq (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z)) (cic.univ (cic.type cic.z))) := refl (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z)).
 
 ttrue : cic.Term (cic.type cic.z) (cic.univ cic.prop).
@@ -1389,7 +1389,7 @@ def foo := match_eq (cic.type (cic.z))
     (refl (cic.univ (cic.type (cic.s cic.z))) (cic.univ (cic.type cic.z))).
 
 def bar : cic.Term cic.prop foo := II.
-
+;)
 def filter_eq :
       return_sort : cic.Sort ->
       A : cic.Univ (cic.type (cic.s (cic.s cic.z))) ->
