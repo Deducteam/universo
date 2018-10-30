@@ -1,17 +1,29 @@
-type env =
+type t =
   {
     sg:Signature.t;
-    md:Basic.mident
+    md_check:Basic.mident;
+    md_elab:Basic.mident;
+    meta:Dkmeta.cfg;
+    meta_out:Dkmeta.cfg;
+    check_fmt:Format.formatter;
   }
 
+let default : t = {sg = Signature.make "";
+                   md_check = Basic.mk_mident "";
+                   md_elab = Basic.mk_mident "";
+                   meta=Dkmeta.default_config;
+                   meta_out=Dkmeta.default_config;
+                   check_fmt=Format.std_formatter}
+
+let global_env : t ref = ref default
 
 module RE : Reduction.RE =
 struct
   open Basic
 
-  let rec mk_rule env ?(name=Rule.Gamma(false, mk_name env.md (mk_ident "universo"))) l r =
-    let pat = failwith "todo" in
-    let rhs = failwith "todo" in
+  let rec add_rule ?(name=Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "universo"))) l r =
+    let pat = Universes.pattern_of_univ l in
+    let rhs = Universes.term_of_univ r in
     let rule = Rule.(
         {
           ctx = [];
@@ -20,7 +32,7 @@ struct
           name;
         })
     in
-    rule
+    Signature.add_rules !global_env.sg  [Rule.to_rule_infos rule]
 
   and whnf sg t =
     Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
@@ -29,14 +41,22 @@ struct
 
   and univ_conversion l r =
     let open Universes in
+    let snf = snf !global_env.sg in
     if Term.term_eq l r then
       true
     else
       try
-        let l' = Universes.extract_univ l in
-        let r' = Universes.extract_univ r in
-        ignore(l');
-        ignore(r');
+        let l' = Universes.extract_univ !global_env.md_elab (snf l) in
+        let r' = Universes.extract_univ !global_env.md_elab (snf r) in
+        begin
+          if Universes.is_var !global_env.md_elab l && Universes.is_var !global_env.md_elab r then
+            if Universes.gt l' r' then
+              add_rule l' r'
+            else
+              add_rule r' l'
+        end;
+        let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+        mk_cstr uenv l' r';
         true
       with Universes.Not_univ ->
         if is_lift l && not (is_lift r) then
@@ -75,11 +95,10 @@ end
 
 module T = Typing.Make(RE)
 
-include T
-
-let mk_entry : env -> Entry.entry -> unit = fun env e ->
+let mk_entry : t -> Entry.entry -> unit = fun env e ->
   let open Entry in
   let open Term in
+  global_env := env;
   let _add_rules rs =
     let ris = List.map Rule.to_rule_infos rs in
     Signature.add_rules env.sg ris
@@ -87,18 +106,20 @@ let mk_entry : env -> Entry.entry -> unit = fun env e ->
   match e with
   | Decl(lc,id,st,ty) ->
     Format.eprintf "[CHECK] on :%a@." Pp.print_ident id;
+    Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id;
     begin
-      match inference env.sg ty with
+      match T.inference env.sg ty with
       | Kind | Type _ -> Signature.add_declaration env.sg lc id st ty
       | s -> raise (Typing.TypingError (Typing.SortExpected (ty,[],s)))
     end
   | Def(lc,id,opaque,mty,te) ->
     Format.eprintf "[CHECK] on :%a@." Pp.print_ident id;
+    Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id;
     let open Rule in
     begin
       let ty = match mty with
-        | None -> inference env.sg te
-        | Some ty -> checking env.sg te ty; ty
+        | None -> T.inference env.sg te
+        | Some ty -> T.checking env.sg te ty; ty
       in
       match ty with
       | Kind -> raise (Env.EnvError (lc, Env.KindLevelDefinition id))
@@ -106,7 +127,7 @@ let mk_entry : env -> Entry.entry -> unit = fun env e ->
         if opaque then Signature.add_declaration env.sg lc id Signature.Static ty
         else
           let _ = Signature.add_declaration env.sg lc id Signature.Definable ty in
-          let cst = Basic.mk_name env.md id in
+          let cst = Basic.mk_name env.md_check id in
           let rule =
             { name= Delta(cst) ;
               ctx = [] ;
@@ -116,7 +137,10 @@ let mk_entry : env -> Entry.entry -> unit = fun env e ->
           in
           _add_rules [rule]
     end
-  | Rules(lc,rs) ->
-    let _ = List.map (check_rule env.sg) rs in
+  | Rules(_,rs) ->
+    Format.fprintf env.check_fmt "@.(; RULES ;)@.";
+    let _ = List.map (T.check_rule env.sg) rs in
     _add_rules rs
+  | Require _ ->
+    () (* FIXME: right now, only Universo generates REQUIRE commands *)
   | _ -> assert false

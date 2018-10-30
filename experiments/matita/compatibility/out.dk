@@ -10,4 +10,6 @@
 
 [] universo.max  --> cic.max.
 
+[] universo.succ --> cic.succ.
+
 [] universo.rule --> cic.rule.

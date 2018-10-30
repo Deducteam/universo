@@ -35,3 +35,14 @@ let from_string : string -> step -> string = fun file step ->
 
 let md_of_file : string -> Basic.mident = fun file ->
   Basic.mk_mident (Filename.basename file)
+
+let entries_of_file : string -> Entry.entry list = fun file ->
+  let ic = open_in file in
+  let md = md_of_file file in
+  Parser.Parse_channel.parse md ic
+
+let signature_of_file : ?sg:Signature.t -> string -> Signature.t = fun ?sg file ->
+  let ic = open_in file in
+  let md = md_of_file file in
+  let entries = Parser.Parse_channel.parse md ic in
+  Dkmeta.to_signature ?sg md entries

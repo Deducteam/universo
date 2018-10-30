@@ -1,0 +1,4 @@
+(library
+        (name solving)
+        (modules solver Z3solver)
+        (libraries dedukti checking z3))

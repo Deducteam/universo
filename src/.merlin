@@ -1,11 +1,19 @@
 B /home/fthire/.opam/4.04.2/lib/dedukti
 B /home/fthire/.opam/4.04.2/lib/dkmeta
+B /home/fthire/.opam/4.04.2/lib/num
 B /home/fthire/.opam/4.04.2/lib/ocaml
+B /home/fthire/.opam/4.04.2/lib/z3
 B ../_build/default/src/.universo.eobjs
+B ../_build/default/src/checking/.checking.objs
 B ../_build/default/src/elaboration/.elaboration.objs
+B ../_build/default/src/solving/.solving.objs
 S /home/fthire/.opam/4.04.2/lib/dedukti
 S /home/fthire/.opam/4.04.2/lib/dkmeta
+S /home/fthire/.opam/4.04.2/lib/num
 S /home/fthire/.opam/4.04.2/lib/ocaml
+S /home/fthire/.opam/4.04.2/lib/z3
 S .
+S checking
 S elaboration
+S solving
 FLG -w @a-4-29-40-41-42-44-45-48-58-59-60-40 -strict-sequence -strict-formats -short-paths -keep-locs

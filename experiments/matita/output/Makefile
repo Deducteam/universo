@@ -9,10 +9,10 @@ DKDEP=dkdep -I ../theory
 DKCHECK=dkcheck -I ../theory -q
 DKINDENT=dkindent
 all: $(DKOS)
-
+E=-errors-in-snf
 %.dko:
 #	$(DKCHECK) -e -nl $<
-	$(DKCHECK) -e -errors-in-snf -nl $<
+	$(DKCHECK) -e $(E) -nl $<
 #	$(DKCHECK) -e -nl $<
 #	$(DKINDENT) $< > $(DIR)/$<
 

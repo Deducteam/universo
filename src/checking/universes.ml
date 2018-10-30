@@ -1,6 +1,6 @@
 open Basic
 
-type env =
+type t =
   {
     out_fmt:Format.formatter;
     meta:Dkmeta.cfg
@@ -100,21 +100,17 @@ let rec term_of_univ u =
   | Prop   -> Term.mk_Const lc prop
   | Type l ->  Term.mk_App2 (Term.mk_Const lc typ) [term_of_level l]
 
-let is_uvar t =
-  match t with
-  | Term.Const(_,n) -> md n = !md_univ
-  | _ -> false
 
-let set = ref (C.empty)
+let global_cstr = ref (C.empty)
 
 let print_rule env left right =
   let normalize t = Dkmeta.mk_term env.meta t in
   let left' = normalize (term_of_univ left) in
   let right' = normalize (term_of_univ right) in
-  Format.fprintf env.out_fmt "[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
+  Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
 
 let add_cstr env left right =
-  set := C.add (left,right) !set;
+  global_cstr := C.add (left,right) !global_cstr;
   print_rule env left right
 
 let mk_cstr env left right =
@@ -126,3 +122,62 @@ let mk_cstr env left right =
       assert (gt right left);
       add_cstr env right left
     end
+
+let rec pattern_of_level l =
+  let lc = Basic.dloc in
+  if l = 0 then
+    Rule.Pattern(lc,z,[])
+  else
+    Rule.Pattern(lc,s,[pattern_of_level (l-1)])
+
+let rec pattern_of_univ u =
+  let lc = Basic.dloc in
+  match u with
+  | Var n -> Rule.Pattern(lc, n, [])
+  | Max(l,r) -> Rule.Pattern(lc, max, [pattern_of_univ l;pattern_of_univ r])
+  | Rule(l,r) -> Rule.Pattern(lc, rule, [pattern_of_univ l;pattern_of_univ r])
+  | Succ(l) -> Rule.Pattern(lc, succ, [pattern_of_univ l])
+  | Set-> Rule.Pattern(lc, set, [])
+  | Prop -> Rule.Pattern(lc, prop, [])
+  | Type l ->  Rule.Pattern(lc, typ, [pattern_of_level l])
+
+let is_const cst t =
+  match t with
+  | Term.Const(_,n) -> name_eq cst n
+  | _ -> false
+
+
+let is_var md_elab t =
+  match t with
+  | Term.Const(_,n) -> md n = md_elab
+  | _ -> false
+
+let rec extract_level l =
+  match l with
+  | Term.Const(_,n) when Basic.name_eq n z -> 0
+  | Term.App(f,l,[]) when is_const s f -> 1 + (extract_level l)
+  | _ -> Format.eprintf "%a@." Pp.print_term l;
+    assert false
+
+let is_lift t =
+  match t with
+  | Term.Const(_,n) -> md n = !md_univ
+  | Term.App(f,_,[_;_]) when is_const lift f -> true
+  | _ -> false
+
+let extract_lift t =
+  match t with
+  | Term.App(f,s1,[s2;_]) when is_const lift f -> s1,s2
+  | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
+
+let rec extract_univ md_elab t =
+  let open Basic in
+  match t with
+  | Term.Const(_,n) when md n = md_elab -> Var n
+  | Term.Const(_,n) when Basic.name_eq n prop -> Prop
+  | Term.Const(_,n) when Basic.name_eq n set -> Set
+  | Term.App(f,l,[]) when is_const typ f -> Type (extract_level l)
+  | Term.App(f,l,[r]) when is_const max f -> Max(extract_univ md_elab l, extract_univ md_elab r)
+  | Term.App(f,l,[r]) when is_const rule f -> Rule(extract_univ md_elab l, extract_univ md_elab r)
+  | Term.App(f,l, []) when is_const succ f -> Succ (extract_univ md_elab l)
+  | _ -> raise Not_univ

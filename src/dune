@@ -3,4 +3,4 @@
         (public_name universo)
         (package universo)
         (modules universo files cmd)
-        (libraries dedukti elaboration))
+        (libraries dedukti elaboration checking solving))

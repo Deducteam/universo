@@ -2,8 +2,6 @@
 
 [] cic.Sort --> universo.Sort.
 
-[] cic.zype --> universo.type.
-
 [] cic.prop --> universo.prop.
 
 [] cic.type --> universo.type.

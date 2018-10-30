@@ -15,13 +15,23 @@ MATITA_PATH=experiments/matita
 
 .PHONY: test
 test: bin
-	$(UNIVERSO) -I $(MATITA_PATH)/theory --in $(MATITA_PATH)/compatibility/in.dk --out $(MATITA_PATH)/compatibility/out.dk $(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output \
-	--theory $(MATITA_PATH)/compatibility/theory.dk > $(MATITA_PATH)/output/test.dk
+	$(UNIVERSO) -I $(MATITA_PATH)/theory \
+	--in $(MATITA_PATH)/compatibility/in.dk \
+	--out $(MATITA_PATH)/compatibility/out.dk \
+	--theory $(MATITA_PATH)/compatibility/theory.dk	\
+	-theory $(MATITA_PATH)/theory/cic.dk \
+	$(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output > \
+	$(MATITA_PATH)/output/test.dk
 
 .PHONY: logic
 logic: bin
-	$(UNIVERSO) -I $(MATITA_PATH)/theory --in $(MATITA_PATH)/compatibility/in.dk --out $(MATITA_PATH)/compatibility/out.dk --theory $(MATITA_PATH)/compatibility/theory.dk \
-	$(MATITA_PATH)/input/matita_basics_logic.dk -o $(MATITA_PATH)/output  > $(MATITA_PATH)/output/matita_basics_logic.dk
+	$(UNIVERSO) -I $(MATITA_PATH)/theory \
+	--in $(MATITA_PATH)/compatibility/in.dk \
+	--out $(MATITA_PATH)/compatibility/out.dk \
+	--theory $(MATITA_PATH)/compatibility/theory.dk	\
+	-theory $(MATITA_PATH)/theory/cic.dk \
+	$(MATITA_PATH)/input/matita_basics_logic.dk -o $(MATITA_PATH)/output > \
+	$(MATITA_PATH)/output/matita_basics_logic.dk
 
 .PHONY: check_input
 check_input:

@@ -1,22 +1,17 @@
-type model = string -> Universes.univ
+module U = Checking.Universes
+
+type model = string -> U.univ
+
+type t =
+  {
+    md_elab:Basic.mident;
+    md_check:Basic.mident
+  }
+
 
 module type SOLVER =
 sig
-  type t
-
-  val mk_var  : string -> t
-
-  val mk_prop : t
-
-  val mk_type : int -> t
-
-  val mk_succ : t -> t
-
-  val mk_max  : t -> t -> t
-
-  val mk_rule : t -> t -> t
-
-  val mk_eq   : t -> t -> unit
+  val parse   : t -> string -> unit
 
   val solve   : unit -> int * model
 
@@ -85,6 +80,8 @@ struct
   let mk_type i = mk_univ (i + 1)
 
   let mk_prop = mk_univ 0
+
+  let mk_set = mk_univ (-1)
 
   let add expr =
     Z3.Solver.add solver [expr]
@@ -159,9 +156,9 @@ struct
   let solution_of_var model var =
     let univ_of_int i =
       if i = 0 then
-        Universes.Prop
+        U.Prop
       else
-        Universes.Type (i - 1)
+        U.Type (i - 1)
     in
     let rec find_univ e i  =
       match Model.get_const_interp_e model (mk_univ i) with
@@ -196,10 +193,10 @@ struct
         let find var =
           try
             (solution_of_var model var)
-          with _ -> Universes.Prop
+          with _ -> U.Prop
         in
         i,
-        fun (var:string) : Universes.univ ->
+        fun (var:string) : U.univ ->
           if Hashtbl.mem hmodel var then
             Hashtbl.find hmodel var
           else
@@ -208,4 +205,33 @@ struct
             t
 
   let solve () = check 1
+
+  let rec from_univ  = fun t ->
+    let open U in
+    match t with
+    | Var cst -> mk_var (Basic.string_of_ident (Basic.id cst))
+    | Prop -> mk_prop
+    | Set -> mk_set
+    | Type(i) -> mk_type i
+    | Succ(s) -> mk_succ (from_univ s)
+    | Max(l,r) -> mk_max (from_univ l) (from_univ r)
+    | Rule(l,r) -> mk_rule (from_univ l) (from_univ r)
+
+  let from_rule : Basic.mident -> Rule.pattern -> Term.term -> unit =
+    fun md pat right ->
+      let left   = Rule.pattern_to_term pat in
+      let left'  = U.extract_univ md left in
+      let right' = U.extract_univ md right in
+      let left'' = from_univ left' in
+      let right'' = from_univ right' in
+      mk_eq left'' right''
+
+  let parse : Basic.mident -> Basic.mident -> string -> unit = fun md_elab md_check s ->
+    let mk_entry = function
+      | Entry.Rules(_,rs) ->
+        Rule.(List.iter (fun r -> from_rule md_elab r.pat r.rhs) rs)
+      | _ -> assert false
+    in
+    Parser.Parse_channel.handle md_check mk_entry (open_in s)
+
 end
