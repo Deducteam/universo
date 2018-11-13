@@ -1,40 +1,46 @@
 module P = Parser.Parse_channel
 
 let _ =
+  (* For debugging purposes, it is better to see error messages in SNF *)
   Errors.errors_in_snf := true;
   (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
   Signature.unsafe := true
 
-let export : string -> unit = fun file ->
-  let ic = open_in file in
-  let md = Files.md_of_file file in
-  let entries = P.parse md ic in
-  Signature.export (Dkmeta.to_signature md entries)
-
+(** Direct the control flow of Universo. The control flow of Universo can be sum up in 4 steps:
+    1) Elaborate the files to replace universes by variables
+    2) Check the files to generate constraints
+    3) Solve the constraints
+    4) Reconstruct the files with the solution *)
 type execution_mode =
-  | Normal
-  | JustElaborate (* Do not generate constraints *)
-  | JustCheck (* Only generate constraints. Suppose that elaboration has been done before *)
+  | Normal (** Go through the four steps above *)
+  | JustElaborate (** Do not generate constraints (only step 1). *)
+  | JustCheck (** Only generate constraints (only step 2). ASSUME that elaboration has been done before. *)
+  | JustSolve (** Only solve the constraints (only step 3). ASSUME that constraints has been generated before. *)
 
-type solution
-
+(** By default, Universo go through all the steps *)
 let mode = Pervasives.ref Normal
 
+(** [elaborate file] generates two new files [file'] and [file_univ].
+    [file'] is the same as [file] except that all universes are replaced by fresh variables.
+    [file_univ] contains the declaration of these variables. Everything is done modulo the logic. *)
 let elaborate : string  -> unit = fun in_file ->
   let ic = open_in in_file in
   let md = Files.md_of_file in_file in
   let env = Cmd.to_elaboration_env in_file in
   let entries = P.parse md ic in
+  (* This steps generates the fresh universe variables *)
   let entries' = List.map (Elaboration.mk_entry env) entries in
   (* Write the elaborated terms in the normal file (in the output directory) *)
   let out_file = open_out (Files.from_string in_file `Normal) in
   let out_fmt = Format.formatter_of_out_channel out_file in
-  (* The elaborated file depends on the env.out_md file that contains universe declarations *)
-  if !mode = JustElaborate then
-    Format.fprintf out_fmt "#REQUIRE %a.@.@." Pp.print_mident env.out_md;
+  (* The elaborated file depends on the out_sol_md file that contains solution. If the mode is JustElaborate, then this file is empty and import the declaration of the fresh universes *)
+  let out_sol_md = Files.md_of_file (Files.from_string in_file `Solution) in
+  Format.fprintf out_fmt "#REQUIRE %a.@.@." Pp.print_mident out_sol_md;
   List.iter (Pp.print_entry (Format.formatter_of_out_channel out_file)) entries'
 
-let checking : string -> unit = fun in_file ->
+(** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that
+    [file_univ] has been generated previously. ASSUME also that the dependencies have been type checked before. *)
+let check : string -> unit = fun in_file ->
   let md = Files.md_of_file in_file in
   let out_file = Files.from_string in_file `Normal in
   let ic = open_in out_file in
@@ -43,20 +49,27 @@ let checking : string -> unit = fun in_file ->
   let entries' = List.map (Dkmeta.mk_entry env.meta md) entries in
   List.iter (Checking.Checker.mk_entry env) entries'
 
+module S = Solving.Solver
+
+(** [solve files] call a SMT solver on the constraints generated for all the files [files]. ASSUME that
+    [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_files ->
-  let add_file in_file =
+  (* [add_constraints file] read the file [file_cstr] and add all the constraints to the SMT solver. *)
+  let add_constraints in_file =
+    (* TODO: clean up a little bit *)
     let check_file = Files.from_string in_file `Checking in
     let md_elab  = Files.md_of_file (Files.from_string in_file `Elaboration) in
     let md_check = Files.md_of_file (Files.from_string in_file `Checking) in
     Solving.Solver.Z3Syn.parse md_elab md_check !Cmd.compat_theory check_file
   in
-  List.iter add_file in_files;
+  List.iter add_constraints in_files;
   Format.eprintf "[SOLVING CONSTRAINTS...]@.";
-  let i,model = Solving.Solver.Z3Syn.solve () in
+  let i,model = S.Z3Syn.solve () in
   Format.eprintf "[SOLVED] Solution found with %d universes.@." i;
   let print_model in_file =
     let elab_file = Files.from_string in_file `Elaboration in
     let md = Files.md_of_file elab_file in
+    (* extract declarations from [file_univ] *)
     let mk_entry = function
       | Entry.Decl(_,id,_,_) -> Basic.mk_name md id
       | _ -> assert false
@@ -69,27 +82,26 @@ let solve : string list -> unit = fun in_files ->
         let name = mk_entry e in
         let sol = model name in
         let rhs = Checking.Universes.term_of_univ sol in
+        (* Solution is translated back to the original theory *)
         let rhs' = Dkmeta.mk_term (Dkmeta.meta_of_file false !Cmd.compat_output) rhs in
-        Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs') entries;
-    let file = Files.from_string in_file `Normal in
-    let md = Files.md_of_file (Files.from_string in_file `Solution) in
-    let cmd = Format.asprintf "sed -i '1s/^/#REQUIRE %a.\\n\\n/' %s" Pp.print_mident md file in
-    ignore(Sys.command cmd)
+        (* Solution is encoded as rewrite rules to make the files type check. *)
+        Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs') entries
   in
   List.iter print_model in_files
 
+(** [run_on_file file] process steps 1 and 2 (depending the mode selected0 on [file] *)
 let run_on_file file =
   Format.eprintf "[FILE] %s@." file;
   match !mode with
   | Normal ->
     elaborate file;
-    checking file
+    check file
   | JustElaborate ->
     elaborate file
   | JustCheck ->
-    checking file
+    check file
+  | JustSolve -> ()
 
-(* FIXME: find better names for options *)
 let cmd_options =
   [ ( "-d"
     , Arg.String Env.set_debug_mode
@@ -100,20 +112,26 @@ let cmd_options =
   ; ( "-o"
     , Arg.String (fun s -> Files.output_directory := Some s; Basic.add_path s)
     , " Set the output directory" )
-  ; ( "-theory"
+  ; ( "--theory"
     , Arg.String (fun s -> Cmd.theory := s)
     , " Theory file" )
-  ; ( "--theory"
+  ; ( "--to-theory"
     , Arg.String (fun s -> Cmd.compat_theory := s)
-    , " Rewrite rules mapping theory's universes to Universo's universes" )
-  ; ( "--in"
+    , " Rewrite rules mapping input theory universes' to Universo's universes" )
+  ; ( "--to-elaboration"
     , Arg.String (fun s -> Cmd.compat_input := s)
-    , " Rewrite rules mapping theory's universes to Universo's universes (input)" )
-  ; ( "--out"
+    , " Rewrite rules mapping theory's universes to be replaced to Universo's variables" )
+  ; ( "--of-universo"
     , Arg.String  (fun s -> Cmd.compat_output := s)
-    , " Rewrite rules mapping Universo's universes to the theory's universes (output)" )]
+    , " Rewrite rules mapping Universo's universes to the theory's universes" )]
 
-module S = Solving.Solver
+let generate_empty_sol_file : string -> unit = fun in_file ->
+  let sol_file = Files.from_string in_file `Solution in
+  let sol_md = Files.md_of_file sol_file in
+  let oc = open_out sol_file in
+  let fmt = Format.formatter_of_out_channel oc in
+  Format.fprintf fmt "#REQUIRE %a@.@." Pp.print_mident sol_md;
+  close_out oc
 
 let _ =
   try
@@ -126,7 +144,11 @@ let _ =
       List.rev !files
     in
     List.iter run_on_file files;
-    solve files
+    if !mode = Normal || !mode = JustSolve then
+      solve files
+    else
+      (* so that REQUIRES declarations in [file] produced at step 1 (see [elaboration]) do not fail. *)
+      List.iter generate_empty_sol_file files
   with
   | Env.EnvError(l,e) -> Errors.fail_env_error l e
   | Signature.SignatureError e ->

@@ -25,20 +25,20 @@ univ:
 .PHONY: test
 test: bin theory univ
 	$(UNIVERSO) -I $(MATITA_PATH)/theory \
-	--in $(MATITA_PATH)/compatibility/in.dk \
-	--out $(MATITA_PATH)/compatibility/out.dk \
-	--theory $(MATITA_PATH)/compatibility/theory.dk	\
-	-theory $(MATITA_PATH)/theory/cic.dk \
+	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
+	--of-universo $(MATITA_PATH)/compatibility/out.dk \
+	--to-theory $(MATITA_PATH)/compatibility/theory.dk	\
+	--theory $(MATITA_PATH)/theory/cic.dk \
 	$(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output > \
 	$(MATITA_PATH)/output/test.dk
 
 .PHONY: logic
 logic: bin theory univ
 	$(UNIVERSO) -I $(MATITA_PATH)/theory \
-	--in $(MATITA_PATH)/compatibility/in.dk \
-	--out $(MATITA_PATH)/compatibility/out.dk \
-	--theory $(MATITA_PATH)/compatibility/theory.dk	\
-	-theory $(MATITA_PATH)/theory/cic.dk \
+	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
+	--of-universo $(MATITA_PATH)/compatibility/out.dk \
+	--to-theory $(MATITA_PATH)/compatibility/theory.dk	\
+	--theory $(MATITA_PATH)/theory/cic.dk \
 	$(MATITA_PATH)/input/matita_basics_logic.dk -o $(MATITA_PATH)/output > \
 	$(MATITA_PATH)/output/matita_basics_logic.dk
 
