@@ -125,6 +125,8 @@ let cmd_options =
     , Arg.String  (fun s -> Cmd.compat_output := s)
     , " Rewrite rules mapping Universo's universes to the theory's universes" )]
 
+(** [generate_empty_sol_file file] generates the file [file_sol] that requires the file [file_univ].
+    This is useful when universo is used with another mode than the Normal one (see elaboration). *)
 let generate_empty_sol_file : string -> unit = fun in_file ->
   let sol_file = Files.from_string in_file `Solution in
   let sol_md = Files.md_of_file sol_file in

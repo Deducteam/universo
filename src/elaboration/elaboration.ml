@@ -33,7 +33,7 @@ let mk_term : t -> Term.term -> Term.term = fun env t ->
   mk_term env t
 
 let mk_rule : t -> 'a Rule.rule -> 'a Rule.rule = fun env rule -> Rule.(
-  {rule with rhs = Dkmeta.mk_term env.meta rule.rhs})
+  {rule with rhs = mk_term env (Dkmeta.mk_term env.meta rule.rhs)})
 
 
 let mk_entry : t -> Entry.entry -> Entry.entry = fun env e ->
