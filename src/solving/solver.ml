@@ -1,12 +1,12 @@
 module U = Checking.Universes
 
-type model = string -> U.univ
+type model = Basic.name -> U.univ
 
 module type SOLVER =
 sig
   type t
 
-  val parse   : Basic.mident -> Basic.mident -> string -> unit
+  val parse   : Basic.mident -> Basic.mident -> string -> string -> unit
 
   val solve   : unit -> int * model
 

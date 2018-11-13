@@ -9,12 +9,21 @@ bin:
 doc:
 	@dune build @doc
 
+DKCHECK  = dkcheck
 UNIVERSO = $(shell readlink -f _build/install/default/bin/universo)
 
 MATITA_PATH=experiments/matita
 
+.PHONY: theory
+theory:
+	$(DKCHECK) -e $(MATITA_PATH)/theory/cic.dk
+
+.PHONY: univ
+univ:
+	$(DKCHECK) -e encodings/universo.dk
+
 .PHONY: test
-test: bin
+test: bin theory univ
 	$(UNIVERSO) -I $(MATITA_PATH)/theory \
 	--in $(MATITA_PATH)/compatibility/in.dk \
 	--out $(MATITA_PATH)/compatibility/out.dk \
@@ -24,7 +33,7 @@ test: bin
 	$(MATITA_PATH)/output/test.dk
 
 .PHONY: logic
-logic: bin
+logic: bin theory univ
 	$(UNIVERSO) -I $(MATITA_PATH)/theory \
 	--in $(MATITA_PATH)/compatibility/in.dk \
 	--out $(MATITA_PATH)/compatibility/out.dk \

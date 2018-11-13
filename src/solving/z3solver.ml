@@ -1,6 +1,6 @@
 module U = Checking.Universes
 
-type model = string -> U.univ
+type model = Basic.name -> U.univ
 
 type t =
   {
@@ -175,6 +175,8 @@ struct
     vars := SSet.empty;
     Z3.Solver.reset solver
 
+  let var_of_name cst = Basic.string_of_ident (Basic.id cst)
+
   let rec check i =
     Z3.Solver.push solver;
     register_axioms i;
@@ -195,8 +197,9 @@ struct
             (solution_of_var model var)
           with _ -> U.Prop
         in
-        i,
-        fun (var:string) : U.univ ->
+        i+1,
+        fun (cst:Basic.name) : U.univ ->
+          let var = var_of_name cst in
           if Hashtbl.mem hmodel var then
             Hashtbl.find hmodel var
           else
@@ -209,7 +212,7 @@ struct
   let rec from_univ  = fun t ->
     let open U in
     match t with
-    | Var cst -> mk_var (Basic.string_of_ident (Basic.id cst))
+    | Var cst -> mk_var (var_of_name cst)
     | Prop -> mk_prop
     | Set -> mk_set
     | Type(i) -> mk_type i
@@ -226,12 +229,15 @@ struct
       let right'' = from_univ right' in
       mk_eq left'' right''
 
-  let parse : Basic.mident -> Basic.mident -> string -> unit = fun md_elab md_check s ->
+  let parse : Basic.mident -> Basic.mident -> string -> string -> unit =
+    fun md_elab md_check compat s ->
+    let meta = Dkmeta.meta_of_file false compat in
     let mk_entry = function
       | Entry.Rules(_,rs) ->
         Rule.(List.iter (fun r -> from_rule md_elab r.pat r.rhs) rs)
       | _ -> assert false
     in
+    let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
     Parser.Parse_channel.handle md_check mk_entry (open_in s)
 
 end

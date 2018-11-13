@@ -24,4 +24,4 @@ def rule : Sort -> Sort -> Sort.
 
 def succ : Sort -> Sort.
 
-def lift : s1:Sort -> s2:Sort -> Univ s1 -> Univ (max s1 s2).
+def lift : s1:Sort -> s2:Sort -> Univ s1 -> Univ s2.

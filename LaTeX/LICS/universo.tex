@@ -76,7 +76,46 @@ The abstract goes here.
 
 % If you want to use \universo{} with your theory, you just need to give these three files to make \universo{} works.
 
-\section{PTS}
+\section{CTS}
+
+\begin{definition}[decidable CTS]
+  A \textit{decidable} CTS is a CTS where every relation \(\mathcal{R}, \mathcal{A}, \mathcal{C}\) is decidable.
+\end{definition}
+
+\begin{definition}[convergent CTS]
+  A \textit{convergent} CTS is a decidable CTS with the property that the decidability can be decided with a convergent rewriting system.
+\end{definition}
+
+\begin{definition}
+  A \textit{finite convergent} CTS is a convergent CTS with the propety that every universe can be represented with a finite number of symbols.
+\end{definition}
+
+\begin{example}
+  The CTS of Coq, Agda, Matita, Lean, CoqHOTT are \textit{convergent}. Checking the decidability for these CTS is almost the same as deciding the order of natural numbers.
+\end{example}
+
+\begin{theorem}
+  A finite convergent CTS can be decided with a finite number of rules.
+\end{theorem}
+
+Using typical ambiguity such as in TODO, one may generate constraints while type checking terms. Consistency of these constraints implies that the terms are well-typed. However, one have to invent a procedure to solve these constraints. For all the systems presented above, this is done by an ad-hoc algorithm implemented by those systems. This is doable because each of these system implement one particular CTS. However, it is not clear how these algorithms could be extended for all \textit{convergent} CTS. We aim to solve this issue by calling a SMT solver instead. However, one has to provide a model for the SMT solver.n  If the maximum number of universes needed is known, then this model can given in a logic with non-interpreted symbols. However, if it is unknown, then a number of unbounded universes is needed, even if in practice most of the proofs use at most four or five universes. Hence, this require to use a more sophisticated logic. TODO: using injectivity on constructor is sufficient?
+
+% 0 : nat
+% S : nat -> nat
+% Prop : Sort
+% Type : nat -> Sort
+% succ (Prop) --> Type 0
+% succ (Type x) --> Type (S x)
+
+% forall x, ~ Prop = Type x
+% succ Prop = Type 0
+% succ (Type x) = Type (S x)
+%
+% forall x, 0 <> S x
+% forall x, S x = S y ==> x = y
+% forall x, Type x = Type y ==> x = y
+
+
 
 \section{Universo}
 
