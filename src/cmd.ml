@@ -53,6 +53,7 @@ let to_checking_env : string -> Checking.Checker.t = fun in_file ->
   let meta_out = Dkmeta.meta_of_file false !compat_output in
   let check_fmt = Format.formatter_of_out_channel (open_out (Files.from_string in_file `Checking)) in
   { sg;
+    md=Files.md_of_file (Files.from_string in_file `Normal);
     md_check=Files.md_of_file (Files.from_string in_file `Checking);
     md_elab=Files.md_of_file (Files.from_string in_file `Elaboration);
     meta;

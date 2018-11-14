@@ -35,6 +35,22 @@ let mk_term : t -> Term.term -> Term.term = fun env t ->
 let mk_rule : t -> 'a Rule.rule -> 'a Rule.rule = fun env rule -> Rule.(
   {rule with rhs = mk_term env (Dkmeta.mk_term env.meta rule.rhs)})
 
+(* do not elaborate those *)
+let is_inductive id =
+  try
+    let s = Basic.string_of_ident id in
+    let i = String.rindex s '_' in (* last occurence of _ *)
+    let sort = String.sub s i (String.length s - i) in
+    Format.eprintf "%s@." sort;
+    if String.length sort > 4 then
+      if String.sub sort 1 4 = "Prop" || String.sub sort 0 4 = "Type" then
+        true
+      else
+        false
+    else
+      false
+  with Not_found -> false
+
 
 let mk_entry : t -> Entry.entry -> Entry.entry = fun env e ->
   let open Entry in

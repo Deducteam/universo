@@ -181,7 +181,7 @@ struct
     Z3.Solver.push solver;
     register_axioms i;
     register_vars !vars i;
-    if i > 5 then failwith "Probably the Constraints are inconsistent";
+    if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
       Format.eprintf "No solution found with %d universes@." i;

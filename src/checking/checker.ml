@@ -1,6 +1,7 @@
 type t =
   {
     sg:Signature.t;
+    md:Basic.mident;
     md_check:Basic.mident;
     md_elab:Basic.mident;
     meta:Dkmeta.cfg;
@@ -9,6 +10,7 @@ type t =
   }
 
 let default : t = {sg = Signature.make "";
+                   md = Basic.mk_mident "";
                    md_check = Basic.mk_mident "";
                    md_elab = Basic.mk_mident "";
                    meta=Dkmeta.default_config;
@@ -46,18 +48,22 @@ struct
       true
     else
       try
-        let l' = Universes.extract_univ !global_env.md_elab (snf l) in
-        let r' = Universes.extract_univ !global_env.md_elab (snf r) in
-        begin
-          if Universes.is_var !global_env.md_elab l && Universes.is_var !global_env.md_elab r then
-            if Universes.gt l' r' then
-              add_rule l' r'
-            else
-              add_rule r' l'
-        end;
-        let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
-        mk_cstr uenv l' r';
-        true
+        let l = snf l in
+        let r = snf r in
+        if l = r then true
+        else
+          let l' = Universes.extract_univ !global_env.md_elab l in
+          let r' = Universes.extract_univ !global_env.md_elab r in
+          begin
+            if Universes.is_var !global_env.md_elab l && Universes.is_var !global_env.md_elab r then
+              if Universes.gt l' r' then
+                add_rule l' r'
+              else
+                add_rule r' l'
+          end;
+          let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+          mk_cstr uenv l' r';
+          true
       with Universes.Not_univ ->
         if is_lift l && not (is_lift r) then
           true
@@ -127,7 +133,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
         if opaque then Signature.add_declaration env.sg lc id Signature.Static ty
         else
           let _ = Signature.add_declaration env.sg lc id Signature.Definable ty in
-          let cst = Basic.mk_name env.md_check id in
+          let cst = Basic.mk_name env.md id in
           let rule =
             { name= Delta(cst) ;
               ctx = [] ;
