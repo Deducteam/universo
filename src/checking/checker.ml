@@ -19,19 +19,23 @@ let default : t = {sg = Signature.make "";
 
 let global_env : t ref = ref default
 
+module V = Elaboration.Var
+
 module RE : Reduction.RE =
 struct
   open Basic
 
-  let rec add_rule ?(name=Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "universo"))) l r =
-    let pat = Universes.pattern_of_univ l in
-    let rhs = Universes.term_of_univ r in
+  let default_name = Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "universo"))
+
+  let rec add_rule  vl vr =
+    let pat = Rule.Pattern(Basic.dloc,vl,[]) in
+    let rhs = Term.mk_Const Basic.dloc vr in
     let rule = Rule.(
         {
           ctx = [];
           pat;
           rhs;
-          name;
+          name=default_name;
         })
     in
     Signature.add_rules !global_env.sg  [Rule.to_rule_infos rule]
@@ -43,12 +47,20 @@ struct
 
   and univ_conversion l r =
     let open Universes in
-    let snf = snf !global_env.sg in
     if Term.term_eq l r then
       true
     else
       try
-        let l = snf l in
+        begin
+          if V.is_uvar l && V.is_uvar r then
+            add_rule (V.name_of_uvar l) (V.name_of_uvar r);
+          Universes.mk_var_cstr uenv l r
+        end;
+        let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+        Universes.mk_cstr uenv l r
+        (* let l' = Universes.to_univ !global_env.md_elab  *)
+
+(*        let l = snf l in
         let r = snf r in
         if l = r then true
         else
@@ -63,8 +75,8 @@ struct
           end;
           let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
           mk_cstr uenv l' r';
-          true
-      with Universes.Not_univ ->
+          true *)
+      with Universes.Not_pred ->
         if is_lift l && not (is_lift r) then
           true
         else if not (is_lift l) && (is_lift r) then

@@ -7,9 +7,3 @@
 [] universo.0    --> cic.z.
 
 [] universo.prop --> cic.prop.
-
-[] universo.max  --> cic.max.
-
-[] universo.succ --> cic.succ.
-
-[] universo.rule --> cic.rule.

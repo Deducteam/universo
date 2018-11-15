@@ -51,9 +51,10 @@ struct
 
   let solver = Z3.Solver.mk_simple_solver ctx
 
-  let sort      = Sort.mk_uninterpreted_s ctx "Univ"
+  let sort      = Sort.mk_uninterpreted_s ctx "Sort"
 
   (* Type 0 is impredictive *)
+(*
   let mk_univ i = Expr.mk_const_s ctx ("type"^(string_of_int i)) sort
 
   let mk_succ   = FuncDecl.mk_func_decl_s ctx "S" [sort] sort
@@ -124,8 +125,8 @@ struct
             mk_neq (mk_rule (mk_univ i) (mk_univ j)) (mk_univ k)
         done
       end
-
-
+*)
+(*
   let register_axioms max =
     for i = 0 to max
     do
@@ -152,8 +153,9 @@ struct
       add (Boolean.mk_or ctx eqs)
     in
     SSet.iter register_vars vars
+*)
 
-  let solution_of_var model var =
+  let solution_of_var model var = failwith "todo" (*
     let univ_of_int i =
       if i = 0 then
         U.Prop
@@ -169,7 +171,7 @@ struct
     match Model.get_const_interp_e model (mk_var var) with
     | None -> assert false
     | Some e -> univ_of_int (find_univ e 0)
-
+*)
 
   let reset () =
     vars := SSet.empty;
@@ -179,8 +181,9 @@ struct
 
   let rec check i =
     Z3.Solver.push solver;
+    failwith "todo"; (*
     register_axioms i;
-    register_vars !vars i;
+    register_vars !vars i; *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
@@ -209,32 +212,62 @@ struct
 
   let solve () = check 1
 
-  let rec from_univ  = fun t ->
+  let mk_var s = Expr.mk_const_s ctx s sort
+
+  let mk_prop =
+    Expr.mk_const_s ctx "Prop" sort
+
+  let mk_set =
+    Expr.mk_const_s ctx "Set" sort
+
+  let mk_type i =
+    Expr.mk_const_s ctx ("Type"^string_of_int i) sort
+
+  let from_univ  = fun t ->
     let open U in
     match t with
     | Var cst -> mk_var (var_of_name cst)
     | Prop -> mk_prop
     | Set -> mk_set
     | Type(i) -> mk_type i
-    | Succ(s) -> mk_succ (from_univ s)
-    | Max(l,r) -> mk_max (from_univ l) (from_univ r)
-    | Rule(l,r) -> mk_rule (from_univ l) (from_univ r)
 
-  let from_rule : Basic.mident -> Rule.pattern -> Term.term -> unit =
-    fun md pat right ->
+  let bool_sort = Boolean.mk_sort ctx
+
+  let mk_axiom s s' =
+    let axiom = FuncDecl.mk_func_decl_s ctx "A" [sort;sort] bool_sort in
+    Expr.mk_app ctx axiom [s;s']
+
+  let mk_cumul s s' =
+    let cumul = FuncDecl.mk_func_decl_s ctx "C" [sort;sort] bool_sort in
+    Expr.mk_app ctx cumul [s;s']
+
+  let mk_rule s s' s'' =
+    let cumul = FuncDecl.mk_func_decl_s ctx "R" [sort;sort;sort] bool_sort in
+    Expr.mk_app ctx cumul [s;s';s'']
+
+  let add expr =
+    Z3.Solver.add solver [expr]
+
+  let from_pred = fun p ->
+    let open U in
+    match p with
+    | Axiom(s,s') -> mk_axiom (from_univ s) (from_univ s')
+    | Cumul(s,s') -> mk_cumul (from_univ s) (from_univ s')
+    | Rule(s,s',s'') -> mk_rule (from_univ s) (from_univ s') (from_univ s'')
+
+
+  let from_rule : Rule.pattern -> Term.term -> unit = fun pat ->
       let left   = Rule.pattern_to_term pat in
-      let left'  = U.extract_univ md left in
-      let right' = U.extract_univ md right in
-      let left'' = from_univ left' in
-      let right'' = from_univ right' in
-      mk_eq left'' right''
+      let pred'  = U.extract_pred left in
+      let pred'' = from_pred pred' in
+      add pred''
 
   let parse : Basic.mident -> Basic.mident -> string -> string -> unit =
     fun md_elab md_check compat s ->
     let meta = Dkmeta.meta_of_file false compat in
     let mk_entry = function
       | Entry.Rules(_,rs) ->
-        Rule.(List.iter (fun r -> from_rule md_elab r.pat r.rhs) rs)
+        Rule.(List.iter (fun r -> from_rule r.pat r.rhs) rs)
       | _ -> assert false
     in
     let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in

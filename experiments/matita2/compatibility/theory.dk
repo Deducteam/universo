@@ -12,10 +12,12 @@
 
 [] cic.s --> universo.S.
 
-[] cic.succ --> universo.succ.
+[] cic.Axiom --> universo.Succ.
 
-[] cic.rule --> universo.rule.
+[] cic.Rule --> universo.Rule.
 
-[] cic.max --> universo.max.
+[] cic.Cumul --> universo.Cumul.
+
+[] cic.True --> universo.True.
 
 [] cic.lift --> universo.lift.

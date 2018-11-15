@@ -11,18 +11,19 @@ type univ =
   | Prop
   | Set
   | Type of int
-  | Succ of univ
-  | Max of univ * univ
-  | Rule of univ * univ
 
-type cstr = univ * univ
+type pred =
+  | Axiom of univ * univ
+  | Cumul of univ * univ
+  | Rule  of univ * univ * univ
 
-module C = Set.Make(struct type t = cstr let compare = compare end)
+module C = Set.Make(struct type t = pred let compare = compare end)
 
 let get_number s =
   int_of_string (String.sub s 1 (String.length s - 1))
 
 (* Implement RPO order with Succ > Max ; should be total FIXME *)
+(*
 let rec gt l r =
   match (l,r) with
   | Var n, Var m ->
@@ -56,11 +57,12 @@ let rec gt l r =
 
 and le l r =
   l = r || gt l r
+*)
 
 let md_universo = mk_mident "universo"
 let md_univ = ref (mk_mident "")
 
-exception Not_univ
+exception Not_pred
 
 let typ = mk_name md_universo (mk_ident "type")
 
@@ -72,11 +74,15 @@ let univ = mk_name md_universo (mk_ident "Univ")
 
 let max = mk_name md_universo (mk_ident "max")
 
-let rule = mk_name md_universo (mk_ident "rule")
-
 let succ = mk_name md_universo (mk_ident "succ")
 
 let lift = mk_name md_universo (mk_ident "lift")
+
+let axiom = mk_name md_universo (mk_ident "Axiom")
+
+let rule = mk_name md_universo (mk_ident "Rule")
+
+let cumul = mk_name md_universo (mk_ident "Cumul")
 
 let z = mk_name md_universo (mk_ident "0")
 
@@ -89,18 +95,24 @@ let rec term_of_level l =
   else
     Term.mk_App2 (Term.mk_Const lc s) [(term_of_level (l-1))]
 
-let rec term_of_univ u =
+let term_of_univ u =
   let lc = Basic.dloc in
   match u with
   | Var n -> Term.mk_Const lc n
-  | Max(l,r) -> Term.mk_App2 (Term.mk_Const lc max) [term_of_univ l;term_of_univ r]
-  | Rule(l,r) -> Term.mk_App2 (Term.mk_Const lc rule) [term_of_univ l;term_of_univ r]
-  | Succ(l) -> Term.mk_App2 (Term.mk_Const lc succ) [term_of_univ l]
   | Set    -> Term.mk_Const lc set
   | Prop   -> Term.mk_Const lc prop
   | Type l ->  Term.mk_App2 (Term.mk_Const lc typ) [term_of_level l]
 
-
+let term_of_pred p =
+  let lc = Basic.dloc in
+  match p with
+  | Axiom(s,s') -> Term.mk_App2 (Term.mk_Const lc axiom)
+                     [term_of_univ s;term_of_univ s']
+  | Cumul(s,s') -> Term.mk_App2 (Term.mk_Const lc cumul)
+                     [term_of_univ s;term_of_univ s']
+  | Rule(s,s',s'') -> Term.mk_App2 (Term.mk_Const lc rule)
+                        [term_of_univ s; term_of_univ s'; term_of_univ s'']
+(*
 let global_cstr = ref (C.empty)
 
 let print_rule env left right =
@@ -109,11 +121,13 @@ let print_rule env left right =
   let right' = normalize (term_of_univ right) in
   Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
 
-let add_cstr env left right =
+let add_cstr _ _ _ = failwith "todo"  *)(*
   global_cstr := C.add (left,right) !global_cstr;
-  print_rule env left right
+  print_rule env left right *)
 
-let mk_cstr env left right =
+(*
+let mk_cstr _ _ _ = failwith "todo"
+
   assert (left <> right);
   if gt left right then
     add_cstr env left right
@@ -122,6 +136,7 @@ let mk_cstr env left right =
       assert (gt right left);
       add_cstr env right left
     end
+    *)
 
 let rec pattern_of_level l =
   let lc = Basic.dloc in
@@ -129,17 +144,6 @@ let rec pattern_of_level l =
     Rule.Pattern(lc,z,[])
   else
     Rule.Pattern(lc,s,[pattern_of_level (l-1)])
-
-let rec pattern_of_univ u =
-  let lc = Basic.dloc in
-  match u with
-  | Var n -> Rule.Pattern(lc, n, [])
-  | Max(l,r) -> Rule.Pattern(lc, max, [pattern_of_univ l;pattern_of_univ r])
-  | Rule(l,r) -> Rule.Pattern(lc, rule, [pattern_of_univ l;pattern_of_univ r])
-  | Succ(l) -> Rule.Pattern(lc, succ, [pattern_of_univ l])
-  | Set-> Rule.Pattern(lc, set, [])
-  | Prop -> Rule.Pattern(lc, prop, [])
-  | Type l ->  Rule.Pattern(lc, typ, [pattern_of_level l])
 
 let is_const cst t =
   match t with
@@ -152,13 +156,6 @@ let is_var md_elab t =
   | Term.Const(_,n) -> md n = md_elab
   | _ -> false
 
-let rec extract_level l =
-  match l with
-  | Term.Const(_,n) when Basic.name_eq n z -> 0
-  | Term.App(f,l,[]) when is_const s f -> 1 + (extract_level l)
-  | _ -> Format.eprintf "%a@." Pp.print_term l;
-    assert false
-
 let is_lift t =
   match t with
   | Term.Const(_,n) -> md n = !md_univ
@@ -170,14 +167,53 @@ let extract_lift t =
   | Term.App(f,s1,[s2;_]) when is_const lift f -> s1,s2
   | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
 
-let rec extract_univ md_elab t =
-  let open Basic in
-  match t with
-  | Term.Const(_,n) when md n = md_elab -> Var n
+let true_ = Basic.(Term.mk_Const dloc (mk_name (mk_mident "universo") (mk_ident "True")))
+
+let rec extract_level l =
+  match l with
+  | Term.Const(_,n) when Basic.name_eq n z -> 0
+  | Term.App(f,l,[]) when is_const s f -> 1 + (extract_level l)
+  | _ -> Format.eprintf "%a@." Pp.print_term l;
+    assert false
+
+let extract_univ s =
+  match s with
   | Term.Const(_,n) when Basic.name_eq n prop -> Prop
   | Term.Const(_,n) when Basic.name_eq n set -> Set
+  | Term.Const(_,n)  -> Var n
   | Term.App(f,l,[]) when is_const typ f -> Type (extract_level l)
-  | Term.App(f,l,[r]) when is_const max f -> Max(extract_univ md_elab l, extract_univ md_elab r)
-  | Term.App(f,l,[r]) when is_const rule f -> Rule(extract_univ md_elab l, extract_univ md_elab r)
-  | Term.App(f,l, []) when is_const succ f -> Succ (extract_univ md_elab l)
-  | _ -> raise Not_univ
+  | _ -> assert false
+
+let extract_pred t =
+  match t with
+  | Term.App(f,s,[s'])     when is_const axiom f ->
+    Axiom(extract_univ s, extract_univ s')
+  | Term.App(f,s,[s'])     when is_const cumul f ->
+    Cumul(extract_univ s, extract_univ s')
+  | Term.App(f,s,[s';s'']) when is_const rule f ->
+    Rule(extract_univ s, extract_univ s', extract_univ s'')
+  | _ -> raise Not_pred
+
+
+let global_cstr = ref (C.empty)
+
+let print_rule env p =
+  let normalize t = Dkmeta.mk_term env.meta t in
+  let left' = normalize (term_of_pred p) in
+  let right' = true_ in
+  Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
+
+let add_cstr env p =
+  global_cstr := C.add p !global_cstr;
+  print_rule env p
+
+let mk_cstr env l r =
+  assert(Term.term_eq r true_);
+  let p = extract_pred l in
+  add_cstr env p;
+  true
+
+let mk_var_cstr env l r =
+  let l = extract_univ l in
+  let r = extract_univ r in
+  add_cstr env

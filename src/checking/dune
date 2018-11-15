@@ -1,4 +1,4 @@
 (library
         (name checking)
         (modules checker universes)
-        (libraries dedukti dkmeta))
+        (libraries elaboration dedukti dkmeta))
