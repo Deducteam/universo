@@ -1,0 +1,24 @@
+#REQUIRE test_sol.
+
+eq :
+  cic.Term test_univ.?0 (cic.prod test_univ.?1 test_univ.?2 test_univ.?3 cic.I (
+                           cic.univ test_univ.?4 test_univ.?5 cic.I) (
+                           A:(cic.Univ test_univ.?15) =>
+                           cic.prod test_univ.?6 test_univ.?7 test_univ.?8 cic.I A (
+                             _x:(cic.Term test_univ.?14 A) =>
+                             cic.prod test_univ.?9 test_univ.?10 test_univ.?11 cic.I A (
+                               __:(cic.Term test_univ.?13 A) =>
+                               cic.univ cic.prop test_univ.?12 cic.I)))).
+
+refl :
+  cic.Term cic.prop (cic.prod test_univ.?16 cic.prop cic.prop cic.I (
+                       cic.univ test_univ.?17 test_univ.?18 cic.I) (A:
+                                                                    (
+                                                                    cic.Univ test_univ.?23) =>
+                                                                    cic.prod test_univ.?19 cic.prop cic.prop cic.I A (
+                                                                    x:
+                                                                    (
+                                                                    cic.Term test_univ.?22 A) =>
+                                                                    test.eq (
+                                                                    cic.lift test_univ.?20 test_univ.?21 cic.I A) x x))).
+

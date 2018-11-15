@@ -1,0 +1,74 @@
+(; eq ;)
+def ?0 : cic.Sort.
+
+
+def ?1 : cic.Sort.
+
+
+def ?2 : cic.Sort.
+
+
+def ?3 : cic.Sort.
+
+
+def ?4 : cic.Sort.
+
+
+def ?5 : cic.Sort.
+
+
+def ?6 : cic.Sort.
+
+
+def ?7 : cic.Sort.
+
+
+def ?8 : cic.Sort.
+
+
+def ?9 : cic.Sort.
+
+
+def ?10 : cic.Sort.
+
+
+def ?11 : cic.Sort.
+
+
+def ?12 : cic.Sort.
+
+
+def ?13 : cic.Sort.
+
+
+def ?14 : cic.Sort.
+
+
+def ?15 : cic.Sort.
+
+
+(; refl ;)
+def ?16 : cic.Sort.
+
+
+def ?17 : cic.Sort.
+
+
+def ?18 : cic.Sort.
+
+
+def ?19 : cic.Sort.
+
+
+def ?20 : cic.Sort.
+
+
+def ?21 : cic.Sort.
+
+
+def ?22 : cic.Sort.
+
+
+def ?23 : cic.Sort.
+
+

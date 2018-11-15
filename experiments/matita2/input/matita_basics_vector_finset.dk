@@ -1,0 +1,1134 @@
+(; This file was automatically generated from Matita. ;)
+
+def eq_Vector :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+           (cic.type (cic.s cic.z)) cic.I matita_basics_deqsets.DeqSet
+           (D :
+              cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+            cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              matita_arithmetics_nat.nat
+              (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I
+                 ((_A : cic.Univ (cic.type cic.z) =>
+                   _n :
+                     cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                   matita_basics_vectors.Vector
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                       ((_xxx :
+                           cic.Term (cic.type (cic.s cic.z))
+                             matita_basics_deqsets.DeqSet =>
+                         matita_basics_deqsets.carr _xxx) D))
+                    (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n)))
+                 (__ :
+                    cic.Term (cic.type cic.z)
+                      ((_A : cic.Univ (cic.type cic.z) =>
+                        _n :
+                          cic.Term (cic.type cic.z)
+                            matita_arithmetics_nat.nat =>
+                        matita_basics_vectors.Vector
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                             _A)
+                          _n)
+                         (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                            ((_xxx :
+                                cic.Term (cic.type (cic.s cic.z))
+                                  matita_basics_deqsets.DeqSet =>
+                              matita_basics_deqsets.carr _xxx) D))
+                         (matita_arithmetics_nat.pred
+                            (matita_arithmetics_nat.S n))) =>
+                  cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                    cic.I
+                    ((_A : cic.Univ (cic.type cic.z) =>
+                      _n :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      matita_basics_vectors.Vector
+                        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                        _n)
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                          ((_xxx :
+                              cic.Term (cic.type (cic.s cic.z))
+                                matita_basics_deqsets.DeqSet =>
+                            matita_basics_deqsets.carr _xxx) D))
+                       (matita_arithmetics_nat.pred
+                          (matita_arithmetics_nat.S n)))
+                    (__1 :
+                       cic.Term (cic.type cic.z)
+                         ((_A : cic.Univ (cic.type cic.z) =>
+                           _n :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           matita_basics_vectors.Vector
+                             (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                cic.I _A)
+                             _n)
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               ((_xxx :
+                                   cic.Term (cic.type (cic.s cic.z))
+                                     matita_basics_deqsets.DeqSet =>
+                                 matita_basics_deqsets.carr _xxx) D))
+                            (matita_arithmetics_nat.pred
+                               (matita_arithmetics_nat.S n))) =>
+                     matita_basics_bool.bool))))).
+
+def eq_Vector_body :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+           (cic.type (cic.s cic.z)) cic.I matita_basics_deqsets.DeqSet
+           (D :
+              cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+            cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              matita_arithmetics_nat.nat
+              (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I
+                 ((_A : cic.Univ (cic.type cic.z) =>
+                   _n :
+                     cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                   matita_basics_vectors.Vector
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                       ((_xxx :
+                           cic.Term (cic.type (cic.s cic.z))
+                             matita_basics_deqsets.DeqSet =>
+                         matita_basics_deqsets.carr _xxx) D))
+                    (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n)))
+                 (__ :
+                    cic.Term (cic.type cic.z)
+                      ((_A : cic.Univ (cic.type cic.z) =>
+                        _n :
+                          cic.Term (cic.type cic.z)
+                            matita_arithmetics_nat.nat =>
+                        matita_basics_vectors.Vector
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                             _A)
+                          _n)
+                         (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                            ((_xxx :
+                                cic.Term (cic.type (cic.s cic.z))
+                                  matita_basics_deqsets.DeqSet =>
+                              matita_basics_deqsets.carr _xxx) D))
+                         (matita_arithmetics_nat.pred
+                            (matita_arithmetics_nat.S n))) =>
+                  cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                    cic.I
+                    ((_A : cic.Univ (cic.type cic.z) =>
+                      _n :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      matita_basics_vectors.Vector
+                        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                        _n)
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                          ((_xxx :
+                              cic.Term (cic.type (cic.s cic.z))
+                                matita_basics_deqsets.DeqSet =>
+                            matita_basics_deqsets.carr _xxx) D))
+                       (matita_arithmetics_nat.pred
+                          (matita_arithmetics_nat.S n)))
+                    (__1 :
+                       cic.Term (cic.type cic.z)
+                         ((_A : cic.Univ (cic.type cic.z) =>
+                           _n :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           matita_basics_vectors.Vector
+                             (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                cic.I _A)
+                             _n)
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               ((_xxx :
+                                   cic.Term (cic.type (cic.s cic.z))
+                                     matita_basics_deqsets.DeqSet =>
+                                 matita_basics_deqsets.carr _xxx) D))
+                            (matita_arithmetics_nat.pred
+                               (matita_arithmetics_nat.S n))) =>
+                     matita_basics_bool.bool))))).
+
+[ D, n ] eq_Vector D n -->
+  matita_arithmetics_nat.filter_nat (cic.type cic.z)
+    (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+       ((_A : cic.Univ (cic.type cic.z) =>
+         _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         matita_basics_vectors.Vector
+           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+             ((_xxx :
+                 cic.Term (cic.type (cic.s cic.z))
+                   matita_basics_deqsets.DeqSet =>
+               matita_basics_deqsets.carr _xxx) D))
+          (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n)))
+       (__ :
+          cic.Term (cic.type cic.z)
+            ((_A : cic.Univ (cic.type cic.z) =>
+              _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              matita_basics_vectors.Vector
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+               (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                  ((_xxx :
+                      cic.Term (cic.type (cic.s cic.z))
+                        matita_basics_deqsets.DeqSet =>
+                    matita_basics_deqsets.carr _xxx) D))
+               (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n))) =>
+        cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) D))
+             (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n)))
+          (__1 :
+             cic.Term (cic.type cic.z)
+               ((_A : cic.Univ (cic.type cic.z) =>
+                 _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                 matita_basics_vectors.Vector
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                  (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                     ((_xxx :
+                         cic.Term (cic.type (cic.s cic.z))
+                           matita_basics_deqsets.DeqSet =>
+                       matita_basics_deqsets.carr _xxx) D))
+                  (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n))) =>
+           matita_basics_bool.bool)))
+    (matita_basics_vector_finset.eq_Vector_body D) n.
+
+[ D, n ] eq_Vector_body D n -->
+  matita_arithmetics_nat.match_nat (cic.type cic.z)
+    (n0 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+       ((_A : cic.Univ (cic.type cic.z) =>
+         _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         matita_basics_vectors.Vector
+           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+             ((_xxx :
+                 cic.Term (cic.type (cic.s cic.z))
+                   matita_basics_deqsets.DeqSet =>
+               matita_basics_deqsets.carr _xxx) D))
+          n0)
+       (_v1 :
+          cic.Term (cic.type cic.z)
+            ((_A : cic.Univ (cic.type cic.z) =>
+              _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              matita_basics_vectors.Vector
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+               (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                  ((_xxx :
+                      cic.Term (cic.type (cic.s cic.z))
+                        matita_basics_deqsets.DeqSet =>
+                    matita_basics_deqsets.carr _xxx) D))
+               n0) =>
+        cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) D))
+             n0)
+          (_v2 :
+             cic.Term (cic.type cic.z)
+               ((_A : cic.Univ (cic.type cic.z) =>
+                 _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                 matita_basics_vectors.Vector
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                  (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                     ((_xxx :
+                         cic.Term (cic.type (cic.s cic.z))
+                           matita_basics_deqsets.DeqSet =>
+                       matita_basics_deqsets.carr _xxx) D))
+                  n0) =>
+           matita_basics_bool.bool)))
+    (v1 :
+       cic.Term (cic.type cic.z)
+         ((_A : cic.Univ (cic.type cic.z) =>
+           _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+           matita_basics_vectors.Vector
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+               ((_xxx :
+                   cic.Term (cic.type (cic.s cic.z))
+                     matita_basics_deqsets.DeqSet =>
+                 matita_basics_deqsets.carr _xxx) D))
+            matita_arithmetics_nat.O) =>
+     v2 :
+       cic.Term (cic.type cic.z)
+         ((_A : cic.Univ (cic.type cic.z) =>
+           _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+           matita_basics_vectors.Vector
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+               ((_xxx :
+                   cic.Term (cic.type (cic.s cic.z))
+                     matita_basics_deqsets.DeqSet =>
+                 matita_basics_deqsets.carr _xxx) D))
+            matita_arithmetics_nat.O) =>
+     matita_basics_bool.true)
+    (m : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     v1 :
+       cic.Term (cic.type cic.z)
+         ((_A : cic.Univ (cic.type cic.z) =>
+           _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+           matita_basics_vectors.Vector
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+               ((_xxx :
+                   cic.Term (cic.type (cic.s cic.z))
+                     matita_basics_deqsets.DeqSet =>
+                 matita_basics_deqsets.carr _xxx) D))
+            (matita_arithmetics_nat.S m)) =>
+     v2 :
+       cic.Term (cic.type cic.z)
+         ((_A : cic.Univ (cic.type cic.z) =>
+           _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+           matita_basics_vectors.Vector
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+               ((_xxx :
+                   cic.Term (cic.type (cic.s cic.z))
+                     matita_basics_deqsets.DeqSet =>
+                 matita_basics_deqsets.carr _xxx) D))
+            (matita_arithmetics_nat.S m)) =>
+     matita_basics_bool.andb
+       (matita_basics_deqsets.eqb D
+          (matita_basics_vectors.vec_hd
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) D))
+             m v1)
+          (matita_basics_vectors.vec_hd
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) D))
+             m v2))
+       (matita_basics_vector_finset.eq_Vector D m
+          (matita_basics_vectors.vec_tail
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) D))
+             (matita_arithmetics_nat.S m) v1)
+          (matita_basics_vectors.vec_tail
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) D))
+             (matita_arithmetics_nat.S m) v2)))
+    n.
+
+def eq_Vector_S :
+      cic.Term cic.prop
+        (cic.prod (cic.type (cic.s cic.z)) cic.prop cic.prop cic.I
+           matita_basics_deqsets.DeqSet
+           (A :
+              cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+            cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+              matita_arithmetics_nat.nat
+              (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                 ((_A : cic.Univ (cic.type cic.z) =>
+                   _n :
+                     cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                   matita_basics_vectors.Vector
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                       ((_xxx :
+                           cic.Term (cic.type (cic.s cic.z))
+                             matita_basics_deqsets.DeqSet =>
+                         matita_basics_deqsets.carr _xxx) A))
+                    (matita_arithmetics_nat.pred
+                       (matita_arithmetics_nat.S (matita_arithmetics_nat.S n))))
+                 (v1 :
+                    cic.Term (cic.type cic.z)
+                      ((_A : cic.Univ (cic.type cic.z) =>
+                        _n :
+                          cic.Term (cic.type cic.z)
+                            matita_arithmetics_nat.nat =>
+                        matita_basics_vectors.Vector
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                             _A)
+                          _n)
+                         (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                            ((_xxx :
+                                cic.Term (cic.type (cic.s cic.z))
+                                  matita_basics_deqsets.DeqSet =>
+                              matita_basics_deqsets.carr _xxx) A))
+                         (matita_arithmetics_nat.pred
+                            (matita_arithmetics_nat.S
+                               (matita_arithmetics_nat.S n)))) =>
+                  cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                    ((_A : cic.Univ (cic.type cic.z) =>
+                      _n :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      matita_basics_vectors.Vector
+                        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                        _n)
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                          ((_xxx :
+                              cic.Term (cic.type (cic.s cic.z))
+                                matita_basics_deqsets.DeqSet =>
+                            matita_basics_deqsets.carr _xxx) A))
+                       (matita_arithmetics_nat.pred
+                          (matita_arithmetics_nat.S
+                             (matita_arithmetics_nat.S n))))
+                    (v2 :
+                       cic.Term (cic.type cic.z)
+                         ((_A : cic.Univ (cic.type cic.z) =>
+                           _n :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           matita_basics_vectors.Vector
+                             (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                cic.I _A)
+                             _n)
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               ((_xxx :
+                                   cic.Term (cic.type (cic.s cic.z))
+                                     matita_basics_deqsets.DeqSet =>
+                                 matita_basics_deqsets.carr _xxx) A))
+                            (matita_arithmetics_nat.pred
+                               (matita_arithmetics_nat.S
+                                  (matita_arithmetics_nat.S n)))) =>
+                     (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                      _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                      __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                      matita_basics_logic.eq
+                        (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                           (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                        _x __)
+                       (cic.lift (cic.type cic.z)
+                          (cic.type (cic.s (cic.s cic.z))) cic.I
+                          matita_basics_bool.bool)
+                       (matita_basics_vector_finset.eq_Vector A
+                          (matita_arithmetics_nat.S n) v1 v2)
+                       (matita_basics_bool.andb
+                          (matita_basics_deqsets.eqb A
+                             (matita_basics_vectors.vec_hd
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I
+                                   ((_xxx :
+                                       cic.Term (cic.type (cic.s cic.z))
+                                         matita_basics_deqsets.DeqSet =>
+                                     matita_basics_deqsets.carr _xxx) A))
+                                n v1)
+                             (matita_basics_vectors.vec_hd
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I
+                                   ((_xxx :
+                                       cic.Term (cic.type (cic.s cic.z))
+                                         matita_basics_deqsets.DeqSet =>
+                                     matita_basics_deqsets.carr _xxx) A))
+                                n v2))
+                          (matita_basics_vector_finset.eq_Vector A n
+                             (matita_basics_vectors.vec_tail
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I
+                                   ((_xxx :
+                                       cic.Term (cic.type (cic.s cic.z))
+                                         matita_basics_deqsets.DeqSet =>
+                                     matita_basics_deqsets.carr _xxx) A))
+                                (matita_arithmetics_nat.S n) v1)
+                             (matita_basics_vectors.vec_tail
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I
+                                   ((_xxx :
+                                       cic.Term (cic.type (cic.s cic.z))
+                                         matita_basics_deqsets.DeqSet =>
+                                     matita_basics_deqsets.carr _xxx) A))
+                                (matita_arithmetics_nat.S n) v2))))))))
+      :=
+      A : cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+      n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      v1 :
+        cic.Term (cic.type cic.z)
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) A))
+             (matita_arithmetics_nat.pred
+                (matita_arithmetics_nat.S (matita_arithmetics_nat.S n)))) =>
+      v2 :
+        cic.Term (cic.type cic.z)
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) A))
+             (matita_arithmetics_nat.pred
+                (matita_arithmetics_nat.S (matita_arithmetics_nat.S n)))) =>
+      matita_basics_logic.refl
+        (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z))) cic.I
+           matita_basics_bool.bool)
+        (matita_basics_vector_finset.eq_Vector A (matita_arithmetics_nat.S n)
+           v1 v2).
+
+eq_Vector_S1 :
+  cic.Term cic.prop
+    (cic.prod (cic.type (cic.s cic.z)) cic.prop cic.prop cic.I
+       matita_basics_deqsets.DeqSet
+       (A : cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+        cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+          matita_arithmetics_nat.nat
+          (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+           cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+             ((_xxx :
+                 cic.Term (cic.type (cic.s cic.z))
+                   matita_basics_deqsets.DeqSet =>
+               matita_basics_deqsets.carr _xxx) A)
+             (a1 :
+                cic.Term (cic.type cic.z)
+                  ((_xxx :
+                      cic.Term (cic.type (cic.s cic.z))
+                        matita_basics_deqsets.DeqSet =>
+                    matita_basics_deqsets.carr _xxx) A) =>
+              cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) A)
+                (a2 :
+                   cic.Term (cic.type cic.z)
+                     ((_xxx :
+                         cic.Term (cic.type (cic.s cic.z))
+                           matita_basics_deqsets.DeqSet =>
+                       matita_basics_deqsets.carr _xxx) A) =>
+                 cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                   ((_A : cic.Univ (cic.type cic.z) =>
+                     _n :
+                       cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                     matita_basics_vectors.Vector
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                       _n)
+                      (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                         ((_xxx :
+                             cic.Term (cic.type (cic.s cic.z))
+                               matita_basics_deqsets.DeqSet =>
+                           matita_basics_deqsets.carr _xxx) A))
+                      n)
+                   (v1 :
+                      cic.Term (cic.type cic.z)
+                        ((_A : cic.Univ (cic.type cic.z) =>
+                          _n :
+                            cic.Term (cic.type cic.z)
+                              matita_arithmetics_nat.nat =>
+                          matita_basics_vectors.Vector
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               _A)
+                            _n)
+                           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                              ((_xxx :
+                                  cic.Term (cic.type (cic.s cic.z))
+                                    matita_basics_deqsets.DeqSet =>
+                                matita_basics_deqsets.carr _xxx) A))
+                           n) =>
+                    cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                      ((_A : cic.Univ (cic.type cic.z) =>
+                        _n :
+                          cic.Term (cic.type cic.z)
+                            matita_arithmetics_nat.nat =>
+                        matita_basics_vectors.Vector
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                             _A)
+                          _n)
+                         (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                            ((_xxx :
+                                cic.Term (cic.type (cic.s cic.z))
+                                  matita_basics_deqsets.DeqSet =>
+                              matita_basics_deqsets.carr _xxx) A))
+                         n)
+                      (v2 :
+                         cic.Term (cic.type cic.z)
+                           ((_A : cic.Univ (cic.type cic.z) =>
+                             _n :
+                               cic.Term (cic.type cic.z)
+                                 matita_arithmetics_nat.nat =>
+                             matita_basics_vectors.Vector
+                               (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                  cic.I _A)
+                               _n)
+                              (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                 cic.I
+                                 ((_xxx :
+                                     cic.Term (cic.type (cic.s cic.z))
+                                       matita_basics_deqsets.DeqSet =>
+                                   matita_basics_deqsets.carr _xxx) A))
+                              n) =>
+                       (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                        _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                        __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                        matita_basics_logic.eq
+                          (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                             (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                          _x __)
+                         (cic.lift (cic.type cic.z)
+                            (cic.type (cic.s (cic.s cic.z))) cic.I
+                            matita_basics_bool.bool)
+                         (matita_basics_vector_finset.eq_Vector A
+                            (matita_arithmetics_nat.S n)
+                            (matita_basics_vectors.vec_cons
+                               (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                  cic.I
+                                  ((_xxx :
+                                      cic.Term (cic.type (cic.s cic.z))
+                                        matita_basics_deqsets.DeqSet =>
+                                    matita_basics_deqsets.carr _xxx) A))
+                               a1 n v1)
+                            (matita_basics_vectors.vec_cons
+                               (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                  cic.I
+                                  ((_xxx :
+                                      cic.Term (cic.type (cic.s cic.z))
+                                        matita_basics_deqsets.DeqSet =>
+                                    matita_basics_deqsets.carr _xxx) A))
+                               a2 n v2))
+                         (matita_basics_bool.andb
+                            (matita_basics_deqsets.eqb A a1 a2)
+                            (matita_basics_vector_finset.eq_Vector A n v1 v2))))))))).
+
+eq_Vector_true :
+  cic.Term cic.prop
+    (cic.prod (cic.type (cic.s cic.z)) cic.prop cic.prop cic.I
+       matita_basics_deqsets.DeqSet
+       (A : cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+        cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+          matita_arithmetics_nat.nat
+          (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+           cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+             ((_A : cic.Univ (cic.type cic.z) =>
+               _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_basics_vectors.Vector
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                   ((_xxx :
+                       cic.Term (cic.type (cic.s cic.z))
+                         matita_basics_deqsets.DeqSet =>
+                     matita_basics_deqsets.carr _xxx) A))
+                (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n)))
+             (v1 :
+                cic.Term (cic.type cic.z)
+                  ((_A : cic.Univ (cic.type cic.z) =>
+                    _n :
+                      cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                    matita_basics_vectors.Vector
+                      (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                      _n)
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                        ((_xxx :
+                            cic.Term (cic.type (cic.s cic.z))
+                              matita_basics_deqsets.DeqSet =>
+                          matita_basics_deqsets.carr _xxx) A))
+                     (matita_arithmetics_nat.pred
+                        (matita_arithmetics_nat.S n))) =>
+              cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                ((_A : cic.Univ (cic.type cic.z) =>
+                  _n :
+                    cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  matita_basics_vectors.Vector
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                      ((_xxx :
+                          cic.Term (cic.type (cic.s cic.z))
+                            matita_basics_deqsets.DeqSet =>
+                        matita_basics_deqsets.carr _xxx) A))
+                   (matita_arithmetics_nat.pred (matita_arithmetics_nat.S n)))
+                (v2 :
+                   cic.Term (cic.type cic.z)
+                     ((_A : cic.Univ (cic.type cic.z) =>
+                       _n :
+                         cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                       matita_basics_vectors.Vector
+                         (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                         _n)
+                        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                           ((_xxx :
+                               cic.Term (cic.type (cic.s cic.z))
+                                 matita_basics_deqsets.DeqSet =>
+                             matita_basics_deqsets.carr _xxx) A))
+                        (matita_arithmetics_nat.pred
+                           (matita_arithmetics_nat.S n))) =>
+                 (_A : cic.Univ cic.prop =>
+                  _B : cic.Univ cic.prop => matita_basics_logic.iff _A _B)
+                   ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                     _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     matita_basics_logic.eq
+                       (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                          (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                       _x __)
+                      (cic.lift (cic.type cic.z)
+                         (cic.type (cic.s (cic.s cic.z))) cic.I
+                         matita_basics_bool.bool)
+                      (matita_basics_vector_finset.eq_Vector A n v1 v2)
+                      matita_basics_bool.true)
+                   ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                     _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     matita_basics_logic.eq
+                       (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                          (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                       _x __)
+                      (cic.lift (cic.type cic.z)
+                         (cic.type (cic.s (cic.s cic.z))) cic.I
+                         ((_A : cic.Univ (cic.type cic.z) =>
+                           _n :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           matita_basics_vectors.Vector
+                             (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                cic.I _A)
+                             _n)
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               ((_xxx :
+                                   cic.Term (cic.type (cic.s cic.z))
+                                     matita_basics_deqsets.DeqSet =>
+                                 matita_basics_deqsets.carr _xxx) A))
+                            (matita_arithmetics_nat.pred
+                               (matita_arithmetics_nat.S n))))
+                      v1 v2)))))).
+
+def DeqVector :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type (cic.s cic.z))
+           (cic.type (cic.s cic.z)) cic.I matita_basics_deqsets.DeqSet
+           (_A :
+              cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+            cic.prod (cic.type cic.z) (cic.type (cic.s cic.z))
+              (cic.type (cic.s cic.z)) cic.I matita_arithmetics_nat.nat
+              (_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_basics_deqsets.DeqSet)))
+      :=
+      A : cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+      n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      matita_basics_deqsets.mk_DeqSet
+        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+           ((_A : cic.Univ (cic.type cic.z) =>
+             _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             matita_basics_vectors.Vector
+               (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 ((_xxx :
+                     cic.Term (cic.type (cic.s cic.z))
+                       matita_basics_deqsets.DeqSet =>
+                   matita_basics_deqsets.carr _xxx) A))
+              n))
+        (matita_basics_vector_finset.eq_Vector A n)
+        (matita_basics_vector_finset.eq_Vector_true A n).
+
+def enum_vector :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+           (cic.type (cic.s cic.z)) cic.I
+           (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+           (H : cic.Univ (cic.type cic.z) =>
+            cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              ((_A : cic.Univ (cic.type cic.z) =>
+                matita_basics_lists_list.list
+                  (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H))
+              (__ :
+                 cic.Term (cic.type cic.z)
+                   ((_A : cic.Univ (cic.type cic.z) =>
+                     matita_basics_lists_list.list
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                      (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)) =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I matita_arithmetics_nat.nat
+                 (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  (_A : cic.Univ (cic.type cic.z) =>
+                   matita_basics_lists_list.list
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                       ((_A : cic.Univ (cic.type cic.z) =>
+                         _n :
+                           cic.Term (cic.type cic.z)
+                             matita_arithmetics_nat.nat =>
+                         matita_basics_vectors.Vector
+                           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                              _A)
+                           _n)
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                          n)))))).
+
+def enum_vector_body :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+           (cic.type (cic.s cic.z)) cic.I
+           (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+           (H : cic.Univ (cic.type cic.z) =>
+            cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              ((_A : cic.Univ (cic.type cic.z) =>
+                matita_basics_lists_list.list
+                  (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H))
+              (__ :
+                 cic.Term (cic.type cic.z)
+                   ((_A : cic.Univ (cic.type cic.z) =>
+                     matita_basics_lists_list.list
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                      (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)) =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I matita_arithmetics_nat.nat
+                 (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  (_A : cic.Univ (cic.type cic.z) =>
+                   matita_basics_lists_list.list
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                       ((_A : cic.Univ (cic.type cic.z) =>
+                         _n :
+                           cic.Term (cic.type cic.z)
+                             matita_arithmetics_nat.nat =>
+                         matita_basics_vectors.Vector
+                           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                              _A)
+                           _n)
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                          n)))))).
+
+[ H, __, n ] enum_vector H __ n -->
+  matita_arithmetics_nat.filter_nat (cic.type cic.z)
+    (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     (_A : cic.Univ (cic.type cic.z) =>
+      matita_basics_lists_list.list
+        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) n)))
+    (matita_basics_vector_finset.enum_vector_body
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) __)
+    n.
+
+[ H, __, n ] enum_vector_body H __ n -->
+  matita_arithmetics_nat.match_nat (cic.type cic.z)
+    (__1 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     (_A : cic.Univ (cic.type cic.z) =>
+      matita_basics_lists_list.list
+        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) __1)))
+    (matita_basics_lists_list.nil
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_basics_vectors.Vector
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+             matita_arithmetics_nat.O)))
+    (n0 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     matita_basics_lists_list.foldr
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            matita_basics_lists_list.list
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_A : cic.Univ (cic.type cic.z) =>
+                  _n :
+                    cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  matita_basics_vectors.Vector
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                   (matita_arithmetics_nat.S n0)))))
+       (i : cic.Term (cic.type cic.z) H =>
+        acc :
+          cic.Term (cic.type cic.z)
+            ((_A : cic.Univ (cic.type cic.z) =>
+              matita_basics_lists_list.list
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+               (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                  ((_A : cic.Univ (cic.type cic.z) =>
+                    _n :
+                      cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                    matita_basics_vectors.Vector
+                      (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A)
+                      _n)
+                     (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                     (matita_arithmetics_nat.S n0)))) =>
+        matita_basics_lists_list.append
+          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+             ((_A : cic.Univ (cic.type cic.z) =>
+               _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_basics_vectors.Vector
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                (matita_arithmetics_nat.S n0)))
+          (matita_basics_lists_list.map
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_A : cic.Univ (cic.type cic.z) =>
+                  _n :
+                    cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  matita_basics_vectors.Vector
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) n0))
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_A : cic.Univ (cic.type cic.z) =>
+                  _n :
+                    cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  matita_basics_vectors.Vector
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                   (matita_arithmetics_nat.S n0)))
+             (matita_basics_vectors.vec_cons
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) i n0)
+             (matita_basics_vector_finset.enum_vector
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) __ n0))
+          acc)
+       (matita_basics_lists_list.nil
+          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+             ((_A : cic.Univ (cic.type cic.z) =>
+               _n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_basics_vectors.Vector
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A) _n)
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H)
+                (matita_arithmetics_nat.S n0))))
+       __)
+    n.
+
+enum_vector_unique :
+  cic.Term cic.prop
+    (cic.prod (cic.type (cic.s cic.z)) cic.prop cic.prop cic.I
+       matita_basics_deqsets.DeqSet
+       (A : cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+        cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            matita_basics_lists_list.list
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) A)))
+          (l :
+             cic.Term (cic.type cic.z)
+               ((_A : cic.Univ (cic.type cic.z) =>
+                 matita_basics_lists_list.list
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                  (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                     ((_xxx :
+                         cic.Term (cic.type (cic.s cic.z))
+                           matita_basics_deqsets.DeqSet =>
+                       matita_basics_deqsets.carr _xxx) A))) =>
+           cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+             matita_arithmetics_nat.nat
+             (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              cic.prod cic.prop cic.prop cic.prop cic.I
+                ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                  _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  matita_basics_logic.eq
+                    (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                       (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                    _x __)
+                   (cic.lift (cic.type cic.z)
+                      (cic.type (cic.s (cic.s cic.z))) cic.I
+                      matita_basics_bool.bool)
+                   (matita_basics_lists_listb.uniqueb A l)
+                   matita_basics_bool.true)
+                (__ :
+                   cic.Term cic.prop
+                     ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                       _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                       __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                       matita_basics_logic.eq
+                         (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                            (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                         _x __)
+                        (cic.lift (cic.type cic.z)
+                           (cic.type (cic.s (cic.s cic.z))) cic.I
+                           matita_basics_bool.bool)
+                        (matita_basics_lists_listb.uniqueb A l)
+                        matita_basics_bool.true) =>
+                 (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                  _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  __1 : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  matita_basics_logic.eq
+                    (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                       (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                    _x __1)
+                   (cic.lift (cic.type cic.z)
+                      (cic.type (cic.s (cic.s cic.z))) cic.I
+                      matita_basics_bool.bool)
+                   (matita_basics_lists_listb.uniqueb
+                      (matita_basics_vector_finset.DeqVector A n)
+                      (matita_basics_vector_finset.enum_vector
+                         (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                            ((_xxx :
+                                cic.Term (cic.type (cic.s cic.z))
+                                  matita_basics_deqsets.DeqSet =>
+                              matita_basics_deqsets.carr _xxx) A))
+                         l n))
+                   matita_basics_bool.true))))).
+
+enum_vector_complete :
+  cic.Term cic.prop
+    (cic.prod (cic.type (cic.s cic.z)) cic.prop cic.prop cic.I
+       matita_basics_deqsets.DeqSet
+       (A : cic.Term (cic.type (cic.s cic.z)) matita_basics_deqsets.DeqSet =>
+        cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+          ((_A : cic.Univ (cic.type cic.z) =>
+            matita_basics_lists_list.list
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                ((_xxx :
+                    cic.Term (cic.type (cic.s cic.z))
+                      matita_basics_deqsets.DeqSet =>
+                  matita_basics_deqsets.carr _xxx) A)))
+          (l :
+             cic.Term (cic.type cic.z)
+               ((_A : cic.Univ (cic.type cic.z) =>
+                 matita_basics_lists_list.list
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I _A))
+                  (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                     ((_xxx :
+                         cic.Term (cic.type (cic.s cic.z))
+                           matita_basics_deqsets.DeqSet =>
+                       matita_basics_deqsets.carr _xxx) A))) =>
+           cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+             matita_arithmetics_nat.nat
+             (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              cic.prod cic.prop cic.prop cic.prop cic.I
+                (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                   ((_xxx :
+                       cic.Term (cic.type (cic.s cic.z))
+                         matita_basics_deqsets.DeqSet =>
+                     matita_basics_deqsets.carr _xxx) A)
+                   (a :
+                      cic.Term (cic.type cic.z)
+                        ((_xxx :
+                            cic.Term (cic.type (cic.s cic.z))
+                              matita_basics_deqsets.DeqSet =>
+                          matita_basics_deqsets.carr _xxx) A) =>
+                    (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                     _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     matita_basics_logic.eq
+                       (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                          (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                       _x __)
+                      (cic.lift (cic.type cic.z)
+                         (cic.type (cic.s (cic.s cic.z))) cic.I
+                         matita_basics_bool.bool)
+                      (matita_basics_lists_listb.memb A a l)
+                      matita_basics_bool.true))
+                (__ :
+                   cic.Term cic.prop
+                     (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                        ((_xxx :
+                            cic.Term (cic.type (cic.s cic.z))
+                              matita_basics_deqsets.DeqSet =>
+                          matita_basics_deqsets.carr _xxx) A)
+                        (a :
+                           cic.Term (cic.type cic.z)
+                             ((_xxx :
+                                 cic.Term (cic.type (cic.s cic.z))
+                                   matita_basics_deqsets.DeqSet =>
+                               matita_basics_deqsets.carr _xxx) A) =>
+                         (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                          _x :
+                            cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                          __ :
+                            cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                          matita_basics_logic.eq
+                            (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                               (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                            _x __)
+                           (cic.lift (cic.type cic.z)
+                              (cic.type (cic.s (cic.s cic.z))) cic.I
+                              matita_basics_bool.bool)
+                           (matita_basics_lists_listb.memb A a l)
+                           matita_basics_bool.true)) =>
+                 cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                   ((_xxx :
+                       cic.Term (cic.type (cic.s cic.z))
+                         matita_basics_deqsets.DeqSet =>
+                     matita_basics_deqsets.carr _xxx)
+                      (matita_basics_vector_finset.DeqVector A n))
+                   (v :
+                      cic.Term (cic.type cic.z)
+                        ((_xxx :
+                            cic.Term (cic.type (cic.s cic.z))
+                              matita_basics_deqsets.DeqSet =>
+                          matita_basics_deqsets.carr _xxx)
+                           (matita_basics_vector_finset.DeqVector A n)) =>
+                    (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                     _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     __1 : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                     matita_basics_logic.eq
+                       (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                          (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                       _x __1)
+                      (cic.lift (cic.type cic.z)
+                         (cic.type (cic.s (cic.s cic.z))) cic.I
+                         matita_basics_bool.bool)
+                      (matita_basics_lists_listb.memb
+                         (matita_basics_vector_finset.DeqVector A n) v
+                         (matita_basics_vector_finset.enum_vector
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               ((_xxx :
+                                   cic.Term (cic.type (cic.s cic.z))
+                                     matita_basics_deqsets.DeqSet =>
+                                 matita_basics_deqsets.carr _xxx) A))
+                            l n))
+                      matita_basics_bool.true)))))).
+
+def FinVector :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type (cic.s cic.z))
+           (cic.type (cic.s cic.z)) cic.I matita_basics_finset.FinSet
+           (_A :
+              cic.Term (cic.type (cic.s cic.z)) matita_basics_finset.FinSet =>
+            cic.prod (cic.type cic.z) (cic.type (cic.s cic.z))
+              (cic.type (cic.s cic.z)) cic.I matita_arithmetics_nat.nat
+              (_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_basics_finset.FinSet)))
+      :=
+      A : cic.Term (cic.type (cic.s cic.z)) matita_basics_finset.FinSet =>
+      n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      matita_basics_finset.mk_FinSet
+        (matita_basics_vector_finset.DeqVector
+           (matita_basics_finset.FinSetcarr A) n)
+        (matita_basics_vector_finset.enum_vector
+           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+              ((x0 :
+                  cic.Term (cic.type (cic.s cic.z))
+                    matita_basics_finset.FinSet =>
+                matita_basics_finset.FinSetcarr__o__carr x0) A))
+           (matita_basics_finset.enum A) n)
+        (matita_basics_vector_finset.enum_vector_unique
+           (matita_basics_finset.FinSetcarr A) (matita_basics_finset.enum A)
+           n (matita_basics_finset.enum_unique A))
+        (matita_basics_vector_finset.enum_vector_complete
+           (matita_basics_finset.FinSetcarr A) (matita_basics_finset.enum A)
+           n (matita_basics_finset.enum_complete A)).
+
+

@@ -1,0 +1,16 @@
+(; This file was automatically generated from Matita. ;)
+
+def Type0 : cic.Sort := cic.type cic.z.
+
+def Type1 : cic.Sort := cic.type (cic.s cic.z).
+
+def Type2 : cic.Sort := cic.type (cic.s (cic.s cic.z)).
+
+def Type3 : cic.Sort := cic.type (cic.s (cic.s (cic.s cic.z))).
+
+def Type4 : cic.Sort := cic.type (cic.s (cic.s (cic.s (cic.s cic.z)))).
+
+def Type5 : cic.Sort :=
+      cic.type (cic.s (cic.s (cic.s (cic.s (cic.s cic.z))))).
+
+

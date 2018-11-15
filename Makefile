@@ -12,7 +12,7 @@ doc:
 DKCHECK  = dkcheck
 UNIVERSO = $(shell readlink -f _build/install/default/bin/universo)
 
-MATITA_PATH=experiments/matita
+MATITA_PATH=experiments/matita2
 
 .PHONY: theory
 theory:

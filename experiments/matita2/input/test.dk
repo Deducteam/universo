@@ -1,0 +1,30 @@
+eq :
+  cic.Term (cic.type (cic.s (cic.s (cic.s cic.z))))
+    (cic.prod (cic.type (cic.s (cic.s (cic.s cic.z))))
+       (cic.type (cic.s (cic.s cic.z)))
+       (cic.type (cic.s (cic.s (cic.s cic.z)))) cic.I
+       (cic.univ (cic.type (cic.s (cic.s cic.z)))
+          (cic.type (cic.s (cic.s (cic.s cic.z)))) cic.I)
+       (A : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+        cic.prod (cic.type (cic.s (cic.s cic.z)))
+          (cic.type (cic.s (cic.s cic.z))) (cic.type (cic.s (cic.s cic.z)))
+          cic.I A
+          (_x : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+           cic.prod (cic.type (cic.s (cic.s cic.z))) (cic.type cic.z)
+             (cic.type (cic.s (cic.s cic.z))) cic.I A
+             (__ : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+              cic.univ cic.prop (cic.type cic.z) cic.I)))).
+
+refl :
+  cic.Term cic.prop
+    (cic.prod (cic.type (cic.s (cic.s (cic.s cic.z)))) cic.prop cic.prop
+       cic.I
+       (cic.univ (cic.type (cic.s (cic.s cic.z)))
+          (cic.type (cic.s (cic.s (cic.s cic.z)))) cic.I)
+       (A : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+        cic.prod (cic.type (cic.s (cic.s cic.z))) cic.prop cic.prop cic.I A
+          (x : cic.Term (cic.type (cic.s (cic.s cic.z))) A =>
+           test.eq
+             (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                (cic.type (cic.s (cic.s cic.z))) cic.I A)
+             x x))).

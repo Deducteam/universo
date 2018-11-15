@@ -1344,11 +1344,13 @@ def match_eq :
                 (cic.type (cic.s (cic.s cic.z))) A)
              _x __) ->
       cic.Term return_sort (return_type __ z).
+
 (;
 [  ] match_eq cic.prop --> test.match_eq_Prop.
 ;)
 [  ] match_eq (cic.type (cic.s (cic.s (cic.s (cic.s (cic.s cic.z)))))) -->
   test.match_eq_Type5.
+
 (;
 [  ] match_eq (cic.type (cic.s (cic.s (cic.s (cic.s cic.z))))) -->
   test.match_eq_Type4.

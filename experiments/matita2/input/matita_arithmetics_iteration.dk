@@ -1,0 +1,744 @@
+(; This file was automatically generated from Matita. ;)
+
+def iter :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+           (cic.type (cic.s cic.z)) cic.I
+           (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+           (H : cic.Univ (cic.type cic.z) =>
+            cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I H (__ : cic.Term (cic.type cic.z) H => H))
+              (__ :
+                 cic.Term (cic.type cic.z)
+                   (cic.prod (cic.type cic.z) (cic.type cic.z)
+                      (cic.type cic.z) cic.I H
+                      (__ : cic.Term (cic.type cic.z) H => H)) =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I matita_arithmetics_nat.nat
+                 (__1 :
+                    cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                    cic.I H (__2 : cic.Term (cic.type cic.z) H => H))))).
+
+def iter_body :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+           (cic.type (cic.s cic.z)) cic.I
+           (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+           (H : cic.Univ (cic.type cic.z) =>
+            cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I H (__ : cic.Term (cic.type cic.z) H => H))
+              (__ :
+                 cic.Term (cic.type cic.z)
+                   (cic.prod (cic.type cic.z) (cic.type cic.z)
+                      (cic.type cic.z) cic.I H
+                      (__ : cic.Term (cic.type cic.z) H => H)) =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I matita_arithmetics_nat.nat
+                 (__1 :
+                    cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                    cic.I H (__2 : cic.Term (cic.type cic.z) H => H))))).
+
+[ H, __, __1 ] iter H __ __1 -->
+  matita_arithmetics_nat.filter_nat (cic.type cic.z)
+    (__1 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I H
+       (__2 : cic.Term (cic.type cic.z) H => H))
+    (matita_arithmetics_iteration.iter_body
+       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) __)
+    __1.
+
+[ H, __, __1 ] iter_body H __ __1 -->
+  a : cic.Term (cic.type cic.z) H =>
+  matita_arithmetics_nat.match_nat (cic.type cic.z)
+    (__2 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat => H) a
+    (m : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+     __
+       (matita_arithmetics_iteration.iter
+          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I H) __ m a))
+    __1.
+
+def le_iter :
+      cic.Term cic.prop
+        (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+           (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              matita_arithmetics_nat.nat
+              (__ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.nat))
+           (g :
+              cic.Term (cic.type cic.z)
+                (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                   cic.I matita_arithmetics_nat.nat
+                   (__ :
+                      cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                    matita_arithmetics_nat.nat)) =>
+            cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+              matita_arithmetics_nat.nat
+              (a : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               cic.prod cic.prop cic.prop cic.prop cic.I
+                 (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                    matita_arithmetics_nat.nat
+                    (x :
+                       cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                     (_n :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      __ :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      matita_arithmetics_nat.le _n __) x (g x)))
+                 (__ :
+                    cic.Term cic.prop
+                      (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                         matita_arithmetics_nat.nat
+                         (x :
+                            cic.Term (cic.type cic.z)
+                              matita_arithmetics_nat.nat =>
+                          (_n :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           __ :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           matita_arithmetics_nat.le _n __) x (g x))) =>
+                  cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                    matita_arithmetics_nat.nat
+                    (i :
+                       cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                     (_n :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      __1 :
+                        cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                      matita_arithmetics_nat.le _n __1) a
+                       (matita_arithmetics_iteration.iter
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                             matita_arithmetics_nat.nat)
+                          g i a))))))
+      :=
+      g :
+        cic.Term (cic.type cic.z)
+          (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+             matita_arithmetics_nat.nat
+             (__ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              matita_arithmetics_nat.nat)) =>
+      a : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      leg :
+        cic.Term cic.prop
+          (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+             matita_arithmetics_nat.nat
+             (x : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              (_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __) x (g x))) =>
+      i : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      matita_arithmetics_nat.nat_ind
+        (_x_365 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         cic.lift cic.prop cic.prop cic.I
+           ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             matita_arithmetics_nat.le _n __) a
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g _x_365 a)))
+        (matita_arithmetics_nat.le_n a)
+        (n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         Hind :
+           cic.Term cic.prop
+             ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __) a
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                      matita_arithmetics_nat.nat)
+                   g n a)) =>
+         matita_arithmetics_nat.transitive_le a
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g n a)
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g (matita_arithmetics_nat.S n) a)
+           Hind
+           (leg
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g n a)))
+        i.
+
+def iter_iter :
+      cic.Term cic.prop
+        (cic.prod (cic.type (cic.s cic.z)) cic.prop cic.prop cic.I
+           (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+           (A : cic.Univ (cic.type cic.z) =>
+            cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+              (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I A (__ : cic.Term (cic.type cic.z) A => A))
+              (g :
+                 cic.Term (cic.type cic.z)
+                   (cic.prod (cic.type cic.z) (cic.type cic.z)
+                      (cic.type cic.z) cic.I A
+                      (__ : cic.Term (cic.type cic.z) A => A)) =>
+               cic.prod (cic.type cic.z) cic.prop cic.prop cic.I A
+                 (a : cic.Term (cic.type cic.z) A =>
+                  cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                    matita_arithmetics_nat.nat
+                    (b :
+                       cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                     cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                       matita_arithmetics_nat.nat
+                       (c :
+                          cic.Term (cic.type cic.z)
+                            matita_arithmetics_nat.nat =>
+                        (A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                         _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                         __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                         matita_basics_logic.eq
+                           (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                              (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                           _x __)
+                          (cic.lift (cic.type cic.z)
+                             (cic.type (cic.s (cic.s cic.z))) cic.I A)
+                          (matita_arithmetics_iteration.iter
+                             (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                cic.I A)
+                             g c
+                             (matita_arithmetics_iteration.iter
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I A)
+                                g b a))
+                          (matita_arithmetics_iteration.iter
+                             (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                cic.I A)
+                             g (matita_arithmetics_nat.plus b c) a)))))))
+      :=
+      A : cic.Univ (cic.type cic.z) =>
+      g :
+        cic.Term (cic.type cic.z)
+          (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+             A (__ : cic.Term (cic.type cic.z) A => A)) =>
+      a : cic.Term (cic.type cic.z) A =>
+      b : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      c : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      matita_arithmetics_nat.nat_ind
+        (_x_365 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         cic.lift cic.prop cic.prop cic.I
+           ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+             _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+             __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+             matita_basics_logic.eq
+               (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                  (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+               _x __)
+              (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                 cic.I A)
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                 _x_365
+                 (matita_arithmetics_iteration.iter
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g b
+                    a))
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                 (matita_arithmetics_nat.plus b _x_365) a)))
+        (matita_basics_logic.eq_ind
+           (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z))) cic.I
+              matita_arithmetics_nat.nat)
+           b
+           (x_1 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            _x_2 :
+              cic.Term cic.prop
+                ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                  _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  matita_basics_logic.eq
+                    (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                       (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                    _x __)
+                   (cic.lift (cic.type cic.z)
+                      (cic.type (cic.s (cic.s cic.z))) cic.I
+                      matita_arithmetics_nat.nat)
+                   b x_1) =>
+            cic.lift cic.prop cic.prop cic.I
+              ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                matita_basics_logic.eq
+                  (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                     (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                  _x __)
+                 (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                    cic.I A)
+                 (matita_arithmetics_iteration.iter
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                    matita_arithmetics_nat.O
+                    (matita_arithmetics_iteration.iter
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                       b a))
+                 (matita_arithmetics_iteration.iter
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                    x_1 a)))
+           (matita_basics_logic.refl
+              (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                 cic.I A)
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g b a))
+           (matita_arithmetics_nat.plus b matita_arithmetics_nat.O)
+           (matita_arithmetics_nat.plus_n_O b))
+        (m : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         Hind :
+           cic.Term cic.prop
+             ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+               _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+               __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+               matita_basics_logic.eq
+                 (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                    (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                 _x __)
+                (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                   cic.I A)
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g m
+                   (matita_arithmetics_iteration.iter
+                      (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                      b a))
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                   (matita_arithmetics_nat.plus b m) a)) =>
+         matita_basics_logic.eq_ind
+           (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z))) cic.I
+              matita_arithmetics_nat.nat)
+           (matita_arithmetics_nat.S (matita_arithmetics_nat.plus b m))
+           (x_1 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            _x_2 :
+              cic.Term cic.prop
+                ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                  _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                  matita_basics_logic.eq
+                    (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                       (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                    _x __)
+                   (cic.lift (cic.type cic.z)
+                      (cic.type (cic.s (cic.s cic.z))) cic.I
+                      matita_arithmetics_nat.nat)
+                   (matita_arithmetics_nat.S
+                      (matita_arithmetics_nat.plus b m))
+                   x_1) =>
+            cic.lift cic.prop cic.prop cic.I
+              ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                matita_basics_logic.eq
+                  (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                     (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                  _x __)
+                 (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                    cic.I A)
+                 (matita_arithmetics_iteration.iter
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                    (matita_arithmetics_nat.S m)
+                    (matita_arithmetics_iteration.iter
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                       b a))
+                 (matita_arithmetics_iteration.iter
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                    x_1 a)))
+           (matita_basics_logic.eq_f
+              (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                 cic.I A)
+              (cic.lift (cic.type cic.z) (cic.type (cic.s (cic.s cic.z)))
+                 cic.I A)
+              g
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g m
+                 (matita_arithmetics_iteration.iter
+                    (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g b
+                    a))
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) g
+                 (matita_arithmetics_nat.plus b m) a)
+              Hind)
+           (matita_arithmetics_nat.plus b (matita_arithmetics_nat.S m))
+           (matita_arithmetics_nat.plus_n_Sm b m))
+        c.
+
+def monotonic_iter :
+      cic.Term cic.prop
+        (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+           (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              matita_arithmetics_nat.nat
+              (__ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.nat))
+           (g :
+              cic.Term (cic.type cic.z)
+                (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                   cic.I matita_arithmetics_nat.nat
+                   (__ :
+                      cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                    matita_arithmetics_nat.nat)) =>
+            cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+              matita_arithmetics_nat.nat
+              (a : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                 matita_arithmetics_nat.nat
+                 (b : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                    matita_arithmetics_nat.nat
+                    (i :
+                       cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                     cic.prod cic.prop cic.prop cic.prop cic.I
+                       ((A : cic.Univ (cic.type cic.z) =>
+                         _R :
+                           cic.Term (cic.type cic.z)
+                             (cic.prod (cic.type cic.z) (cic.type cic.z)
+                                (cic.type cic.z) cic.I A
+                                (__ : cic.Term (cic.type cic.z) A =>
+                                 cic.prod (cic.type cic.z) (cic.type cic.z)
+                                   (cic.type cic.z) cic.I A
+                                   (__1 : cic.Term (cic.type cic.z) A =>
+                                    cic.univ cic.prop (cic.type cic.z) cic.I))) =>
+                         _f :
+                           cic.Term (cic.type cic.z)
+                             (cic.prod (cic.type cic.z) (cic.type cic.z)
+                                (cic.type cic.z) cic.I A
+                                (__ : cic.Term (cic.type cic.z) A => A)) =>
+                         matita_basics_relations.monotonic
+                           (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                              A)
+                           _R _f)
+                          (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                             matita_arithmetics_nat.nat)
+                          (_n :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           __ :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           cic.lift cic.prop cic.prop cic.I
+                             (matita_arithmetics_nat.le _n __))
+                          g)
+                       (__ :
+                          cic.Term cic.prop
+                            ((A : cic.Univ (cic.type cic.z) =>
+                              _R :
+                                cic.Term (cic.type cic.z)
+                                  (cic.prod (cic.type cic.z) (cic.type cic.z)
+                                     (cic.type cic.z) cic.I A
+                                     (__ : cic.Term (cic.type cic.z) A =>
+                                      cic.prod (cic.type cic.z)
+                                        (cic.type cic.z) (cic.type cic.z)
+                                        cic.I A
+                                        (__1 : cic.Term (cic.type cic.z) A =>
+                                         cic.univ cic.prop (cic.type cic.z)
+                                           cic.I))) =>
+                              _f :
+                                cic.Term (cic.type cic.z)
+                                  (cic.prod (cic.type cic.z) (cic.type cic.z)
+                                     (cic.type cic.z) cic.I A
+                                     (__ : cic.Term (cic.type cic.z) A => A)) =>
+                              matita_basics_relations.monotonic
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I A)
+                                _R _f)
+                               (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                  cic.I matita_arithmetics_nat.nat)
+                               (_n :
+                                  cic.Term (cic.type cic.z)
+                                    matita_arithmetics_nat.nat =>
+                                __ :
+                                  cic.Term (cic.type cic.z)
+                                    matita_arithmetics_nat.nat =>
+                                cic.lift cic.prop cic.prop cic.I
+                                  (matita_arithmetics_nat.le _n __))
+                               g) =>
+                        cic.prod cic.prop cic.prop cic.prop cic.I
+                          ((_n :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            __1 :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            matita_arithmetics_nat.le _n __1) a b)
+                          (__1 :
+                             cic.Term cic.prop
+                               ((_n :
+                                   cic.Term (cic.type cic.z)
+                                     matita_arithmetics_nat.nat =>
+                                 __1 :
+                                   cic.Term (cic.type cic.z)
+                                     matita_arithmetics_nat.nat =>
+                                 matita_arithmetics_nat.le _n __1) a b) =>
+                           (_n :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            __2 :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            matita_arithmetics_nat.le _n __2)
+                             (matita_arithmetics_iteration.iter
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I matita_arithmetics_nat.nat)
+                                g i a)
+                             (matita_arithmetics_iteration.iter
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I matita_arithmetics_nat.nat)
+                                g i b))))))))
+      :=
+      g :
+        cic.Term (cic.type cic.z)
+          (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+             matita_arithmetics_nat.nat
+             (__ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              matita_arithmetics_nat.nat)) =>
+      a : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      b : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      i : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      Hmono :
+        cic.Term cic.prop
+          ((A : cic.Univ (cic.type cic.z) =>
+            _R :
+              cic.Term (cic.type cic.z)
+                (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                   cic.I A
+                   (__ : cic.Term (cic.type cic.z) A =>
+                    cic.prod (cic.type cic.z) (cic.type cic.z)
+                      (cic.type cic.z) cic.I A
+                      (__1 : cic.Term (cic.type cic.z) A =>
+                       cic.univ cic.prop (cic.type cic.z) cic.I))) =>
+            _f :
+              cic.Term (cic.type cic.z)
+                (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                   cic.I A (__ : cic.Term (cic.type cic.z) A => A)) =>
+            matita_basics_relations.monotonic
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A) _R _f)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                matita_arithmetics_nat.nat)
+             (_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              cic.lift cic.prop cic.prop cic.I
+                (matita_arithmetics_nat.le _n __))
+             g) =>
+      leab :
+        cic.Term cic.prop
+          ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_arithmetics_nat.le _n __) a b) =>
+      matita_arithmetics_nat.nat_ind
+        (_x_365 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         cic.lift cic.prop cic.prop cic.I
+           ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             matita_arithmetics_nat.le _n __)
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g _x_365 a)
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g _x_365 b)))
+        leab
+        (m : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         Hind :
+           cic.Term cic.prop
+             ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __)
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                      matita_arithmetics_nat.nat)
+                   g m a)
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                      matita_arithmetics_nat.nat)
+                   g m b)) =>
+         Hmono
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g m a)
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g m b)
+           Hind)
+        i.
+
+def monotonic_iter2 :
+      cic.Term cic.prop
+        (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+           (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+              matita_arithmetics_nat.nat
+              (__ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.nat))
+           (g :
+              cic.Term (cic.type cic.z)
+                (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                   cic.I matita_arithmetics_nat.nat
+                   (__ :
+                      cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                    matita_arithmetics_nat.nat)) =>
+            cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+              matita_arithmetics_nat.nat
+              (a : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                 matita_arithmetics_nat.nat
+                 (i : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                  cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                    matita_arithmetics_nat.nat
+                    (j :
+                       cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+                     cic.prod cic.prop cic.prop cic.prop cic.I
+                       (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+                          matita_arithmetics_nat.nat
+                          (x :
+                             cic.Term (cic.type cic.z)
+                               matita_arithmetics_nat.nat =>
+                           (_n :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            __ :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            matita_arithmetics_nat.le _n __) x (g x)))
+                       (__ :
+                          cic.Term cic.prop
+                            (cic.prod (cic.type cic.z) cic.prop cic.prop
+                               cic.I matita_arithmetics_nat.nat
+                               (x :
+                                  cic.Term (cic.type cic.z)
+                                    matita_arithmetics_nat.nat =>
+                                (_n :
+                                   cic.Term (cic.type cic.z)
+                                     matita_arithmetics_nat.nat =>
+                                 __ :
+                                   cic.Term (cic.type cic.z)
+                                     matita_arithmetics_nat.nat =>
+                                 matita_arithmetics_nat.le _n __) x (
+                                g x))) =>
+                        cic.prod cic.prop cic.prop cic.prop cic.I
+                          ((_n :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            __1 :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            matita_arithmetics_nat.le _n __1) i j)
+                          (__1 :
+                             cic.Term cic.prop
+                               ((_n :
+                                   cic.Term (cic.type cic.z)
+                                     matita_arithmetics_nat.nat =>
+                                 __1 :
+                                   cic.Term (cic.type cic.z)
+                                     matita_arithmetics_nat.nat =>
+                                 matita_arithmetics_nat.le _n __1) i j) =>
+                           (_n :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            __2 :
+                              cic.Term (cic.type cic.z)
+                                matita_arithmetics_nat.nat =>
+                            matita_arithmetics_nat.le _n __2)
+                             (matita_arithmetics_iteration.iter
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I matita_arithmetics_nat.nat)
+                                g i a)
+                             (matita_arithmetics_iteration.iter
+                                (cic.lift (cic.type cic.z) (cic.type cic.z)
+                                   cic.I matita_arithmetics_nat.nat)
+                                g j a))))))))
+      :=
+      g :
+        cic.Term (cic.type cic.z)
+          (cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z) cic.I
+             matita_arithmetics_nat.nat
+             (__ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              matita_arithmetics_nat.nat)) =>
+      a : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      i : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      j : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+      leg :
+        cic.Term cic.prop
+          (cic.prod (cic.type cic.z) cic.prop cic.prop cic.I
+             matita_arithmetics_nat.nat
+             (x : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+              (_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __) x (g x))) =>
+      leij :
+        cic.Term cic.prop
+          ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+            matita_arithmetics_nat.le _n __) i j) =>
+      matita_arithmetics_nat.le_ind i
+        (x_417 : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         _x_418 :
+           cic.Term cic.prop
+             ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __) i x_417) =>
+         cic.lift cic.prop cic.prop cic.I
+           ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+             matita_arithmetics_nat.le _n __)
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g i a)
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g x_417 a)))
+        (matita_arithmetics_nat.le_n
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g i a))
+        (m : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+         leim :
+           cic.Term cic.prop
+             ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __) i m) =>
+         Hind :
+           cic.Term cic.prop
+             ((_n : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               __ : cic.Term (cic.type cic.z) matita_arithmetics_nat.nat =>
+               matita_arithmetics_nat.le _n __)
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                      matita_arithmetics_nat.nat)
+                   g i a)
+                (matita_arithmetics_iteration.iter
+                   (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                      matita_arithmetics_nat.nat)
+                   g m a)) =>
+         matita_arithmetics_nat.transitive_le
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g i a)
+           (matita_arithmetics_iteration.iter
+              (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                 matita_arithmetics_nat.nat)
+              g m a)
+           (g
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g m a))
+           Hind
+           (leg
+              (matita_arithmetics_iteration.iter
+                 (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                    matita_arithmetics_nat.nat)
+                 g m a)))
+        j leij.
+
+
