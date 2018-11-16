@@ -11,12 +11,7 @@ type t =
 
 module type SOLVER =
 sig
-  type t =
-  {
-    model : Dkmeta.cfg
-  }
-
-  val parse   : t -> string -> unit
+  val parse   : Dkmeta.cfg -> string -> unit
 
   val solve   : unit -> int * model
 
@@ -143,9 +138,9 @@ struct
         let or_eqs = List.map (fun u -> Boolean.mk_eq ctx (mk_var var) (mk_univ u)) univs in
         add (Boolean.mk_or ctx or_eqs)) vars
 
-  let rec check env i =
+  let rec check meta i =
     Z3.Solver.push solver;
-    let model = Checking.Universes.mk_model env.model i in
+    let model = Checking.Universes.mk_model meta i in
     mk_model model;
     register_vars !vars i;
     Format.eprintf "%s@." (Z3.Solver.to_string solver);
@@ -153,7 +148,7 @@ struct
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
       Format.eprintf "No solution found with %d universes@." i;
-      Z3.Solver.pop solver 1; check env (i+1)
+      Z3.Solver.pop solver 1; check meta (i+1)
     | Z3.Solver.UNKNOWN -> failwith "This bug should be reported (check)"
     | Z3.Solver.SATISFIABLE ->
       match Z3.Solver.get_model solver with

@@ -61,9 +61,7 @@ let to_checking_env : string -> Checking.Checker.t = fun in_file ->
     check_fmt
   }
 
-let to_solver_env : unit -> Solving.Solver.Z3Syn.t = fun () ->
+let to_solver_env : unit -> Dkmeta.cfg = fun () ->
   let open Dkmeta in
   let meta = Dkmeta.meta_of_file false !compat_theory in
-  {
-    model={sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}
-  }
+  {sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}

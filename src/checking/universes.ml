@@ -266,10 +266,20 @@ let rec map3 f l1 l2 l3 =
   | a::l1,b::l2,c::l3 -> f a b c::(map3 f l1 l2 l3)
   | _ -> assert false
 
+let cartesian2 f l l' =
+  List.concat (List.map (fun e -> List.map (fun e' -> f e e') l') l)
+
+let cartesian3 f l l' l'' =
+  List.concat (
+    List.map (fun e ->
+        List.concat (
+          List.map (fun e' ->
+              List.map (fun e'' -> f e e' e'') l'') l')) l)
+
 (* FIXME: can be optimized *)
 let mk_model meta (i:int) =
   let u  = enumerate i in
-  let model_ax  = List.map2 (fun l r -> mk_axiom_model meta l r) u u in
-  let model_cu = List.map2 (fun l r -> mk_cumul_model meta l r) u u in
-  let model_ru = map3 (fun l m r -> mk_rule_model meta l m r) u u u in
+  let model_ax  = cartesian2 (fun l r -> mk_axiom_model meta l r) u u in
+  let model_cu = cartesian2 (fun l r -> mk_cumul_model meta l r) u u in
+  let model_ru = cartesian3 (fun l m r -> mk_rule_model meta l m r) u u u in
   model_ax@model_cu@model_ru
