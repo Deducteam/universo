@@ -12,7 +12,7 @@
 
 [] cic.s --> universo.S.
 
-[] cic.Axiom --> universo.Succ.
+[] cic.Axiom --> universo.Axiom.
 
 [] cic.Rule --> universo.Rule.
 

@@ -18,10 +18,8 @@ def S : Nat -> Nat.
 
 def type : Nat -> Sort.
 
-def max : Sort -> Sort -> Sort.
+def True : Type.
 
-def rule : Sort -> Sort -> Sort.
+def Cumul : Sort -> Sort -> Type.
 
-def succ : Sort -> Sort.
-
-def lift : s1:Sort -> s2:Sort -> Univ s1 -> Univ s2.
+def lift : s1:Sort -> s2:Sort -> Cumul s1 s2 -> Univ s1 -> Univ s2.

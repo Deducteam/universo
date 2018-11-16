@@ -51,13 +51,20 @@ struct
       true
     else
       try
-        begin
-          if V.is_uvar l && V.is_uvar r then
-            add_rule (V.name_of_uvar l) (V.name_of_uvar r);
-          Universes.mk_var_cstr uenv l r
-        end;
         let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
-        Universes.mk_cstr uenv l r
+        if V.is_uvar l && V.is_uvar r then
+          begin
+            add_rule (V.name_of_uvar l) (V.name_of_uvar r);
+            Universes.mk_var_cstr uenv l r;
+            true
+          end
+        else if (Term.term_eq Universes.true_ l) then
+          begin
+            Universes.mk_cstr uenv r l;
+            true
+          end
+        else
+          false
         (* let l' = Universes.to_univ !global_env.md_elab  *)
 
 (*        let l = snf l in

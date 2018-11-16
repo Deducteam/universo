@@ -11,6 +11,11 @@ type t =
 
 module type SOLVER =
 sig
+  type t =
+  {
+    model : Dkmeta.cfg
+  }
+
   val parse   : t -> string -> unit
 
   val solve   : unit -> int * model
@@ -44,8 +49,11 @@ let ctx = mk_context (string_of_cfg cfg)
 
 module Syn =
 struct
+  type t =
+    {
+      model : Dkmeta.cfg
+    }
 
-  type t = Expr.expr
 
   let vars = ref SSet.empty
 
@@ -53,166 +61,11 @@ struct
 
   let sort      = Sort.mk_uninterpreted_s ctx "Sort"
 
-  (* Type 0 is impredictive *)
-(*
-  let mk_univ i = Expr.mk_const_s ctx ("type"^(string_of_int i)) sort
-
-  let mk_succ   = FuncDecl.mk_func_decl_s ctx "S" [sort] sort
-
-  let mk_max    = FuncDecl.mk_func_decl_s ctx "M" [sort;sort] sort
-
-  let mk_rule   = FuncDecl.mk_func_decl_s ctx "R" [sort;sort] sort
-
-  let mk_eq l r = Boolean.mk_eq ctx l r
-
-  let mk_succ l  =
-    Expr.mk_app ctx mk_succ [l]
-
-  let mk_max l1 l2 =
-    Expr.mk_app ctx mk_max [l1;l2]
-
-  let mk_rule l1 l2 =
-   Expr.mk_app ctx mk_rule [l1;l2]
-
-  let mk_var s =
-    vars := SSet.add s !vars;
-    Expr.mk_const_s ctx s sort
-
-  let mk_type i = mk_univ (i + 1)
-
-  let mk_prop = mk_univ 0
-
-  let mk_set = mk_univ (-1)
-
-  let add expr =
-    Z3.Solver.add solver [expr]
-
-  let mk_eq l r = add (mk_eq l r)
-
-  let mk_neq l r = add (Boolean.mk_not ctx (Boolean.mk_eq ctx l r))
-
-  let mk_axiom_succ i max =
-    mk_eq (mk_succ (mk_univ i)) (mk_univ (i+1));
-    for j = 0 to max
-    do
-      if 1 + i <> j then
-        mk_neq (mk_succ (mk_univ i)) (mk_univ j)
-    done
-
-  let mk_axiom_max i j m =
-    mk_eq (mk_max (mk_univ i) (mk_univ j)) (mk_univ (max i j));
-    for k = 0 to m
-    do
-      if k <> max i j then
-        mk_neq (mk_max (mk_univ i) (mk_univ j)) (mk_univ k)
-    done
-
-  let mk_axiom_rule i j m =
-    if j = 0 then
-      begin
-        mk_eq (mk_rule (mk_univ i) (mk_univ 0)) (mk_univ 0);
-        for k = 1 to m
-        do
-          mk_neq (mk_rule (mk_univ i) (mk_univ 0)) (mk_univ k)
-        done
-      end
-    else
-      begin
-        mk_eq (mk_rule (mk_univ i) (mk_univ j)) (mk_univ (max i j));
-        for k = 0 to m
-        do
-          if k <> (max i j) then
-            mk_neq (mk_rule (mk_univ i) (mk_univ j)) (mk_univ k)
-        done
-      end
-*)
-(*
-  let register_axioms max =
-    for i = 0 to max
-    do
-      mk_axiom_succ i max;
-      for j = 0 to max
-      do
-        mk_axiom_max i j max;
-        mk_axiom_rule i j max;
-        if i <> j then
-          mk_neq (mk_univ i) (mk_univ j);
-      done;
-    done
-
-  let rec range i j =
-    if i = j then
-      []
-    else
-      i::(range (i+1) j)
-
-  let register_vars vars i =
-    let register_vars var =
-      let eqs = List.map
-          (fun i -> Boolean.mk_eq  ctx (Expr.mk_const_s ctx var sort) (mk_univ i)) (range 0 (i+1)) in
-      add (Boolean.mk_or ctx eqs)
-    in
-    SSet.iter register_vars vars
-*)
-
-  let solution_of_var model var = failwith "todo" (*
-    let univ_of_int i =
-      if i = 0 then
-        U.Prop
-      else
-        U.Type (i - 1)
-    in
-    let rec find_univ e i  =
-      match Model.get_const_interp_e model (mk_univ i) with
-      | None -> assert false
-      | Some u ->
-        if e = u then i else find_univ e (i+1)
-    in
-    match Model.get_const_interp_e model (mk_var var) with
-    | None -> assert false
-    | Some e -> univ_of_int (find_univ e 0)
-*)
-
   let reset () =
     vars := SSet.empty;
     Z3.Solver.reset solver
 
   let var_of_name cst = Basic.string_of_ident (Basic.id cst)
-
-  let rec check i =
-    Z3.Solver.push solver;
-    failwith "todo"; (*
-    register_axioms i;
-    register_vars !vars i; *)
-    if i > 6 then failwith "Probably the Constraints are inconsistent";
-    match Z3.Solver.check solver [] with
-    | Z3.Solver.UNSATISFIABLE ->
-      Format.eprintf "No solution found with %d universes@." i;
-      Z3.Solver.pop solver 1; check (i+1)
-    | Z3.Solver.UNKNOWN -> failwith "This bug should be reported (check)"
-    | Z3.Solver.SATISFIABLE ->
-      match Z3.Solver.get_model solver with
-      | None -> assert false
-      | Some model ->
-        let hmodel = Hashtbl.create 10001 in
-        let find var =
-          try
-            (solution_of_var model var)
-          with _ -> U.Prop
-        in
-        i+1,
-        fun (cst:Basic.name) : U.univ ->
-          let var = var_of_name cst in
-          if Hashtbl.mem hmodel var then
-            Hashtbl.find hmodel var
-          else
-            let t = find var in
-            Hashtbl.add hmodel var t;
-            t
-
-  let solve () = check 1
-
-  let mk_var s = Expr.mk_const_s ctx s sort
 
   let mk_prop =
     Expr.mk_const_s ctx "Prop" sort
@@ -223,13 +76,35 @@ struct
   let mk_type i =
     Expr.mk_const_s ctx ("Type"^string_of_int i) sort
 
-  let from_univ  = fun t ->
+  let mk_var s =
+    vars := SSet.add s !vars;
+    Expr.mk_const_s ctx s sort
+
+  let mk_univ  = fun t ->
     let open U in
     match t with
     | Var cst -> mk_var (var_of_name cst)
     | Prop -> mk_prop
     | Set -> mk_set
     | Type(i) -> mk_type i
+
+  let solution_of_var i model var =
+    let exception Found of Checking.Universes.univ in
+    let univs = Checking.Universes.enumerate i in
+    let find_univ e u  =
+      match Model.get_const_interp_e model (mk_univ u) with
+      | None -> assert false
+      | Some u' ->
+        if e = u' then raise (Found u) else ()
+    in
+    match Model.get_const_interp_e model var with
+    | None -> assert false
+    | Some e ->
+      try
+        List.iter (find_univ e) univs;
+        None
+      with Found(u) -> Some u
+
 
   let bool_sort = Boolean.mk_sort ctx
 
@@ -248,19 +123,71 @@ struct
   let add expr =
     Z3.Solver.add solver [expr]
 
-  let from_pred = fun p ->
+  let mk_pred = fun p ->
     let open U in
     match p with
-    | Axiom(s,s') -> mk_axiom (from_univ s) (from_univ s')
-    | Cumul(s,s') -> mk_cumul (from_univ s) (from_univ s')
-    | Rule(s,s',s'') -> mk_rule (from_univ s) (from_univ s') (from_univ s'')
+    | Axiom(s,s') -> mk_axiom (mk_univ s) (mk_univ s')
+    | Cumul(s,s') -> mk_cumul (mk_univ s) (mk_univ s')
+    | Rule(s,s',s'') -> mk_rule (mk_univ s) (mk_univ s') (mk_univ s'')
 
+  let mk_model m =
+    List.iter (fun (p,b) ->
+        if b then
+          add (mk_pred p)
+        else
+          add (Boolean.mk_not ctx (mk_pred p))) m
 
-  let from_rule : Rule.pattern -> Term.term -> unit = fun pat ->
-      let left   = Rule.pattern_to_term pat in
+  let register_vars vars i =
+    let univs = Checking.Universes.enumerate i in
+    SSet.iter (fun var ->
+        let or_eqs = List.map (fun u -> Boolean.mk_eq ctx (mk_var var) (mk_univ u)) univs in
+        add (Boolean.mk_or ctx or_eqs)) vars
+
+  let rec check env i =
+    Z3.Solver.push solver;
+    let model = Checking.Universes.mk_model env.model i in
+    mk_model model;
+    register_vars !vars i;
+    Format.eprintf "%s@." (Z3.Solver.to_string solver);
+    if i > 6 then failwith "Probably the Constraints are inconsistent";
+    match Z3.Solver.check solver [] with
+    | Z3.Solver.UNSATISFIABLE ->
+      Format.eprintf "No solution found with %d universes@." i;
+      Z3.Solver.pop solver 1; check env (i+1)
+    | Z3.Solver.UNKNOWN -> failwith "This bug should be reported (check)"
+    | Z3.Solver.SATISFIABLE ->
+      match Z3.Solver.get_model solver with
+      | None -> assert false
+      | Some model ->
+        let hmodel = Hashtbl.create 10001 in
+        Format.eprintf "%s@." (Z3.Model.to_string model);
+        let find var =
+          match solution_of_var i model var with
+          | None -> U.Prop
+          | Some u -> u
+        in
+        i,
+        fun (cst:Basic.name) : U.univ ->
+          let var = var_of_name cst in
+          if Hashtbl.mem hmodel var then
+            Hashtbl.find hmodel var
+          else
+            let t = find (mk_var var) in
+            Hashtbl.add hmodel var t;
+            t
+
+  let solve env = check env 1
+
+  let from_rule : Rule.pattern -> Term.term -> unit = fun pat right ->
+    let left   = Rule.pattern_to_term pat in
+    try
       let pred'  = U.extract_pred left in
-      let pred'' = from_pred pred' in
+      let pred'' = mk_pred pred' in
       add pred''
+    with Checking.Universes.Not_pred ->
+      let left' = Elaboration.Var.name_of_uvar left in
+      let right' = Elaboration.Var.name_of_uvar right in
+      add (Boolean.mk_eq ctx (mk_var (var_of_name left')) (mk_var (var_of_name right')))
 
   let parse : Basic.mident -> Basic.mident -> string -> string -> unit =
     fun md_elab md_check compat s ->
@@ -272,5 +199,4 @@ struct
     in
     let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
     Parser.Parse_channel.handle md_check mk_entry (open_in s)
-
 end

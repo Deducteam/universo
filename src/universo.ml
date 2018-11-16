@@ -29,7 +29,7 @@ let elaborate : string  -> unit = fun in_file ->
   let env = Cmd.to_elaboration_env in_file in
   let entries = P.parse md ic in
   (* This steps generates the fresh universe variables *)
-  let entries' = List.map (Elaboration.mk_entry env) entries in
+  let entries' = List.map (Elaboration.Elaborate.mk_entry env) entries in
   (* Write the elaborated terms in the normal file (in the output directory) *)
   let out_file = open_out (Files.from_string in_file `Normal) in
   let out_fmt = Format.formatter_of_out_channel out_file in
@@ -64,7 +64,7 @@ let solve : string list -> unit = fun in_files ->
   in
   List.iter add_constraints in_files;
   Format.eprintf "[SOLVING CONSTRAINTS...]@.";
-  let i,model = S.Z3Syn.solve () in
+  let i,model = S.Z3Syn.solve (Cmd.to_solver_env ()) in
   Format.eprintf "[SOLVED] Solution found with %d universes.@." i;
   let print_model in_file =
     let elab_file = Files.from_string in_file `Elaboration in

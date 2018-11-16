@@ -8,7 +8,7 @@ _build/
 # Dedukti files.
 *.dko
 .depend
-experiments/matita/output/*.dk
+experiments/**/*.dk
 
 # Editor temporary files.
 *~

@@ -17,10 +17,9 @@ type pred =
   | Cumul of univ * univ
   | Rule  of univ * univ * univ
 
-module C = Set.Make(struct type t = pred let compare = compare end)
+type cstr = Pred of pred | EqVar of name * name
 
-let get_number s =
-  int_of_string (String.sub s 1 (String.length s - 1))
+module C = Set.Make(struct type t = cstr let compare = compare end)
 
 (* Implement RPO order with Succ > Max ; should be total FIXME *)
 (*
@@ -197,11 +196,15 @@ let extract_pred t =
 
 let global_cstr = ref (C.empty)
 
-let print_rule env p =
+let print_rule env cstr =
   let normalize t = Dkmeta.mk_term env.meta t in
-  let left' = normalize (term_of_pred p) in
-  let right' = true_ in
-  Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
+  match cstr with
+  | Pred(p) ->
+    let left' = normalize (term_of_pred p) in
+    let right' = normalize true_ in
+    Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
+  | EqVar(l,r) ->
+    Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_name l Pp.print_name r
 
 let add_cstr env p =
   global_cstr := C.add p !global_cstr;
@@ -210,10 +213,63 @@ let add_cstr env p =
 let mk_cstr env l r =
   assert(Term.term_eq r true_);
   let p = extract_pred l in
-  add_cstr env p;
-  true
+  add_cstr env (Pred p)
 
 let mk_var_cstr env l r =
-  let l = extract_univ l in
-  let r = extract_univ r in
-  add_cstr env
+  let get_number s =
+    int_of_string (String.sub s 1 (String.length s - 1))
+  in
+  let l = Elaboration.Var.name_of_uvar l in
+  let r = Elaboration.Var.name_of_uvar r in
+  let nl = get_number (string_of_ident @@ id l) in
+  let nr = get_number (string_of_ident @@ id r) in
+  if nr < nl then
+    begin
+      global_cstr := C.add (EqVar(l,r)) !global_cstr;
+      add_cstr env (EqVar(l,r))
+    end
+  else
+    begin
+      global_cstr := C.add (EqVar(r,l)) !global_cstr;
+      add_cstr env (EqVar(r,l))
+    end
+
+type model = (pred * bool) list
+
+(* FIXME: do not scale for any CTS *)
+let rec enumerate i =
+  if i = 1 then
+    [Prop]
+  else
+    Type (i-2)::(enumerate (i-1))
+
+let is_true meta p =
+  let t = term_of_pred p in
+  let t' = Dkmeta.mk_term meta t in
+  Term.term_eq (true_) t'
+
+let mk_axiom_model meta s s' =
+  let p = Axiom(s,s') in
+  (p,is_true meta p)
+
+let mk_cumul_model meta s s' =
+  let p = Cumul(s,s') in
+  (p, is_true meta p)
+
+let mk_rule_model meta s s' s'' =
+  let p = Rule(s,s',s'') in
+  (p,is_true meta p)
+
+let rec map3 f l1 l2 l3 =
+  match l1,l2,l3 with
+  | [],[],[] -> []
+  | a::l1,b::l2,c::l3 -> f a b c::(map3 f l1 l2 l3)
+  | _ -> assert false
+
+(* FIXME: can be optimized *)
+let mk_model meta (i:int) =
+  let u  = enumerate i in
+  let model_ax  = List.map2 (fun l r -> mk_axiom_model meta l r) u u in
+  let model_cu = List.map2 (fun l r -> mk_cumul_model meta l r) u u in
+  let model_ru = map3 (fun l m r -> mk_rule_model meta l m r) u u u in
+  model_ax@model_cu@model_ru

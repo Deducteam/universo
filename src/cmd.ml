@@ -23,7 +23,7 @@ let theory_sort : unit -> Term.term = fun () ->
   (* compat_output (universo.sort) --> <theory>.sort *)
   Dkmeta.mk_term meta sort
 
-let to_elaboration_env : string -> Elaboration.t = fun in_file ->
+let to_elaboration_env : string -> Elaboration.Elaborate.t = fun in_file ->
   let out_md = Files.md_of_file (Files.from_string in_file `Elaboration) in
   let out_file = Files.from_string in_file `Elaboration in
   let out_fmt = Format.formatter_of_out_channel (open_out out_file) in
@@ -59,4 +59,11 @@ let to_checking_env : string -> Checking.Checker.t = fun in_file ->
     meta;
     meta_out;
     check_fmt
+  }
+
+let to_solver_env : unit -> Solving.Solver.Z3Syn.t = fun () ->
+  let open Dkmeta in
+  let meta = Dkmeta.meta_of_file false !compat_theory in
+  {
+    model={sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}
   }
