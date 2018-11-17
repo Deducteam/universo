@@ -1,11 +1,5 @@
 open Basic
 
-type t =
-  {
-    out_fmt:Format.formatter;
-    meta:Dkmeta.cfg
-  }
-
 type univ =
     Var of name
   | Prop
@@ -127,9 +121,13 @@ let extract_pred t =
     Rule(extract_univ s, extract_univ s', extract_univ s'')
   | _ -> raise Not_pred
 
+type t =
+  {
+    out_fmt:Format.formatter;
+    meta:Dkmeta.cfg
+  }
 
-let global_cstr = ref (C.empty)
-
+(* FIXME: should not be here *)
 let print_rule env cstr =
   let normalize t = Dkmeta.mk_term env.meta t in
   match cstr with
@@ -140,16 +138,16 @@ let print_rule env cstr =
   | EqVar(l,r) ->
     Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_name l Pp.print_name r
 
-let add_cstr env p =
-  global_cstr := C.add p !global_cstr;
-  print_rule env p
+let add_cstr env p = print_rule env p
 
 let mk_cstr env l r =
   assert(Term.term_eq r true_);
   let p = extract_pred l in
   add_cstr env (Pred p)
 
-let mk_var_cstr env l r =
+(** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
+    l >= r. *)
+let mk_var_cstr env f l r =
   let get_number s =
     int_of_string (String.sub s 1 (String.length s - 1))
   in
@@ -157,16 +155,14 @@ let mk_var_cstr env l r =
   let nr = get_number (string_of_ident @@ id r) in
   if nr < nl then
     begin
-      global_cstr := C.add (EqVar(l,r)) !global_cstr;
-      add_cstr env (EqVar(l,r))
+      f l r; add_cstr env (EqVar(l,r))
     end
   else
     begin
-      global_cstr := C.add (EqVar(r,l)) !global_cstr;
-      add_cstr env (EqVar(r,l))
+      f r l; add_cstr env (EqVar(r,l))
     end
 
-type model = (pred * bool) list
+type theory = (pred * bool) list
 
 (* FIXME: do not scale for any CTS *)
 let rec enumerate i =
@@ -175,43 +171,44 @@ let rec enumerate i =
   else
     Type (i-2)::(enumerate (i-1))
 
+(** [is_true meta p] check if the predicate [p] is true in the original theory. *)
 let is_true meta p =
   let t = term_of_pred p in
   let t' = Dkmeta.mk_term meta t in
   Term.term_eq (true_) t'
 
-let mk_axiom_model meta s s' =
+(** [is_true_axiom meta s s'] check if the predicate [Axiom s s'] is true in the original theory. *)
+let is_true_axiom meta s s' =
   let p = Axiom(s,s') in
   (p,is_true meta p)
 
-let mk_cumul_model meta s s' =
+(** [is_true_cumul meta s s'] check if the predicate [Cumul s s'] is true in the original theory. *)
+let is_true_cumul meta s s' =
   let p = Cumul(s,s') in
   (p, is_true meta p)
 
-let mk_rule_model meta s s' s'' =
+(** [is_true_rule meta s s' s''] check if the predicate [Rule s s' s''] is true in the original theory. *)
+let is_true_rule meta s s' s'' =
   let p = Rule(s,s',s'') in
   (p,is_true meta p)
 
-let rec map3 f l1 l2 l3 =
-  match l1,l2,l3 with
-  | [],[],[] -> []
-  | a::l1,b::l2,c::l3 -> f a b c::(map3 f l1 l2 l3)
-  | _ -> assert false
+module Util = struct
+  let cartesian2 f l l' =
+    List.concat (List.map (fun e -> List.map (fun e' -> f e e') l') l)
 
-let cartesian2 f l l' =
-  List.concat (List.map (fun e -> List.map (fun e' -> f e e') l') l)
+  let cartesian3 f l l' l'' =
+    List.concat (
+      List.map (fun e ->
+          List.concat (
+            List.map (fun e' ->
+                List.map (fun e'' -> f e e' e'') l'') l')) l)
+end
 
-let cartesian3 f l l' l'' =
-  List.concat (
-    List.map (fun e ->
-        List.concat (
-          List.map (fun e' ->
-              List.map (fun e'' -> f e e' e'') l'') l')) l)
-
-(* FIXME: can be optimized by avoiding concatenation of lists *)
-let mk_model meta (i:int) =
+(* FIXME: can be optimized. *)
+(** [mk_theory meta i] computes a theory for the universes up to [i]. A theory is an array for each predicate that tells if the predicate holds. The array is index by universes and its dimension is the arity of the predicate. *)
+let mk_theory : Dkmeta.cfg -> int -> theory = fun meta i ->
   let u  = enumerate i in
-  let model_ax  = cartesian2 (fun l r -> mk_axiom_model meta l r) u u in
-  let model_cu = cartesian2 (fun l r -> mk_cumul_model meta l r) u u in
-  let model_ru = cartesian3 (fun l m r -> mk_rule_model meta l m r) u u u in
+  let model_ax  = Util.cartesian2 (fun l r -> is_true_axiom meta l r) u u in
+  let model_cu = Util.cartesian2 (fun l r -> is_true_cumul meta l r) u u in
+  let model_ru = Util.cartesian3 (fun l m r -> is_true_rule meta l m r) u u u in
   model_ax@model_cu@model_ru

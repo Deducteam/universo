@@ -4,22 +4,24 @@ def Univ : Sort -> Type.
 
 def var : Sort.
 
-def prop : Sort.
+def prop : Sort. (; FIXME: should be remove ;)
 
-def set : Sort.
+def set : Sort. (; FIXME: should be remove ;)
 
-def sort : Sort.
+def Nat : Type. (; FIXME: should be remove ;)
 
-def Nat : Type.
+def 0 : Nat. (; FIXME: should be remove ;)
 
-def 0 : Nat.
+def S : Nat -> Nat. (; FIXME: should be remove ;)
 
-def S : Nat -> Nat.
-
-def type : Nat -> Sort.
+def type : Nat -> Sort. (; FIXME: should be remove ;)
 
 def True : Type.
 
 def Cumul : Sort -> Sort -> Type.
+
+def Axiom : Sort -> Sort -> Type.
+
+def Rule : Sort -> Sort -> Sort -> Type.
 
 def lift : s1:Sort -> s2:Sort -> Cumul s1 s2 -> Univ s1 -> Univ s2.

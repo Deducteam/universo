@@ -40,21 +40,22 @@ let elaborate : string  -> unit = fun in_file ->
   Format.fprintf out_fmt "#REQUIRE %a.@.@." Pp.print_mident out_sol_md;
   List.iter (Pp.print_entry (Format.formatter_of_out_channel out_file)) entries'
 
-(** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that
-    [file_univ] has been generated previously. ASSUME also that the dependencies have been type checked before. *)
+(** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
+    ASSUME also that the dependencies have been type checked before. *)
 let check : string -> unit = fun in_file ->
   let md = F.md_of_file in_file in
   let out_file = F.from_string in_file `Normal in
   let ic = open_in out_file in
   let entries = P.parse md ic in
   let env = Cmd.to_checking_env in_file in
-  let entries' = List.map (Dkmeta.mk_entry env.meta md) entries in
+  let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
+  let entries' = List.map (Dkmeta.mk_entry meta md) entries in
   List.iter (Checking.Checker.mk_entry env) entries'
 
 module S = Solving.Solver
 
-(** [solve files] call a SMT solver on the constraints generated for all the files [files]. ASSUME that
-    [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
+(** [solve files] call a SMT solver on the constraints generated for all the files [files].
+    ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_files ->
   (* [add_constraints file] read the file [file_cstr] and add all the constraints to the SMT solver. *)
   let add_constraints in_file =
@@ -91,7 +92,7 @@ let solve : string list -> unit = fun in_files ->
   in
   List.iter print_model in_files
 
-(** [run_on_file file] process steps 1 and 2 (depending the mode selected0 on [file] *)
+(** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
 let run_on_file file =
   Format.eprintf "[FILE] %s@." file;
   match !mode with
@@ -160,7 +161,7 @@ let _ =
     if !mode = Normal || !mode = JustSolve then
       solve files
     else
-      (* so that REQUIRES declarations in [file] produced at step 1 (see [elaboration]) do not fail. *)
+      (* so that REQUIRE declarations in produced at step 1 (see [elaboration]) do not fail. *)
       List.iter generate_empty_sol_file files
   with
   | Env.EnvError(l,e) -> Errors.fail_env_error l e

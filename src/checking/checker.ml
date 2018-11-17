@@ -1,33 +1,45 @@
+module V = Elaboration.Var
+module U = Common.Universes
+
 type t =
   {
     sg:Signature.t;
+    (** The current signature used for type checking *)
     md:Basic.mident;
+    (** mident of the current module being type checked *)
     md_check:Basic.mident;
+    (** mident of the file containing constraints for the current module *)
     md_elab:Basic.mident;
-    meta:Dkmeta.cfg;
+    (** mident of the file containing universe variables declaration for the current module *)
     meta_out:Dkmeta.cfg;
+    (** Meta configuration to translate back universes of Universo to the original theory universes *)
     check_fmt:Format.formatter;
+    (** Formatter where constraints are printed *)
   }
 
+(** Only used as default value for [global_env] *)
 let default : t = {sg = Signature.make "";
                    md = Basic.mk_mident "";
                    md_check = Basic.mk_mident "";
                    md_elab = Basic.mk_mident "";
-                   meta=Dkmeta.default_config;
                    meta_out=Dkmeta.default_config;
                    check_fmt=Format.std_formatter}
 
+(** [globel_env] is a reference to the current type checking environment. *)
+(* This is a reference because we have to use it in the Reduction Engine and we have no control over
+   the interface *)
 let global_env : t ref = ref default
 
-module V = Elaboration.Var
-module U = Common.Universes
 
 module RE : Reduction.RE =
 struct
   open Basic
 
-  let default_name = Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "universo"))
+  (** Name for rules that reduce variables. Names are irrelevant for Universo. *)
+  let dummy_name = Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "universo"))
 
+  (** [add_rule vl vr] add to the current signature the rule that maps [vl] to [vr]. *)
+  (* FIXME: this rules are not exported hence redudant rule might be added when the current module is      impoted somewhere else *)
   let rec add_rule  vl vr =
     let pat = Rule.Pattern(Basic.dloc,vl,[]) in
     let rhs = Term.mk_Const Basic.dloc vr in
@@ -36,7 +48,7 @@ struct
           ctx = [];
           pat;
           rhs;
-          name=default_name;
+          name=dummy_name;
         })
     in
     Signature.add_rules !global_env.sg  [Rule.to_rule_infos rule]
@@ -47,19 +59,23 @@ struct
     Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
 
   and univ_conversion l r =
-    if Term.term_eq l r then
+    if Term.term_eq l r then (* should not happen *)
       true
     else
       try
+        (* FIXME: should not be done in Universes anymore *)
         let uenv = U.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+        (* If two universes should be equal, then we add the constraint [l =?= r] AND a rule that
+           makes [l] convertible to [r]. Order matters and is handled by the module U. *)
         if V.is_uvar l && V.is_uvar r then
           begin
             let ul = V.name_of_uvar l in
             let ur = V.name_of_uvar r in
-            add_rule ul ur;
-            U.mk_var_cstr uenv ul ur;
+            U.mk_var_cstr uenv add_rule ul ur;
             true
           end
+          (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
+          (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
         else if (Term.term_eq U.true_ l) then
           begin
             U.mk_cstr uenv r l;
@@ -68,9 +84,12 @@ struct
         else
           false
       with U.Not_pred ->
+        (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. *)
         if U.is_lift l && not (U.is_lift r) then
+          (* FIXME: to do stuff here *)
           true
         else if not (U.is_lift l) && (U.is_lift r) then
+          (* FIXME: to do stuff here *)
           true
         else
           false
@@ -92,6 +111,7 @@ struct
     try are_convertible_lst sg [(t1,t2)]
     with Reduction.NotConvertible -> false
 
+  (* FIXME: This should not be relevant anymore *)
   and matching_test r sg t1 t2 =
     match r with
     | Rule.Gamma(_,rn) ->
@@ -104,6 +124,7 @@ end
 
 module T = Typing.Make(RE)
 
+(** [mk_entry env e] type checks the entry e in the same way then dkcheck does. However, the convertibility tests is hacked so that we can add constraints dynamically while type checking the term. This is really close to what is done with typical ambiguity in Coq. *)
 let mk_entry : t -> Entry.entry -> unit = fun env e ->
   let open Entry in
   let open Term in
@@ -150,6 +171,5 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
     Format.fprintf env.check_fmt "@.(; RULES ;)@.";
     let _ = List.map (T.check_rule env.sg) rs in
     _add_rules rs
-  | Require _ ->
-    () (* FIXME: right now, only Universo generates REQUIRE commands *)
-  | _ -> assert false
+  | Require _ -> () (* FIXME: How should we handle a Require command? *)
+  | _ -> assert false (* other commands are not supported by this is only by lazyness. *)

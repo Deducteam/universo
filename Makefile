@@ -13,6 +13,7 @@ DKCHECK  = dkcheck
 UNIVERSO = $(shell readlink -f _build/install/default/bin/universo)
 
 MATITA_PATH=experiments/matita2
+MODE=
 
 .PHONY: theory
 theory:
@@ -24,7 +25,7 @@ univ:
 
 .PHONY: test
 test: bin theory univ
-	$(UNIVERSO) -I $(MATITA_PATH)/theory \
+	$(UNIVERSO) $(MODE) -I $(MATITA_PATH)/theory \
 	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
 	--of-universo $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory $(MATITA_PATH)/compatibility/theory.dk	\
@@ -34,7 +35,7 @@ test: bin theory univ
 
 .PHONY: logic
 logic: bin theory univ
-	$(UNIVERSO) -I $(MATITA_PATH)/theory \
+	$(UNIVERSO) $(MODE) -I $(MATITA_PATH)/theory \
 	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
 	--of-universo $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory $(MATITA_PATH)/compatibility/theory.dk	\

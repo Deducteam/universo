@@ -18,17 +18,21 @@ sig
   val reset   : unit -> unit
 end
 
+(** Set containing all the variables used by Z3 *)
 module SSet = Set.Make(struct type t = string let compare = compare end)
 
 open Z3
 
+(** Z3 configuration *)
 type cfg_item = [`Model of bool | `Proof of bool | `Trace of bool | `TraceFile of string]
 
 type cfg = cfg_item list
 
-let cfg = [`Model(true);
-           `Proof(true);
-           `Trace(false)]
+(** Concrete configuration. *)
+let cfg = [`Model(true); (* Generate a model *)
+           `Proof(true); (* Give a proof if unsatisfiable *)
+           `Trace(false); (* Do not generate trace *)
+          ]
 
 let string_of_cfg_item item =
   match item with
@@ -39,42 +43,56 @@ let string_of_cfg_item item =
 
 let string_of_cfg cfg = List.map string_of_cfg_item cfg
 
+(** Z3 context elaborated from a Z3 configuration *)
 let ctx = mk_context (string_of_cfg cfg)
 
-
+(** Z3 Solver with non interpreted symbol Functions *)
 module Syn =
 struct
+
   type t =
     {
-      model : Dkmeta.cfg
+      model : Dkmeta.cfg (* used to elaborate a model *)
     }
 
-
+  (* Set of Z3 variables *)
   let vars = ref SSet.empty
 
+  (* Z3 Solver *)
   let solver = Z3.Solver.mk_simple_solver ctx
 
+  (* Z3 type for universes *)
   let sort      = Sort.mk_uninterpreted_s ctx "Sort"
 
+  (** [reset ()] resets the Z3 solver *)
   let reset () =
     vars := SSet.empty;
     Z3.Solver.reset solver
 
+  (** [var_of_name name] returns a variable string for Z3. ASSUME that all identifiers representing fresh universe variables are unique, hence the module can be forgetten. *)
   let var_of_name cst = Basic.string_of_ident (Basic.id cst)
 
+  (** non-interpreted symbol for Prop *)
+  (* FIXME: should be given by the model *)
   let mk_prop =
     Expr.mk_const_s ctx "Prop" sort
 
+  (** non-interpreted symbol for Set *)
+  (* FIXME: should be given by the model *)
   let mk_set =
     Expr.mk_const_s ctx "Set" sort
 
+  (** non-interpreted symbol for Type i *)
+  (* FIXME: should be given by the model *)
   let mk_type i =
     Expr.mk_const_s ctx ("Type"^string_of_int i) sort
 
+  (** [mk_var s] construct a Z3 expression from the Z3 variable [s]. *)
   let mk_var s =
     vars := SSet.add s !vars;
     Expr.mk_const_s ctx s sort
 
+  (** [mk_univ u] construct a Z3 expression from a universe. *)
   let mk_univ  = fun t ->
     let open U in
     match t with
@@ -83,9 +101,10 @@ struct
     | Set -> mk_set
     | Type(i) -> mk_type i
 
-  let solution_of_var i model var =
+  (** [solution_of_var univs model var] looks for the concrete universe associated to [var]
+      in the [model]. Such universe satisfy that model(univ) = model(var). *)
+  let solution_of_var univs model var =
     let exception Found of U.univ in
-    let univs = U.enumerate i in
     let find_univ e u  =
       match Model.get_const_interp_e model (mk_univ u) with
       | None -> assert false
@@ -100,24 +119,24 @@ struct
         None
       with Found(u) -> Some u
 
-
   let bool_sort = Boolean.mk_sort ctx
 
+  (** [mk_axiom s s'] construct the Z3 predicate associated to the Axiom Predicate *)
   let mk_axiom s s' =
     let axiom = FuncDecl.mk_func_decl_s ctx "A" [sort;sort] bool_sort in
     Expr.mk_app ctx axiom [s;s']
 
+  (** [mk_cumul s s'] construct the Z3 predicate associated to the Cumul Predicate *)
   let mk_cumul s s' =
     let cumul = FuncDecl.mk_func_decl_s ctx "C" [sort;sort] bool_sort in
     Expr.mk_app ctx cumul [s;s']
 
+  (** [mk_rule s s' s''] construct the Z3 predicate associated to the Rule Predicate *)
   let mk_rule s s' s'' =
     let cumul = FuncDecl.mk_func_decl_s ctx "R" [sort;sort;sort] bool_sort in
     Expr.mk_app ctx cumul [s;s';s'']
 
-  let add expr =
-    Z3.Solver.add solver [expr]
-
+  (** [mk_pred p] construct the Z3 predicate from a universe predicate *)
   let mk_pred = fun p ->
     let open U in
     match p with
@@ -125,44 +144,53 @@ struct
     | Cumul(s,s') -> mk_cumul (mk_univ s) (mk_univ s')
     | Rule(s,s',s'') -> mk_rule (mk_univ s) (mk_univ s') (mk_univ s'')
 
-  let mk_model m =
+  (** [add expr] add the asserition [expr] in the Z3 solver. [expr] should be a predicate. *)
+  let add expr =
+    Z3.Solver.add solver [expr]
+
+  (** [mk_theory m] construct a Z3 theory for the non-interpreted predicate using the theory [t]. *)
+  let mk_theory t =
     List.iter (fun (p,b) ->
         if b then
           add (mk_pred p)
         else
-          add (Boolean.mk_not ctx (mk_pred p))) m
+          add (Boolean.mk_not ctx (mk_pred p))) t
 
+  (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
   let register_vars vars i =
     let univs = U.enumerate i in
     SSet.iter (fun var ->
         let or_eqs = List.map (fun u -> Boolean.mk_eq ctx (mk_var var) (mk_univ u)) univs in
         add (Boolean.mk_or ctx or_eqs)) vars
 
+  (** [check meta i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
   let rec check meta i =
     Z3.Solver.push solver;
-    let model = U.mk_model meta i in
-    mk_model model;
+    let theory = U.mk_theory meta i in (* The theory is computed by U *)
+    mk_theory theory;
     register_vars !vars i;
-    Format.eprintf "%s@." (Z3.Solver.to_string solver);
+    (* Format.eprintf "%s@." (Z3.Solver.to_string solver); *)
+    (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
       Format.eprintf "No solution found with %d universes@." i;
       Z3.Solver.pop solver 1; check meta (i+1)
-    | Z3.Solver.UNKNOWN -> failwith "This bug should be reported (check)"
+    | Z3.Solver.UNKNOWN -> assert false
     | Z3.Solver.SATISFIABLE ->
       match Z3.Solver.get_model solver with
-      | None -> assert false
+      | None -> assert false (* the context says that we want a model *)
       | Some model ->
+        (* FIXME: This is not useful anymore *)
         let hmodel = Hashtbl.create 10001 in
-        Format.eprintf "%s@." (Z3.Model.to_string model);
+        (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
         let find var =
-          match solution_of_var i model var with
+          let univs = U.enumerate i in
+          match solution_of_var univs model var with
           | None -> U.Prop
           | Some u -> u
         in
-        i,
-        fun (cst:Basic.name) : U.univ ->
+        let model (cst:Basic.name) : U.univ =
           let var = var_of_name cst in
           if Hashtbl.mem hmodel var then
             Hashtbl.find hmodel var
@@ -170,28 +198,35 @@ struct
             let t = find (mk_var var) in
             Hashtbl.add hmodel var t;
             t
+        in
+        (i,model)
 
-  let solve env = check env 1
+  (** [solve meta] tries to solve the constraints *)
+  let solve meta = check meta 1
 
+  (** [from_rule pat rhs] add the assertion [pat = rhs] to Z3. *)
   let from_rule : Rule.pattern -> Term.term -> unit = fun pat right ->
     let left   = Rule.pattern_to_term pat in
-    try
+    try (* the constraint is a predicate *)
       let pred'  = U.extract_pred left in
       let pred'' = mk_pred pred' in
       add pred''
     with U.Not_pred ->
+      (* the constraint is en equality between variables *)
       let left' = Elaboration.Var.name_of_uvar left in
       let right' = Elaboration.Var.name_of_uvar right in
       add (Boolean.mk_eq ctx (mk_var (var_of_name left')) (mk_var (var_of_name right')))
 
+  (** [parse _ _ compat s] parse a constraint file. *)
   let parse : Basic.mident -> Basic.mident -> string -> string -> unit =
     fun md_elab md_check compat s ->
-    let meta = Dkmeta.meta_of_file false compat in
-    let mk_entry = function
-      | Entry.Rules(_,rs) ->
-        Rule.(List.iter (fun r -> from_rule r.pat r.rhs) rs)
-      | _ -> assert false
-    in
-    let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
-    Parser.Parse_channel.handle md_check mk_entry (open_in s)
+      let meta = Dkmeta.meta_of_file false compat in
+      (* meta transform the constraints to universos constraints *)
+      let mk_entry = function
+        | Entry.Rules(_,rs) ->
+          Rule.(List.iter (fun r -> from_rule r.pat r.rhs) rs)
+        | _ -> assert false
+      in
+      let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
+      Parser.Parse_channel.handle md_check mk_entry (open_in s)
 end
