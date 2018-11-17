@@ -21,43 +21,6 @@ type cstr = Pred of pred | EqVar of name * name
 
 module C = Set.Make(struct type t = cstr let compare = compare end)
 
-(* Implement RPO order with Succ > Max ; should be total FIXME *)
-(*
-let rec gt l r =
-  match (l,r) with
-  | Var n, Var m ->
-    let n = get_number (string_of_ident @@ id n) in
-    let m = get_number (string_of_ident @@ id m) in
-    n > m
-  | Var _, Prop
-  | Var _, Set
-  | Var _, Type _ -> true
-  | Var _, Max(m,n) ->
-    gt l m && gt l n
-  | Var _, Rule(m,n) ->
-    gt l m && gt l n
-  | Var _, Succ m ->
-    gt l m
-  | Max(l1,r1), Max(l2,r2) ->
-    gt l1 l2 || (l1 = l2 && gt r1 r2)
-  | Succ l, Succ m ->
-    gt l m
-  | Succ _, Max(m,n) ->
-    gt l m && gt l n
-  | Max(m,n), Succ _ ->
-    le m r || le n r
-  | Max(m,n), Var _ ->
-    le m r || le n r
-  | Rule(m,n), Var _ ->
-    le m r || le n r
-  | Succ m, Var _ ->
-    le m r
-  | _ -> false
-
-and le l r =
-  l = r || gt l r
-*)
-
 let md_universo = mk_mident "universo"
 let md_univ = ref (mk_mident "")
 
@@ -70,10 +33,6 @@ let set = mk_name md_universo (mk_ident "set")
 let prop = mk_name md_universo (mk_ident "prop")
 
 let univ = mk_name md_universo (mk_ident "Univ")
-
-let max = mk_name md_universo (mk_ident "max")
-
-let succ = mk_name md_universo (mk_ident "succ")
 
 let lift = mk_name md_universo (mk_ident "lift")
 
@@ -111,31 +70,6 @@ let term_of_pred p =
                      [term_of_univ s;term_of_univ s']
   | Rule(s,s',s'') -> Term.mk_App2 (Term.mk_Const lc rule)
                         [term_of_univ s; term_of_univ s'; term_of_univ s'']
-(*
-let global_cstr = ref (C.empty)
-
-let print_rule env left right =
-  let normalize t = Dkmeta.mk_term env.meta t in
-  let left' = normalize (term_of_univ left) in
-  let right' = normalize (term_of_univ right) in
-  Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
-
-let add_cstr _ _ _ = failwith "todo"  *)(*
-  global_cstr := C.add (left,right) !global_cstr;
-  print_rule env left right *)
-
-(*
-let mk_cstr _ _ _ = failwith "todo"
-
-  assert (left <> right);
-  if gt left right then
-    add_cstr env left right
-  else
-    begin
-      assert (gt right left);
-      add_cstr env right left
-    end
-    *)
 
 let rec pattern_of_level l =
   let lc = Basic.dloc in
@@ -219,8 +153,6 @@ let mk_var_cstr env l r =
   let get_number s =
     int_of_string (String.sub s 1 (String.length s - 1))
   in
-  let l = Elaboration.Var.name_of_uvar l in
-  let r = Elaboration.Var.name_of_uvar r in
   let nl = get_number (string_of_ident @@ id l) in
   let nr = get_number (string_of_ident @@ id r) in
   if nr < nl then
@@ -276,7 +208,7 @@ let cartesian3 f l l' l'' =
           List.map (fun e' ->
               List.map (fun e'' -> f e e' e'') l'') l')) l)
 
-(* FIXME: can be optimized *)
+(* FIXME: can be optimized by avoiding concatenation of lists *)
 let mk_model meta (i:int) =
   let u  = enumerate i in
   let model_ax  = cartesian2 (fun l r -> mk_axiom_model meta l r) u u in

@@ -1,4 +1,4 @@
-module U = Checking.Universes
+module U = Common.Universes
 
 type model = Basic.name -> U.univ
 
@@ -84,8 +84,8 @@ struct
     | Type(i) -> mk_type i
 
   let solution_of_var i model var =
-    let exception Found of Checking.Universes.univ in
-    let univs = Checking.Universes.enumerate i in
+    let exception Found of U.univ in
+    let univs = U.enumerate i in
     let find_univ e u  =
       match Model.get_const_interp_e model (mk_univ u) with
       | None -> assert false
@@ -133,14 +133,14 @@ struct
           add (Boolean.mk_not ctx (mk_pred p))) m
 
   let register_vars vars i =
-    let univs = Checking.Universes.enumerate i in
+    let univs = U.enumerate i in
     SSet.iter (fun var ->
         let or_eqs = List.map (fun u -> Boolean.mk_eq ctx (mk_var var) (mk_univ u)) univs in
         add (Boolean.mk_or ctx or_eqs)) vars
 
   let rec check meta i =
     Z3.Solver.push solver;
-    let model = Checking.Universes.mk_model meta i in
+    let model = U.mk_model meta i in
     mk_model model;
     register_vars !vars i;
     Format.eprintf "%s@." (Z3.Solver.to_string solver);
@@ -179,7 +179,7 @@ struct
       let pred'  = U.extract_pred left in
       let pred'' = mk_pred pred' in
       add pred''
-    with Checking.Universes.Not_pred ->
+    with U.Not_pred ->
       let left' = Elaboration.Var.name_of_uvar left in
       let right' = Elaboration.Var.name_of_uvar right in
       add (Boolean.mk_eq ctx (mk_var (var_of_name left')) (mk_var (var_of_name right')))

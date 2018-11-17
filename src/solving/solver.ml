@@ -1,6 +1,4 @@
-module U = Checking.Universes
-
-type model = Basic.name -> U.univ
+type model = Basic.name -> Common.Universes.univ
 
 module type SOLVER =
 sig

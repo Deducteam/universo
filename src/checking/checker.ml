@@ -20,6 +20,7 @@ let default : t = {sg = Signature.make "";
 let global_env : t ref = ref default
 
 module V = Elaboration.Var
+module U = Common.Universes
 
 module RE : Reduction.RE =
 struct
@@ -46,47 +47,30 @@ struct
     Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
 
   and univ_conversion l r =
-    let open Universes in
     if Term.term_eq l r then
       true
     else
       try
-        let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+        let uenv = U.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
         if V.is_uvar l && V.is_uvar r then
           begin
-            add_rule (V.name_of_uvar l) (V.name_of_uvar r);
-            Universes.mk_var_cstr uenv l r;
+            let ul = V.name_of_uvar l in
+            let ur = V.name_of_uvar r in
+            add_rule ul ur;
+            U.mk_var_cstr uenv ul ur;
             true
           end
-        else if (Term.term_eq Universes.true_ l) then
+        else if (Term.term_eq U.true_ l) then
           begin
-            Universes.mk_cstr uenv r l;
+            U.mk_cstr uenv r l;
             true
           end
         else
           false
-        (* let l' = Universes.to_univ !global_env.md_elab  *)
-
-(*        let l = snf l in
-        let r = snf r in
-        if l = r then true
-        else
-          let l' = Universes.extract_univ !global_env.md_elab l in
-          let r' = Universes.extract_univ !global_env.md_elab r in
-          begin
-            if Universes.is_var !global_env.md_elab l && Universes.is_var !global_env.md_elab r then
-              if Universes.gt l' r' then
-                add_rule l' r'
-              else
-                add_rule r' l'
-          end;
-          let uenv = Universes.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
-          mk_cstr uenv l' r';
-          true *)
-      with Universes.Not_pred ->
-        if is_lift l && not (is_lift r) then
+      with U.Not_pred ->
+        if U.is_lift l && not (U.is_lift r) then
           true
-        else if not (is_lift l) && (is_lift r) then
+        else if not (U.is_lift l) && (U.is_lift r) then
           true
         else
           false

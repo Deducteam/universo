@@ -1,18 +1,24 @@
 type t =
   {
     out_fmt:Format.formatter;
+    (** Where to print universe variables declarations *)
     out_md:Basic.mident;
+    (** mident of the module that contains universe variables declarations *)
     theory_sort:Term.term;
-    meta:Dkmeta.cfg (* Meta rules that translates universes to the Universo constructor "Var" *)
+    (** Type of a universe in the original theory *)
+    meta:Dkmeta.cfg
+    (** Meta rules that translates universes to the pre-universe variable *)
   }
 
+(** Return a var environement using an elaboration environement *)
+let var_env : t -> Var.t = fun env ->
+  {out_fmt=env.out_fmt;theory_sort=env.theory_sort;out_md=env.out_md}
+
+(** Takes a term [t] where universes are elaborated as pre-universe variables and returns a term where all the pre-universe variables are fresh universe variables *)
 let rec mk_term : t -> Term.term -> Term.term = fun env ->
-  let var_env : Var.t = {out_fmt=env.out_fmt;
-                         theory_sort=env.theory_sort;
-                         out_md=env.out_md} in
   fun t ->
     if Var.is_pre_var t then
-      Var.fresh_uvar var_env ()
+      Var.fresh_uvar (var_env env) ()
     else
       match t with
       | Term.Kind
@@ -27,31 +33,21 @@ let rec mk_term : t -> Term.term -> Term.term = fun env ->
       | Term.Pi (lc,id,tya,tyb) ->
         Term.mk_Pi lc id (mk_term env tya) (mk_term env tyb)
 
+(** [mk_term env t] replaces all the concrete universes in [t] by a fresh variable
+    using the environment env. *)
 let mk_term : t -> Term.term -> Term.term = fun env t ->
-  (* Make the term independent from the theory first *)
+  (* Generate pre-universe variable first by replacing each universe with a pre-universe variable *)
+  (* env.meta maps all the concrete universe to a unique constructor universo.var *)
   let t = Dkmeta.mk_term env.meta t in
   mk_term env t
 
+(** [mkrule env r] replaces all the concrete universes in [rule.rhs] by a fresh variable
+    using the environement env. *)
 let mk_rule : t -> 'a Rule.rule -> 'a Rule.rule = fun env rule -> Rule.(
   {rule with rhs = mk_term env (Dkmeta.mk_term env.meta rule.rhs)})
 
-(* do not elaborate those *)
-let is_inductive id =
-  try
-    let s = Basic.string_of_ident id in
-    let i = String.rindex s '_' in (* last occurence of _ *)
-    let sort = String.sub s i (String.length s - i) in
-    Format.eprintf "%s@." sort;
-    if String.length sort > 4 then
-      if String.sub sort 1 4 = "Prop" || String.sub sort 0 4 = "Type" then
-        true
-      else
-        false
-    else
-      false
-  with Not_found -> false
-
-
+(** [mk_entry env entry] replaces all the concrete universes in [entry] by a fresh variable
+    using the environment env. Commands are skipped. *)
 let mk_entry : t -> Entry.entry -> Entry.entry = fun env e ->
   let open Entry in
   match e with
