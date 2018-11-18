@@ -64,8 +64,6 @@ struct
     Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
 
   and univ_conversion l r =
-    Format.eprintf "%a@." Pp.print_term l;
-    Format.eprintf "%a@." Pp.print_term r;
     if Term.term_eq l r then (* should not happen *)
       true
     else

@@ -27,7 +27,11 @@ let mk_var_cstr f l r =
   in
   let nl = get_number (Basic.string_of_ident @@ Basic.id l) in
   let nr = get_number (Basic.string_of_ident @@ Basic.id r) in
-  if nr < nl then f l r else f r l
+  if nr < nl then (
+    f l r; U.EqVar(l,r))
+  else (
+    f r l; U.EqVar(r,l))
+
 
 let mk_cstr env f cstr =
   match cstr with
@@ -35,7 +39,8 @@ let mk_cstr env f cstr =
   | Some ((U.Pred _) as cstr) ->
     print_cstr env cstr;
     true
-  | Some (U.EqVar(l,r) as cstr) ->
-    mk_var_cstr f l r;
-    print_cstr env cstr;
+  | Some (U.EqVar(l,r)) ->
+    (* print the rule in the correct order. *)
+    let cstr' = mk_var_cstr f l r in
+    print_cstr env cstr';
     true
