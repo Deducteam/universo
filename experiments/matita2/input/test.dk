@@ -8168,3 +8168,91 @@ def rewrite_r :
            (cic.lift (cic.type (cic.s (cic.s cic.z)))
               (cic.type (cic.s (cic.s cic.z))) cic.I A)
            y x Heq).
+
+
+def eq_coerc :
+      cic.Term (cic.type (cic.s cic.z))
+        (cic.prod (cic.type (cic.s cic.z)) (cic.type (cic.s cic.z))
+           (cic.type (cic.s cic.z)) cic.I
+           (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+           (A : cic.Univ (cic.type cic.z) =>
+            cic.prod (cic.type (cic.s cic.z)) (cic.type cic.z)
+              (cic.type (cic.s cic.z)) cic.I
+              (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I)
+              (B : cic.Univ (cic.type cic.z) =>
+               cic.prod (cic.type cic.z) (cic.type cic.z) (cic.type cic.z)
+                 cic.I A
+                 (__ : cic.Term (cic.type cic.z) A =>
+                  cic.prod cic.prop (cic.type cic.z) (cic.type cic.z) cic.I
+                    ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                      _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                      __1 : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                      test.eq
+                        (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                           (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                        _x __1)
+                       (cic.lift (cic.type (cic.s cic.z))
+                          (cic.type (cic.s (cic.s cic.z))) cic.I
+                          (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z))
+                             cic.I))
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A)
+                       (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I B))
+                    (__1 :
+                       cic.Term cic.prop
+                         ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+                           _x :
+                             cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                           __1 :
+                             cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+                           test.eq
+                             (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                                (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                             _x __1)
+                            (cic.lift (cic.type (cic.s cic.z))
+                               (cic.type (cic.s (cic.s cic.z))) cic.I
+                               (cic.univ (cic.type cic.z)
+                                  (cic.type (cic.s cic.z)) cic.I))
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               A)
+                            (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I
+                               B)) =>
+                     B)))))
+      :=
+      A : cic.Univ (cic.type cic.z) =>
+      B : cic.Univ (cic.type cic.z) =>
+      Ha : cic.Term (cic.type cic.z) A =>
+      Heq :
+        cic.Term cic.prop
+          ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+            _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+            __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+            test.eq
+              (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                 (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+              _x __)
+             (cic.lift (cic.type (cic.s cic.z))
+                (cic.type (cic.s (cic.s cic.z))) cic.I
+                (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I))
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A)
+             (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I B)) =>
+      test.eq_rect_Type0
+        (cic.lift (cic.type (cic.s cic.z)) (cic.type (cic.s (cic.s cic.z)))
+           cic.I (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I))
+        (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A)
+        (x_19 : cic.Univ (cic.type cic.z) =>
+         _x_20 :
+           cic.Term cic.prop
+             ((A1 : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
+               _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+               __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A1 =>
+               test.eq
+                 (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                    (cic.type (cic.s (cic.s cic.z))) cic.I A1)
+                 _x __)
+                (cic.lift (cic.type (cic.s cic.z))
+                   (cic.type (cic.s (cic.s cic.z))) cic.I
+                   (cic.univ (cic.type cic.z) (cic.type (cic.s cic.z)) cic.I))
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I A)
+                (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I x_19)) =>
+         cic.lift (cic.type cic.z) (cic.type cic.z) cic.I x_19)
+        Ha (cic.lift (cic.type cic.z) (cic.type cic.z) cic.I B) Heq.

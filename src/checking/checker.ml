@@ -77,7 +77,7 @@ struct
           (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
         else if (Term.term_eq U.true_ l) then
           Some(U.Pred(U.extract_pred r))
-          (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. *)
+          (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. This quite ugly to be so dependent of that rule, but I have found no nice solution to resolve that one. *)
         else if U.is_lift' l && not (U.is_lift' r) then
           let s1,s2 = U.extract_lift' l in
           assert (V.is_uvar s1 && V.is_uvar s2);
@@ -111,17 +111,20 @@ struct
 
   (* FIXME: This should not be relevant anymore *)
   and matching_test r sg t1 t2 =
-    match r with
-    | Rule.Gamma(_,rn) ->
-      (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
-      (* FIXME: this is a bug of dkmeta that rule names are not preserved *)
-      if (md rn) = !global_env.md_theory  then
-        false
-      else
+    if Term.term_eq t1 t2 then
+      true
+    else
+      match r with
+      | Rule.Gamma(_,rn) ->
+        (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
+        (* FIXME: this is a bug of dkmeta that rule names are not preserved *)
+        if (md rn) = !global_env.md_theory  then
+          false
+        else
+          are_convertible sg t1 t2
+      | Rule.Delta(_) ->
         are_convertible sg t1 t2
-    | Rule.Delta(_) ->
-      are_convertible sg t1 t2
-    | Rule.Beta -> assert false
+      | Rule.Beta -> assert false
 end
 
 module T = Typing.Make(RE)

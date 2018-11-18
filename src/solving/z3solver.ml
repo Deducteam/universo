@@ -179,7 +179,7 @@ struct
     let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
-    (* Format.eprintf "%s@." (Z3.Solver.to_string solver); *)
+    Format.printf "%s@." (Z3.Solver.to_string solver);
     (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
