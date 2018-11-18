@@ -78,13 +78,16 @@ struct
           (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
           (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
         else if (Term.term_eq U.true_ l) then
-            Some(U.Pred(U.extract_pred r))
-        else
+          Some(U.Pred(U.extract_pred r))
           (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. *)
-        if U.is_lift l && not (U.is_lift r) then
-          failwith "todo"
-        else if not (U.is_lift l) && (U.is_lift r) then
-          failwith "todo"
+        else if U.is_lift' l && not (U.is_lift' r) then
+          let s1,s2 = U.extract_lift' l in
+          assert (V.is_uvar s1 && V.is_uvar s2);
+          Some(U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2))
+        else if not (U.is_lift' l) && (U.is_lift' r) then
+          let s1,s2 = U.extract_lift' r in
+          assert (V.is_uvar s1 && V.is_uvar s2);
+          Some(U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2))
         else
           None
       in

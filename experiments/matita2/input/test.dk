@@ -28,3 +28,37 @@ refl :
              (cic.lift (cic.type (cic.s (cic.s cic.z)))
                 (cic.type (cic.s (cic.s cic.z))) cic.I A)
              x x))).
+
+def match_eq :
+      return_sort : cic.Sort ->
+      A : cic.Univ (cic.type (cic.s (cic.s cic.z))) ->
+      _x : cic.Term (cic.type (cic.s (cic.s cic.z))) A ->
+      return_type :
+        (__ : cic.Term (cic.type (cic.s (cic.s cic.z))) A ->
+         z :
+           cic.Term cic.prop
+             (test.eq
+                (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                   (cic.type (cic.s (cic.s cic.z))) cic.I A)
+                _x __) ->
+         cic.Univ return_sort) ->
+      case_refl :
+        cic.Term return_sort
+          (return_type _x
+             (test.refl
+                (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                   (cic.type (cic.s (cic.s cic.z))) cic.I A)
+                _x)) ->
+      __ : cic.Term (cic.type (cic.s (cic.s cic.z))) A ->
+      z :
+        cic.Term cic.prop
+          (test.eq
+             (cic.lift (cic.type (cic.s (cic.s cic.z)))
+                (cic.type (cic.s (cic.s cic.z))) cic.I A)
+             _x __) ->
+      cic.Term return_sort (return_type __ z).
+
+[ return_sort, A, _x, return_type, case_refl ]
+  match_eq return_sort A _x return_type case_refl (_x)
+    (test.refl A _x) -->
+  case_refl.

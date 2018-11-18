@@ -25,3 +25,5 @@ def Axiom : Sort -> Sort -> Type.
 def Rule : Sort -> Sort -> Sort -> Type.
 
 def lift : s1:Sort -> s2:Sort -> Cumul s1 s2 -> Univ s1 -> Univ s2.
+
+def lift' : s1:Sort -> s2:Sort -> Univ s1 -> Univ s2.

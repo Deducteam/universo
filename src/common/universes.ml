@@ -28,7 +28,7 @@ let prop  = mk_name md_universo (mk_ident "prop")
 
 let univ  = mk_name md_universo (mk_ident "Univ")
 
-let lift  = mk_name md_universo (mk_ident "lift")
+let lift' = mk_name md_universo (mk_ident "lift'")
 
 let axiom = mk_name md_universo (mk_ident "Axiom")
 
@@ -88,15 +88,15 @@ let is_var md_elab t =
   | Term.Const(_,n) -> md n = md_elab
   | _ -> false
 
-let is_lift t =
+let is_lift' t =
   match t with
   | Term.Const(_,n) -> md n = !md_univ
-  | Term.App(f,_,[_;_]) when is_const lift f -> true
+  | Term.App(f,_,[_;_]) when is_const lift' f -> true
   | _ -> false
 
-let extract_lift t =
+let extract_lift' t =
   match t with
-  | Term.App(f,s1,[s2;_]) when is_const lift f -> s1,s2
+  | Term.App(f,s1,[s2;_]) when is_const lift' f -> s1,s2
   | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
 
 let rec extract_level l =
