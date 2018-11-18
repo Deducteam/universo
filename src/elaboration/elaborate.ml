@@ -1,3 +1,5 @@
+module L = Common.Log
+
 type t =
   {
     out_fmt:Format.formatter;
@@ -52,11 +54,11 @@ let mk_entry : t -> Entry.entry -> Entry.entry = fun env e ->
   let open Entry in
   match e with
   | Decl(lc, id, st, ty) ->
-    Format.eprintf "[ELAB] %a@." Pp.print_ident id;
+    L.log_elab "[ELAB] %a" Pp.print_ident id;
     Format.fprintf env.out_fmt "(; %a ;)@." Pp.print_ident id;
     Decl(lc,id,st, mk_term env ty)
   | Def(lc, id, op, mty, te) ->
-    Format.eprintf "[ELAB] %a@." Pp.print_ident id;
+    L.log_elab "[ELAB] %a" Pp.print_ident id;
     Format.fprintf env.out_fmt "(; %a ;)@." Pp.print_ident id;
     let mty' = match mty with None -> None | Some ty -> Some (mk_term env ty) in
     let te' = mk_term env te in

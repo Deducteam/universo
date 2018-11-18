@@ -77,8 +77,8 @@ let to_checking_env : string -> Checking.Checker.t = fun in_file ->
     check_fmt
   }
 
-(** [to_solver_env f] returns the solver environement. The environement is currently a configuration for [dkmeta]. This is used to generate the model for the SMT used by the theory. *)
-let to_solver_env : unit -> Dkmeta.cfg = fun () ->
+(** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
+let theory_meta : unit -> Dkmeta.cfg = fun () ->
   let open Dkmeta in
   let meta = Dkmeta.meta_of_file false !compat_theory in
   {sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}

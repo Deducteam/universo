@@ -1,6 +1,8 @@
+module L = Common.Log
 module P = Parser.Parse_channel
 module F = Common.Files
 module U = Common.Universes
+module S = Solving.Solver
 
 let _ =
   (* For debugging purposes, it is better to see error messages in SNF *)
@@ -52,49 +54,25 @@ let check : string -> unit = fun in_file ->
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
   List.iter (Checking.Checker.mk_entry env) entries'
 
-module S = Solving.Solver
-
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_files ->
-  (* [add_constraints file] read the file [file_cstr] and add all the constraints to the SMT solver. *)
   let add_constraints in_file =
-    (* TODO: clean up a little bit *)
-    let check_file = F.from_string in_file `Checking in
-    let md_elab  = F.md_of_file (F.from_string in_file `Elaboration) in
-    let md_check = F.md_of_file (F.from_string in_file `Checking) in
-    Solving.Solver.Z3Syn.parse md_elab md_check !Cmd.compat_theory check_file
+    let file_cstr = F.from_string in_file `Checking in
+    let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
+    S.parse meta file_cstr
   in
   List.iter add_constraints in_files;
-  Format.eprintf "[SOLVING CONSTRAINTS...]@.";
-  let i,model = S.Z3Syn.solve (Cmd.to_solver_env ()) in
-  Format.eprintf "[SOLVED] Solution found with %d universes.@." i;
-  let print_model in_file =
-    let elab_file = F.from_string in_file `Elaboration in
-    let md = F.md_of_file elab_file in
-    (* extract declarations from [file_univ] *)
-    let mk_entry = function
-      | Entry.Decl(_,id,_,_) -> Basic.mk_name md id
-      | _ -> assert false
-    in
-    let ic = open_in elab_file in
-    let entries = Parser.Parse_channel.parse md ic in
-    let oc = open_out (F.from_string in_file `Solution) in
-    let fmt = Format.formatter_of_out_channel oc in
-    List.iter (fun e ->
-        let name = mk_entry e in
-        let sol = model name in
-        let rhs = U.term_of_univ sol in
-        (* Solution is translated back to the original theory *)
-        let rhs' = Dkmeta.mk_term (Dkmeta.meta_of_file false !Cmd.compat_output) rhs in
-        (* Solution is encoded as rewrite rules to make the files type check. *)
-        Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs') entries
-  in
-  List.iter print_model in_files
+  L.log_univ "[SOLVING CONSTRAINTS...]";
+  let mk_theory i = U.mk_theory (Cmd.theory_meta ()) i in
+  let i,model = S.Z3Syn.solve mk_theory in
+  L.log_univ "[SOLVED] Solution found with %d universes." i;
+  let meta_out = Dkmeta.meta_of_file false !Cmd.compat_output in
+  List.iter (S.print_model meta_out model) in_files
 
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
 let run_on_file file =
-  Format.eprintf "[FILE] %s@." file;
+  L.log_univ "[FILE] %s" file;
   match !mode with
   | Normal ->
     elaborate file;
@@ -107,7 +85,7 @@ let run_on_file file =
 
 let cmd_options =
   [ ( "-d"
-    , Arg.String Env.set_debug_mode
+    , Arg.String L.enable_flag
     , " flags enables debugging for all given flags" )
   ; ( "--elab-only"
     , Arg.Unit (fun _ -> mode := JustElaborate)
@@ -138,13 +116,13 @@ let cmd_options =
     , " Rewrite rules mapping Universo's universes to the theory's universes" )]
 
 (** [generate_empty_sol_file file] generates the file [file_sol] that requires the file [file_univ].
-    This is useful when universo is used with another mode than the Normal one (see elaboration). *)
+    This is necessary when universo is used with another mode than the Normal one (see elaboration). *)
 let generate_empty_sol_file : string -> unit = fun in_file ->
   let sol_file = F.from_string in_file `Solution in
   let sol_md = F.md_of_file sol_file in
   let oc = open_out sol_file in
   let fmt = Format.formatter_of_out_channel oc in
-  Format.fprintf fmt "#REQUIRE %a@.@." Pp.print_mident sol_md;
+  Format.fprintf fmt "#REQUIRE %a.@.@." Pp.print_mident sol_md;
   close_out oc
 
 let _ =
@@ -161,7 +139,7 @@ let _ =
     if !mode = Normal || !mode = JustSolve then
       solve files
     else
-      (* so that REQUIRE declarations in produced at step 1 (see [elaboration]) do not fail. *)
+      (* so that REQUIRE declarations produced at step 1 (see [elaboration]) do not fail. *)
       List.iter generate_empty_sol_file files
   with
   | Env.EnvError(l,e) -> Errors.fail_env_error l e

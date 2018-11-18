@@ -204,8 +204,8 @@ module Util = struct
                 List.map (fun e'' -> f e e' e'') l'') l')) l)
 end
 
-(* FIXME: can be optimized. *)
 (** [mk_theory meta i] computes a theory for the universes up to [i]. A theory is an array for each predicate that tells if the predicate holds. The array is index by universes and its dimension is the arity of the predicate. *)
+(* FIXME: can be optimized. *)
 let mk_theory : Dkmeta.cfg -> int -> theory = fun meta i ->
   let u  = enumerate i in
   let model_ax  = Util.cartesian2 (fun l r -> is_true_axiom meta l r) u u in

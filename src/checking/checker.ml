@@ -1,3 +1,4 @@
+module L = Common.Log
 module V = Elaboration.Var
 module U = Common.Universes
 
@@ -135,7 +136,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
   in
   match e with
   | Decl(lc,id,st,ty) ->
-    Format.eprintf "[CHECK] %a@." Pp.print_ident id;
+    L.log_check "[CHECK] %a" Pp.print_ident id;
     Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id;
     begin
       match T.inference env.sg ty with
@@ -143,7 +144,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
       | s -> raise (Typing.TypingError (Typing.SortExpected (ty,[],s)))
     end
   | Def(lc,id,opaque,mty,te) ->
-    Format.eprintf "[CHECK] %a@." Pp.print_ident id;
+    L.log_check "[CHECK] %a" Pp.print_ident id;
     Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id;
     let open Rule in
     begin

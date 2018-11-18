@@ -1,4 +1,6 @@
+module L = Common.Log
 module U = Common.Universes
+module F = Common.Files
 
 type model = Basic.name -> U.univ
 
@@ -144,6 +146,13 @@ struct
     | Cumul(s,s') -> mk_cumul (mk_univ s) (mk_univ s')
     | Rule(s,s',s'') -> mk_rule (mk_univ s) (mk_univ s') (mk_univ s'')
 
+  (** [mk_cstr c] construct the Z3 constraint from the universe constraint [c] *)
+  let mk_cstr = fun c ->
+    let open U in
+    match c with
+    | Pred p -> mk_pred p
+    | EqVar(l,r) -> Boolean.mk_eq ctx (mk_var (var_of_name l)) (mk_var (var_of_name r))
+
   (** [add expr] add the asserition [expr] in the Z3 solver. [expr] should be a predicate. *)
   let add expr =
     Z3.Solver.add solver [expr]
@@ -163,10 +172,10 @@ struct
         let or_eqs = List.map (fun u -> Boolean.mk_eq ctx (mk_var var) (mk_univ u)) univs in
         add (Boolean.mk_or ctx or_eqs)) vars
 
-  (** [check meta i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
-  let rec check meta i =
+  (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
+  let rec check theory_of i =
     Z3.Solver.push solver;
-    let theory = U.mk_theory meta i in (* The theory is computed by U *)
+    let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
     (* Format.eprintf "%s@." (Z3.Solver.to_string solver); *)
@@ -174,8 +183,8 @@ struct
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
-      Format.eprintf "No solution found with %d universes@." i;
-      Z3.Solver.pop solver 1; check meta (i+1)
+      L.log_solver "[SOLVER] No solution found with %d universes" i;
+      Z3.Solver.pop solver 1; check theory_of (i+1)
     | Z3.Solver.UNKNOWN -> assert false
     | Z3.Solver.SATISFIABLE ->
       match Z3.Solver.get_model solver with
@@ -201,32 +210,8 @@ struct
         in
         (i,model)
 
-  (** [solve meta] tries to solve the constraints *)
-  let solve meta = check meta 1
+  (** [solve mk_theory] tries to solve the constraints *)
+  let solve mk_theory = check mk_theory 1
 
-  (** [from_rule pat rhs] add the assertion [pat = rhs] to Z3. *)
-  let from_rule : Rule.pattern -> Term.term -> unit = fun pat right ->
-    let left   = Rule.pattern_to_term pat in
-    try (* the constraint is a predicate *)
-      let pred'  = U.extract_pred left in
-      let pred'' = mk_pred pred' in
-      add pred''
-    with U.Not_pred ->
-      (* the constraint is en equality between variables *)
-      let left' = Elaboration.Var.name_of_uvar left in
-      let right' = Elaboration.Var.name_of_uvar right in
-      add (Boolean.mk_eq ctx (mk_var (var_of_name left')) (mk_var (var_of_name right')))
-
-  (** [parse _ _ compat s] parse a constraint file. *)
-  let parse : Basic.mident -> Basic.mident -> string -> string -> unit =
-    fun md_elab md_check compat s ->
-      let meta = Dkmeta.meta_of_file false compat in
-      (* meta transform the constraints to universos constraints *)
-      let mk_entry = function
-        | Entry.Rules(_,rs) ->
-          Rule.(List.iter (fun r -> from_rule r.pat r.rhs) rs)
-        | _ -> assert false
-      in
-      let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
-      Parser.Parse_channel.handle md_check mk_entry (open_in s)
+  let add : U.cstr -> unit = fun cstr -> add (mk_cstr cstr)
 end
