@@ -1,6 +1,7 @@
 module L = Common.Log
 module V = Elaboration.Var
 module U = Common.Universes
+module C = Common.Constraints
 
 type t =
   {
@@ -65,21 +66,21 @@ struct
     else
       try
         (* FIXME: should not be done in Universes anymore *)
-        let uenv = U.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+        let uenv = C.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
         (* If two universes should be equal, then we add the constraint [l =?= r] AND a rule that
            makes [l] convertible to [r]. Order matters and is handled by the module U. *)
         if V.is_uvar l && V.is_uvar r then
           begin
             let ul = V.name_of_uvar l in
             let ur = V.name_of_uvar r in
-            U.mk_var_cstr uenv add_rule ul ur;
+            C.mk_var_cstr uenv add_rule ul ur;
             true
           end
           (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
           (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
         else if (Term.term_eq U.true_ l) then
           begin
-            U.mk_cstr uenv r l;
+            C.mk_cstr uenv r l;
             true
           end
         else
