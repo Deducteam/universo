@@ -1,4 +1,5 @@
 module L = Common.Log
+module O = Common.Oracle
 module U = Common.Universes
 module F = Common.Files
 
@@ -167,7 +168,7 @@ struct
 
   (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
   let register_vars vars i =
-    let univs = U.enumerate i in
+    let univs = O.enumerate i in
     SSet.iter (fun var ->
         let or_eqs = List.map (fun u -> Boolean.mk_eq ctx (mk_var var) (mk_univ u)) univs in
         add (Boolean.mk_or ctx or_eqs)) vars
@@ -194,7 +195,7 @@ struct
         let hmodel = Hashtbl.create 10001 in
         (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
         let find var =
-          let univs = U.enumerate i in
+          let univs = O.enumerate i in
           match solution_of_var univs model var with
           | None -> U.Prop
           | Some u -> u

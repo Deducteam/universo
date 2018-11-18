@@ -1,6 +1,7 @@
 module L = Common.Log
 module P = Parser.Parse_channel
 module F = Common.Files
+module O = Common.Oracle
 module U = Common.Universes
 module S = Solving.Solver
 
@@ -64,7 +65,7 @@ let solve : string list -> unit = fun in_files ->
   in
   List.iter add_constraints in_files;
   L.log_univ "[SOLVING CONSTRAINTS...]";
-  let mk_theory i = U.mk_theory (Cmd.theory_meta ()) i in
+  let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
   let i,model = S.Z3Syn.solve mk_theory in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
   let meta_out = Dkmeta.meta_of_file false !Cmd.compat_output in
@@ -139,7 +140,7 @@ let _ =
     if !mode = Normal || !mode = JustSolve then
       solve files
     else
-      (* so that REQUIRE declarations produced at step 1 (see [elaboration]) do not fail. *)
+      (* So that REQUIRE declarations produced at step 1 (see [elaboration]) do not fail. *)
       List.iter generate_empty_sol_file files
   with
   | Env.EnvError(l,e) -> Errors.fail_env_error l e
