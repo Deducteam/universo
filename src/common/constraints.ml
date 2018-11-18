@@ -6,7 +6,7 @@ type t =
     meta:Dkmeta.cfg
   }
 
-(* FIXME: should not be here *)
+(** [print_rule env cstr] prints the constraint [cstr] into the file [env.out_fmt] *)
 let print_rule env cstr =
   let normalize t = Dkmeta.mk_term env.meta t in
   match cstr with
@@ -17,26 +17,25 @@ let print_rule env cstr =
   | U.EqVar(l,r) ->
     Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_name l Pp.print_name r
 
-let add_cstr env p = print_rule env p
-
-let mk_cstr env l r =
-  assert(Term.term_eq r U.true_);
-  let p = U.extract_pred l in
-  add_cstr env (Pred p)
+let print_cstr env p = print_rule env p
 
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
     l >= r. *)
-let mk_var_cstr env f l r =
+let mk_var_cstr f l r =
   let get_number s =
     int_of_string (String.sub s 1 (String.length s - 1))
   in
   let nl = get_number (Basic.string_of_ident @@ Basic.id l) in
   let nr = get_number (Basic.string_of_ident @@ Basic.id r) in
-  if nr < nl then
-    begin
-      f l r; add_cstr env (EqVar(l,r))
-    end
-  else
-    begin
-      f r l; add_cstr env (EqVar(r,l))
-    end
+  if nr < nl then f l r else f r l
+
+let mk_cstr env f cstr =
+  match cstr with
+  | None ->  false
+  | Some ((U.Pred _) as cstr) ->
+    print_cstr env cstr;
+    true
+  | Some (U.EqVar(l,r) as cstr) ->
+    mk_var_cstr f l r;
+    print_cstr env cstr;
+    true

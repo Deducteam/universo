@@ -1,4 +1,5 @@
 module F = Common.Files
+module U = Common.Universes
 
 (** The path to the original theory *)
 let theory        = ref ""
@@ -27,10 +28,8 @@ let universo () =
 
 (** [theory_sort ()] returns the type of universes in the original theory *)
 let theory_sort : unit -> Term.term = fun () ->
-  (* FIXME: This should depend on universes I guess *)
-  let sort = Basic.mk_name (Basic.mk_mident "universo") (Basic.mk_ident "Sort") in
   let meta = Dkmeta.meta_of_file false !compat_output in
-  let sort = Term.mk_Const Basic.dloc sort in
+  let sort = Term.mk_Const Basic.dloc U.sort in
   (* compat_output (universo.sort) --> <theory>.sort *)
   Dkmeta.mk_term meta sort
 

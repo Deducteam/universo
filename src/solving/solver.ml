@@ -22,7 +22,6 @@ end
 (** A concrete implementation of a solver using Z3 with non interpreted symbol functions for universes *)
 module Z3Syn : SOLVER  = Z3solver.Syn
 
-
 (** [from_rule pat rhs] add the assertion [pat = rhs] to Z3. *)
 let from_rule : Rule.pattern -> Term.term -> U.cstr = fun pat right ->
   let left   = Rule.pattern_to_term pat in

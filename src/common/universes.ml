@@ -18,27 +18,32 @@ module C = Set.Make(struct type t = cstr let compare = compare end)
 let md_universo = mk_mident "universo"
 let md_univ = ref (mk_mident "")
 
-exception Not_pred
+let sort  = mk_name md_universo (mk_ident "Sort")
 
-let typ = mk_name md_universo (mk_ident "type")
+let typ   = mk_name md_universo (mk_ident "type")
 
-let set = mk_name md_universo (mk_ident "set")
+let set   = mk_name md_universo (mk_ident "set")
 
-let prop = mk_name md_universo (mk_ident "prop")
+let prop  = mk_name md_universo (mk_ident "prop")
 
-let univ = mk_name md_universo (mk_ident "Univ")
+let univ  = mk_name md_universo (mk_ident "Univ")
 
-let lift = mk_name md_universo (mk_ident "lift")
+let lift  = mk_name md_universo (mk_ident "lift")
 
 let axiom = mk_name md_universo (mk_ident "Axiom")
 
-let rule = mk_name md_universo (mk_ident "Rule")
+let rule  = mk_name md_universo (mk_ident "Rule")
 
 let cumul = mk_name md_universo (mk_ident "Cumul")
 
-let z = mk_name md_universo (mk_ident "0")
+let pvar  = mk_name md_universo (mk_ident "var")
 
-let s = mk_name md_universo (mk_ident "S")
+let z     = mk_name md_universo (mk_ident "0")
+
+let s     = mk_name md_universo (mk_ident "S")
+
+
+let true_ = Basic.(Term.mk_Const dloc (mk_name (md_universo) (mk_ident "True")))
 
 let rec term_of_level l =
   let lc = Basic.dloc in
@@ -94,14 +99,14 @@ let extract_lift t =
   | Term.App(f,s1,[s2;_]) when is_const lift f -> s1,s2
   | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
 
-let true_ = Basic.(Term.mk_Const dloc (mk_name (mk_mident "universo") (mk_ident "True")))
-
 let rec extract_level l =
   match l with
   | Term.Const(_,n) when Basic.name_eq n z -> 0
   | Term.App(f,l,[]) when is_const s f -> 1 + (extract_level l)
-  | _ -> Format.eprintf "%a@." Pp.print_term l;
-    assert false
+  | _ -> assert false
+
+exception Not_univ
+exception Not_pred
 
 let extract_univ s =
   match s with
@@ -109,7 +114,7 @@ let extract_univ s =
   | Term.Const(_,n) when Basic.name_eq n set -> Set
   | Term.Const(_,n)  -> Var n
   | Term.App(f,l,[]) when is_const typ f -> Type (extract_level l)
-  | _ -> assert false
+  | _ -> raise Not_univ
 
 let extract_pred t =
   match t with

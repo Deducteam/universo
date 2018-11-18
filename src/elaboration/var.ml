@@ -1,3 +1,5 @@
+module U = Common.Universes
+
 exception Not_uvar
 
 type t =
@@ -13,15 +15,10 @@ type t =
 (** prefix for all the universe variables. *)
 let basename = "?"
 
-
-(* FIXME: This should be in a common module, maybe Universes? *)
-(** Name of a variable before generating a fresh one *)
-let pre_var : Basic.name = Basic.(mk_name (mk_mident "universo") (mk_ident "var"))
-
 (** Check if a term should be elaborated by a fresh variable *)
 let is_pre_var t =
   match t with
-  | Term.Const(_,n) when n = pre_var -> true
+  | Term.Const(_,n) when n = U.pvar -> true
   | _ -> false
 
 (** Check if a term is universe variable, i.e. its ident should be ?11, ?43... *)
@@ -43,9 +40,6 @@ let name_of_uvar t =
 
 (** Internal counter use by this module to generate fresh variables *)
 let counter = ref 0
-
-(* FIXME: should be somewhere else in a common module such as Universes *)
-let default_md = Basic.mk_mident "universo"
 
 (** Generate a fresh name for a universe variable *)
 let fresh () =

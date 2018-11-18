@@ -38,7 +38,7 @@ struct
   open Basic
 
   (** Name for rules that reduce variables. Names are irrelevant for Universo. *)
-  let dummy_name = Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "universo"))
+  let dummy_name = Rule.Gamma(false, mk_name !global_env.md_check (mk_ident "dummy"))
 
   (** [add_rule vl vr] add to the current signature the rule that maps [vl] to [vr]. *)
   (* FIXME: this rules are not exported hence redudant rule might be added when the current module is      impoted somewhere else *)
@@ -64,37 +64,27 @@ struct
     if Term.term_eq l r then (* should not happen *)
       true
     else
-      try
-        (* FIXME: should not be done in Universes anymore *)
-        let uenv = C.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+      let uenv = C.({out_fmt= !global_env.check_fmt; meta= !global_env.meta_out}) in
+      let cstr =
         (* If two universes should be equal, then we add the constraint [l =?= r] AND a rule that
            makes [l] convertible to [r]. Order matters and is handled by the module U. *)
         if V.is_uvar l && V.is_uvar r then
-          begin
-            let ul = V.name_of_uvar l in
-            let ur = V.name_of_uvar r in
-            C.mk_var_cstr uenv add_rule ul ur;
-            true
-          end
+          Some(U.EqVar(V.name_of_uvar l, V.name_of_uvar r))
           (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
           (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
         else if (Term.term_eq U.true_ l) then
-          begin
-            C.mk_cstr uenv r l;
-            true
-          end
+            Some(U.Pred(U.extract_pred r))
         else
-          false
-      with U.Not_pred ->
-        (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. *)
+          (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. *)
         if U.is_lift l && not (U.is_lift r) then
-          (* FIXME: to do stuff here *)
-          true
+          None (* FIXME: WRONG *)
         else if not (U.is_lift l) && (U.is_lift r) then
-          (* FIXME: to do stuff here *)
-          true
+          None (* FIXME: WRONG *)
         else
-          false
+          None
+      in
+      C.mk_cstr uenv add_rule cstr
+
 
   and are_convertible_lst sg : (Term.term * Term.term) list -> bool = function
     | [] -> true
@@ -117,7 +107,7 @@ struct
   and matching_test r sg t1 t2 =
     match r with
     | Rule.Gamma(_,rn) ->
-      if md rn = Basic.mk_mident "universo" then
+      if md rn = U.md_universo then
         false
       else
         are_convertible sg t1 t2
