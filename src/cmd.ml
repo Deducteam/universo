@@ -49,7 +49,7 @@ let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
   let entries = Parser.Parse_channel.parse md ic in
   let sg = universo () in
   (* The line below does the main trick: it normalizes every entry of the original theory with the universes of Universo *)
-  let entries' = List.map (Dkmeta.mk_entry ~all_def:true meta md) entries in
+  let entries' = List.map (Dkmeta.mk_entry meta md) entries in
   let sg = Dkmeta.to_signature md ~sg entries' in
   (* We include the compat theory so that the type checker transforms automatically a universe from the original theory to the one of Universo. *)
   F.signature_of_file ~sg !compat_theory
@@ -70,6 +70,7 @@ let to_checking_env : string -> Checking.Checker.t = fun in_file ->
   let check_fmt = Format.formatter_of_out_channel (open_out (F.from_string in_file `Checking)) in
   { sg;
     md=F.md_of_file (F.from_string in_file `Normal);
+    md_theory=F.md_of_file !theory;
     md_check=F.md_of_file (F.from_string in_file `Checking);
     md_elab=F.md_of_file (F.from_string in_file `Elaboration);
     meta_out;

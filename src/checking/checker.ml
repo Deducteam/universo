@@ -7,6 +7,8 @@ type t =
   {
     sg:Signature.t;
     (** The current signature used for type checking *)
+    md_theory:Basic.mident;
+    (** mident of the original theory *)
     md:Basic.mident;
     (** mident of the current module being type checked *)
     md_check:Basic.mident;
@@ -20,12 +22,13 @@ type t =
   }
 
 (** Only used as default value for [global_env] *)
-let default : t = {sg = Signature.make "";
-                   md = Basic.mk_mident "";
-                   md_check = Basic.mk_mident "";
-                   md_elab = Basic.mk_mident "";
-                   meta_out=Dkmeta.default_config;
-                   check_fmt=Format.std_formatter}
+let default : t = {sg        = Signature.make "";
+                   md_theory = Basic.mk_mident "";
+                   md        = Basic.mk_mident "";
+                   md_check  = Basic.mk_mident "";
+                   md_elab   = Basic.mk_mident "";
+                   meta_out  = Dkmeta.default_config;
+                   check_fmt = Format.std_formatter}
 
 (** [globel_env] is a reference to the current type checking environment. *)
 (* This is a reference because we have to use it in the Reduction Engine and we have no control over
@@ -61,6 +64,8 @@ struct
     Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
 
   and univ_conversion l r =
+    Format.eprintf "%a@." Pp.print_term l;
+    Format.eprintf "%a@." Pp.print_term r;
     if Term.term_eq l r then (* should not happen *)
       true
     else
@@ -77,9 +82,9 @@ struct
         else
           (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. *)
         if U.is_lift l && not (U.is_lift r) then
-          None (* FIXME: WRONG *)
+          failwith "todo"
         else if not (U.is_lift l) && (U.is_lift r) then
-          None (* FIXME: WRONG *)
+          failwith "todo"
         else
           None
       in
@@ -107,11 +112,15 @@ struct
   and matching_test r sg t1 t2 =
     match r with
     | Rule.Gamma(_,rn) ->
-      if md rn = U.md_universo then
+      (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
+      (* FIXME: this is a bug of dkmeta that rule names are not preserved *)
+      if (md rn) = !global_env.md_theory  then
         false
       else
         are_convertible sg t1 t2
-    | _ -> are_convertible sg t1 t2
+    | Rule.Delta(_) ->
+      are_convertible sg t1 t2
+    | Rule.Beta -> assert false
 end
 
 module T = Typing.Make(RE)
