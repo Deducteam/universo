@@ -3,7 +3,9 @@ module P = Parser.Parse_channel
 module F = Common.Files
 module O = Common.Oracle
 module U = Common.Universes
-module S = Solving.Solver
+module Syn = Solving.Solver.Z3Syn
+module ZSyn = Solving.Z3cfg.Make(Syn)
+module S = Solving.Solver.Make(ZSyn)
 
 let _ =
   (* For debugging purposes, it is better to see error messages in SNF *)
@@ -68,7 +70,7 @@ let solve : string list -> unit = fun in_files ->
   List.iter add_constraints in_files;
   L.log_univ "[SOLVING CONSTRAINTS...]";
   let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
-  let i,model = S.Z3Syn.solve mk_theory in
+  let i,model = S.solve mk_theory in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
   let meta_out = Dkmeta.meta_of_file false !Cmd.compat_output in
   List.iter (S.print_model meta_out model) in_files

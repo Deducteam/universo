@@ -144,7 +144,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
   match e with
   | Decl(lc,id,st,ty) ->
     L.log_check "[CHECK] %a" Pp.print_ident id;
-    Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id;
+    (* Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id; *)
     begin
       match T.inference env.sg ty with
       | Kind | Type _ -> Signature.add_declaration env.sg lc id st ty
@@ -152,7 +152,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
     end
   | Def(lc,id,opaque,mty,te) ->
     L.log_check "[CHECK] %a" Pp.print_ident id;
-    Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id;
+    (* Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id; *)
     let open Rule in
     begin
       let ty = match mty with
