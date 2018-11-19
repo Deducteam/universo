@@ -40,13 +40,13 @@ let parse : Dkmeta.cfg -> string -> unit =
     let md_check = F.md_of_file (F.from_string file `Checking) in
     (* meta transform the constraints to universos constraints *)
     let mk_entry = function
-      | Entry.Rules(_,[r]) ->
-        from_rule r.pat r.rhs
-      | _ ->  assert false
+      | Entry.Rules(_,rs) ->
+        List.map (fun (r:Rule.untyped_rule) -> from_rule r.pat r.rhs) rs
+      | _  -> assert false
     in
     let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
     let entries = Parser.Parse_channel.parse md_check (open_in file) in
-    let entries' = List.map mk_entry entries in
+    let entries' = List.flatten (List.map mk_entry entries) in
     List.iter Z3Syn.add entries'
 
 (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)

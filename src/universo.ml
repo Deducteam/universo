@@ -53,7 +53,8 @@ let check : string -> unit = fun in_file ->
   let env = Cmd.to_checking_env in_file in
   let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
-  List.iter (Checking.Checker.mk_entry env) entries'
+  List.iter (Checking.Checker.mk_entry env) entries';
+  Common.Constraints.flush {Common.Constraints.out_fmt=env.check_fmt; meta=env.meta_out}
 
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)

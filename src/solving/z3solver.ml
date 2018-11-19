@@ -152,7 +152,7 @@ struct
     let open U in
     match c with
     | Pred p -> mk_pred p
-    | EqVar(l,r) -> Boolean.mk_eq ctx (mk_var (var_of_name l)) (mk_var (var_of_name r))
+    | EqVar(l,r) -> Boolean.mk_eq ctx (mk_var (var_of_name r)) (mk_var (var_of_name l))
 
   (** [add expr] add the asserition [expr] in the Z3 solver. [expr] should be a predicate. *)
   let add expr =
@@ -179,7 +179,7 @@ struct
     let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
-    Format.printf "%s@." (Z3.Solver.to_string solver);
+    if i = 3 then
     (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with

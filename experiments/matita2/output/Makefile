@@ -16,15 +16,12 @@ E=-errors-in-snf
 #	$(DKCHECK) -e -nl $<
 #	$(DKINDENT) $< > $(DIR)/$<
 
-clean:
+fullclean:
 	rm -f *.dko .depend
 	rm $(subst cic.dk,, $(DKS)) 2>/dev/null || true
 
-dkclean:
-	@ls *.dk | grep -v "cic.dk" | xargs rm
-
-import:
-	$(KRAJONO) -extract_dedukti $(LIB)
+clean:
+	rm -f *.dko .depend
 
 depend: .depend
 .depend:
