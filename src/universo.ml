@@ -54,6 +54,7 @@ let check : string -> unit = fun in_file ->
   let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
   List.iter (Checking.Checker.mk_entry env) entries';
+  L.log_check "[CHECK] Printing constraints...";
   Common.Constraints.flush {Common.Constraints.out_fmt=env.check_fmt; meta=env.meta_out}
 
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
@@ -121,10 +122,10 @@ let cmd_options =
     This is necessary when universo is used with another mode than the Normal one (see elaboration). *)
 let generate_empty_sol_file : string -> unit = fun in_file ->
   let sol_file = F.from_string in_file `Solution in
-  let sol_md = F.md_of_file sol_file in
+  let check_md = F.md_of_file (F.from_string in_file `Checking) in
   let oc = open_out sol_file in
   let fmt = Format.formatter_of_out_channel oc in
-  Format.fprintf fmt "#REQUIRE %a.@.@." Pp.print_mident sol_md;
+  Format.fprintf fmt "#REQUIRE %a.@.@." Pp.print_mident check_md;
   close_out oc
 
 let _ =
