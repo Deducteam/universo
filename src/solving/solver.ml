@@ -20,6 +20,8 @@ end
 (** A concrete implementation of a solver using Z3 with non interpreted symbol functions for universes *)
 module Z3Syn : Z3cfg.ALGEBRAIC = Z3syn
 
+module Z3Arith : Z3cfg.ALGEBRAIC = Z3arith
+
 module type S =
 sig
   val parse : Dkmeta.cfg -> F.file -> unit

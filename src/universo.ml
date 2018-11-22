@@ -4,8 +4,10 @@ module F = Common.Files
 module O = Common.Oracle
 module U = Common.Universes
 module Syn = Solving.Solver.Z3Syn
+module Arith = Solving.Solver.Z3Arith
 module ZSyn = Solving.Z3cfg.Make(Syn)
-module S = Solving.Solver.Make(ZSyn)
+module ZArith = Solving.Z3cfg.Make(Arith)
+module S = Solving.Solver.Make(ZArith)
 
 let _ =
   (* For debugging purposes, it is better to see error messages in SNF *)

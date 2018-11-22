@@ -37,6 +37,7 @@ sig
   val mk_axiom : t -> t -> t
   val mk_cumul : t -> t -> t
   val mk_rule : t -> t -> t -> t
+  val solution_of_var : int -> Z.Model.model -> string -> U.univ
 end
 
 
@@ -91,23 +92,7 @@ struct
     | Pred p -> mk_pred p
     | EqVar(l,r) -> Z.Boolean.mk_eq ctx (mk_var (S.mk_name r)) (mk_var (S.mk_name l))
 
-  (** [solution_of_var univs model var] looks for the concrete universe associated to [var]
-      in the [model]. Such universe satisfy that model(univ) = model(var). *)
-  let solution_of_var univs model var =
-    let exception Found of U.univ in
-    let find_univ e u  =
-      match Z.Model.get_const_interp_e model (S.mk_univ u) with
-      | None -> assert false
-      | Some u' ->
-        if e = u' then raise (Found u) else ()
-    in
-    match Z.Model.get_const_interp_e model var with
-    | None -> assert false
-    | Some e ->
-      try
-        List.iter (find_univ e) univs;
-        None
-      with Found(u) -> Some u
+
 
   (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
   let rec check theory_of i =

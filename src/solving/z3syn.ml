@@ -1,3 +1,4 @@
+module O = Common.Oracle
 module U = Common.Universes
 module Z = Z3cfg
 
@@ -54,3 +55,29 @@ let mk_cumul s s' =
 let mk_rule s s' s'' =
   let cumul = Z.FuncDecl.mk_func_decl_s Z.ctx "R" [sort;sort;sort] bool_sort in
   Z.Expr.mk_app Z.ctx cumul [s;s';s'']
+
+(** [solution_of_var univs model var] looks for the concrete universe associated to [var]
+    in the [model]. Such universe satisfy that model(univ) = model(var). *)
+let solution_of_var i model var =
+  let univs = O.enumerate i in
+  let exception Found of U.univ in
+  let find_univ e u  =
+    match Z.Model.get_const_interp_e model (mk_univ u) with
+    | None -> assert false
+    | Some u' ->
+      if e = u' then raise (Found u) else ()
+  in
+  match Z.Model.get_const_interp_e model var with
+  | None -> assert false
+  | Some e ->
+    try
+      List.iter (find_univ e) univs;
+      None
+    with Found(u) -> Some u
+
+(** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
+let register_vars vars i =
+  let univs = O.enumerate i in
+  SSet.iter (fun var ->
+      let or_eqs = List.map (fun u -> Z.Boolean.mk_eq ctx (mk_var var) (S.mk_univ u)) univs in
+      add (Z.Boolean.mk_or ctx or_eqs)) vars
