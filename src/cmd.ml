@@ -34,18 +34,16 @@ let theory_sort : unit -> Term.term = fun () ->
   Dkmeta.mk_term meta sort
 
 (** [to_elaboration_env f] generates a fresh environement to elaborate file [f]. *)
-let to_elaboration_env : string -> Elaboration.Elaborate.t = fun in_file ->
-  let out_md = F.md_of_file (F.from_string in_file `Elaboration) in
-  let out_file = F.from_string in_file `Elaboration in
-  let out_fmt = Format.formatter_of_out_channel (open_out out_file) in
+let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
+  let file = F.out_from_string in_path `Elaboration in
   let meta = Dkmeta.meta_of_file false !compat_input in
   let theory_sort = theory_sort () in
-  {out_fmt; out_md; theory_sort; meta}
+  {file; theory_sort; meta}
 
 (** [mk_theory meta] returns a signature that corresponds to the original where universes of universo have been plugged in. This allows us to type check as if we were in the original theory but Universo can recognize easily a universe. *)
 let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
   let ic = open_in !theory in
-  let md = F.md_of_file !theory in
+  let md = F.md_of_path !theory in
   let entries = Parser.Parse_channel.parse md ic in
   let sg = universo () in
   (* The line below does the main trick: it normalizes every entry of the original theory with the universes of Universo *)
@@ -56,23 +54,23 @@ let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
 
 (** [elab_signature f] returns the signature containing all the universes declaration associated to
     file [f] *)
-let elab_signature : string -> Signature.t = fun in_file ->
-  F.signature_of_file (F.from_string in_file `Elaboration)
+let elab_signature : string -> Signature.t = fun in_path ->
+  F.signature_of_file (F.get_out_path in_path `Elaboration)
 
 (** [to_checking_env f] returns the type checking environement for the file [f] *)
-let to_checking_env : string -> Checking.Checker.t = fun in_file ->
+let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   let meta = Dkmeta.meta_of_file false !compat_theory in
   let theory_signature = mk_theory meta in
-  let sg = Signature.make (Filename.basename in_file) in
+  let sg = Signature.make (Filename.basename in_path) in
   Signature.import_signature sg theory_signature;
-  Signature.import_signature sg (elab_signature in_file);
+  Signature.import_signature sg (elab_signature in_path);
   let meta_out = Dkmeta.meta_of_file false !compat_output in
-  let check_fmt = Format.formatter_of_out_channel (open_out (F.from_string in_file `Checking)) in
+  let check_fmt = Format.formatter_of_out_channel (open_out (F.get_out_path in_path `Checking)) in
   { sg;
-    md=F.md_of_file (F.from_string in_file `Normal);
-    md_theory=F.md_of_file !theory;
-    md_check=F.md_of_file (F.from_string in_file `Checking);
-    md_elab=F.md_of_file (F.from_string in_file `Elaboration);
+    md=F.md_of_path (F.get_out_path in_path `Output);
+    md_theory=F.md_of_path !theory;
+    md_check=F.md_of_path (F.get_out_path in_path `Checking);
+    md_elab=F.md_of_path (F.get_out_path in_path `Elaboration);
     meta_out;
     check_fmt
   }

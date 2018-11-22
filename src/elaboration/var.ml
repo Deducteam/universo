@@ -1,13 +1,12 @@
+module F = Common.Files
 module U = Common.Universes
 
 exception Not_uvar
 
 type t =
   {
-    out_fmt:Format.formatter;
-    (** Where to print universe variables declarations *)
-    out_md:Basic.mident;
-    (** mident of the module that contains universe variables declarations *)
+    file: F.cout F.t;
+    (** File where universe declarations are printed *)
     theory_sort:Term.term;
     (** Type of a universe in the original theory *)
   }
@@ -50,10 +49,10 @@ let fresh () =
 let fresh_uvar : t -> unit -> Term.term =
   fun env () ->
   let id = fresh () in
-  let uvar = Basic.mk_name env.out_md id in
+  let uvar = Basic.mk_name env.file.md id in
   let uterm = Term.mk_Const Basic.dloc uvar in
   begin
-    Format.fprintf env.out_fmt "%a@."
+    Format.fprintf (F.fmt_of_file env.file) "%a@."
       Pp.print_entry (Entry.Decl(Basic.dloc, id, Signature.Definable, env.theory_sort))
   end;
   uterm

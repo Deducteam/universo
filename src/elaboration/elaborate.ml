@@ -1,11 +1,10 @@
+module F = Common.Files
 module L = Common.Log
 
 type t =
   {
-    out_fmt:Format.formatter;
-    (** Where to print universe variables declarations *)
-    out_md:Basic.mident;
-    (** mident of the module that contains universe variables declarations *)
+    file: F.cout F.t;
+    (** File where universe declarations are printed *)
     theory_sort:Term.term;
     (** Type of a universe in the original theory *)
     meta:Dkmeta.cfg
@@ -13,8 +12,7 @@ type t =
   }
 
 (** Return a var environement using an elaboration environement *)
-let var_env : t -> Var.t = fun env ->
-  {out_fmt=env.out_fmt;theory_sort=env.theory_sort;out_md=env.out_md}
+let var_env : t -> Var.t = fun env -> {file=env.file;theory_sort=env.theory_sort}
 
 (** Takes a term [t] where universes are elaborated as pre-universe variables and returns a term where all the pre-universe variables are fresh universe variables *)
 let rec mk_term : t -> Term.term -> Term.term = fun env ->
@@ -51,19 +49,20 @@ let mk_rule : t -> 'a Rule.rule -> 'a Rule.rule = fun env rule -> Rule.(
 (** [mk_entry env entry] replaces all the concrete universes in [entry] by a fresh variable
     using the environment env. Commands are skipped. *)
 let mk_entry : t -> Entry.entry -> Entry.entry = fun env e ->
+  let fmt = F.fmt_of_file env.file in
   let open Entry in
   match e with
   | Decl(lc, id, st, ty) ->
     L.log_elab "[ELAB] %a" Pp.print_ident id;
-    Format.fprintf env.out_fmt "(; %a ;)@." Pp.print_ident id;
+    Format.fprintf fmt "(; %a ;)@." Pp.print_ident id;
     Decl(lc,id,st, mk_term env ty)
   | Def(lc, id, op, mty, te) ->
     L.log_elab "[ELAB] %a" Pp.print_ident id;
-    Format.fprintf env.out_fmt "(; %a ;)@." Pp.print_ident id;
+    Format.fprintf fmt "(; %a ;)@." Pp.print_ident id;
     let mty' = match mty with None -> None | Some ty -> Some (mk_term env ty) in
     let te' = mk_term env te in
     Def(lc, id, op, mty', te')
   | Rules(lc, rs) ->
-    Format.fprintf env.out_fmt "(; RULES ;)@.";
+    Format.fprintf fmt "(; RULES ;)@.";
     Rules(lc,List.map (mk_rule env) rs)
   | _ -> e

@@ -24,9 +24,9 @@ module Z3Arith : Z3cfg.ALGEBRAIC = Z3arith
 
 module type S =
 sig
-  val parse : Dkmeta.cfg -> F.file -> unit
+  val parse : Dkmeta.cfg -> F.path -> unit
 
-  val print_model : Dkmeta.cfg -> model -> F.file -> unit
+  val print_model : Dkmeta.cfg -> model -> F.path -> unit
 
   val solve : O.theory_maker -> int * model
 end
@@ -47,9 +47,9 @@ struct
 
   (** [parse meta s] parses a constraint file. *)
   let parse : Dkmeta.cfg -> string -> unit =
-    fun meta file ->
-      let md_elab = F.md_of_file (F.from_string file `Elaboration) in
-      let md_check = F.md_of_file (F.from_string file `Checking) in
+    fun meta path ->
+      let md_elab = F.md_of_path (F.get_out_path path `Elaboration) in
+      let md_check = F.md_of_path (F.get_out_path path `Checking) in
       (* meta transform the constraints to universos constraints *)
       let mk_entry = function
         | Entry.Rules(_,rs) ->
@@ -57,14 +57,14 @@ struct
         | _  -> assert false
       in
       let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
-      let entries = Parser.Parse_channel.parse md_check (open_in file) in
+      let entries = Parser.Parse_channel.parse md_check (open_in path) in
       let entries' = List.flatten (List.map mk_entry entries) in
       List.iter S.add entries'
 
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
-  let print_model meta model in_file =
-    let elab_file = F.from_string in_file `Elaboration in
-    let md = F.md_of_file elab_file in
+  let print_model meta model in_path =
+    let elab_file = F.get_out_path in_path `Elaboration in
+    let md = F.md_of_path elab_file in
     (* extract declarations from [file_univ] *)
     let mk_entry = function
       | Entry.Decl(_,id,_,_) -> Basic.mk_name md id
@@ -72,7 +72,7 @@ struct
     in
     let ic = open_in elab_file in
     let entries = Parser.Parse_channel.parse md ic in
-    let oc = open_out (F.from_string in_file `Solution) in
+    let oc = open_out (F.get_out_path in_path `Solution) in
     let fmt = Format.formatter_of_out_channel oc in
     let print_rule e =
       let name = mk_entry e in
