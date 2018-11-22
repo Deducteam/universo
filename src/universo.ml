@@ -1,3 +1,4 @@
+module C = Common.Constraints
 module L = Common.Log
 module P = Parser.Parse_channel
 module F = Common.Files
@@ -53,15 +54,18 @@ let elaborate : string  -> unit = fun in_path ->
     ASSUME also that the dependencies have been type checked before. *)
 let check : string -> unit = fun in_path ->
   let md = F.md_of_path in_path in
-  let out_file = F.get_out_path in_path `Output in
-  let ic = open_in out_file in
-  let entries = P.parse md ic in
+  let file = F.in_from_string in_path `Output in
+  let entries = P.parse md (F.in_channel_of_file file) in
   let env = Cmd.to_checking_env in_path in
   let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
   List.iter (Checking.Checker.mk_entry env) entries';
   L.log_check "[CHECK] Printing constraints...";
-  Common.Constraints.flush {Common.Constraints.out_fmt=env.check_fmt; meta=env.meta_out}
+  let cstr_file = F.out_from_string in_path `Checking in
+  (* Constraints are printed only at the end so that we can rearrange them for Dedukti *)
+  C.flush {C.file=cstr_file; meta=env.meta_out};
+  F.close_in file;
+  F.close_out cstr_file
 
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)

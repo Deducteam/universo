@@ -65,14 +65,10 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   Signature.import_signature sg theory_signature;
   Signature.import_signature sg (elab_signature in_path);
   let meta_out = Dkmeta.meta_of_file false !compat_output in
-  let check_fmt = Format.formatter_of_out_channel (open_out (F.get_out_path in_path `Checking)) in
   { sg;
-    md=F.md_of_path (F.get_out_path in_path `Output);
+    in_path;
     md_theory=F.md_of_path !theory;
-    md_check=F.md_of_path (F.get_out_path in_path `Checking);
-    md_elab=F.md_of_path (F.get_out_path in_path `Elaboration);
     meta_out;
-    check_fmt
   }
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)

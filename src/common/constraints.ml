@@ -1,9 +1,10 @@
 module B = Basic
+module F = Files
 module U = Universes
 
 type t =
   {
-    out_fmt:Format.formatter;
+    file: F.cout F.t;
     meta:Dkmeta.cfg
   }
 
@@ -46,12 +47,13 @@ let add_rule  sg vl vr =
   Signature.add_rules sg  [Rule.to_rule_infos rule]
 
 let print_constraints env =
+  let fmt = F.fmt_of_file env.file in
   let normalize t = Dkmeta.mk_term env.meta t in
-  let print_rule fmt l r =
+  let print_rule pp l r =
     env.meta.meta_rules <- None;
-    Format.fprintf env.out_fmt "@.[] %a --> %a" fmt l fmt r
+    Format.fprintf fmt "@.[] %a --> %a" pp l pp r
   in
-  let print_dot () = Format.fprintf env.out_fmt "." in
+  let print_dot () = Format.fprintf fmt "." in
   let print_eq_var (l,r) =
     add_rule env.meta.sg l r;
     print_rule Pp.print_name l r; print_dot ()
@@ -68,21 +70,7 @@ let print_constraints env =
   print_dot ();
   List.iter (fun (l,m,r) -> print_predicate (Rule(l,m,r))) !constraints.rule;
   print_dot ();
-  Format.fprintf env.out_fmt "@." (* flush last dot *)
-
-
-(** [print_rule env cstr] prints the constraint [cstr] into the file [env.out_fmt] *)
-let print_rule env cstr =
-  let normalize t = Dkmeta.mk_term env.meta t in
-  match cstr with
-  | U.Pred(p) ->
-    let left' = normalize (U.term_of_pred p) in
-    let right' = normalize U.true_ in
-    Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_term left' Pp.print_term right'
-  | U.EqVar(l,r) ->
-    Format.fprintf env.out_fmt "@.[] %a --> %a.@." Pp.print_name l Pp.print_name r
-
-let print_cstr env p = print_rule env p
+  Format.fprintf fmt "@." (* flush last dot *)
 
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
     l >= r. *)
@@ -98,17 +86,14 @@ let mk_var_cstr f l r =
     f r l; U.EqVar(r,l))
 
 
-let mk_cstr _ f cstr =
+let mk_cstr f cstr =
   match cstr with
   | (U.Pred _) as cstr ->
-    (* print_cstr env cstr; *)
     register_cstr cstr;
     true
   | U.EqVar(l,r) ->
-    (* print the rule in the correct order. *)
     let cstr' = mk_var_cstr f l r in
     register_cstr cstr';
-    (* print_cstr env cstr'; *)
     true
 
 let flush env = print_constraints env
