@@ -71,9 +71,8 @@ let check : string -> unit = fun in_path ->
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
   let add_constraints in_path =
-    let file_cstr = F.get_out_path in_path `Checking in
     let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
-    S.parse meta file_cstr
+    S.parse meta in_path
   in
   List.iter add_constraints in_paths;
   L.log_univ "[SOLVING CONSTRAINTS...]";

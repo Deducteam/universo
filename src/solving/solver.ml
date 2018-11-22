@@ -47,9 +47,9 @@ struct
 
   (** [parse meta s] parses a constraint file. *)
   let parse : Dkmeta.cfg -> string -> unit =
-    fun meta path ->
-      let md_elab = F.md_of_path (F.get_out_path path `Elaboration) in
-      let md_check = F.md_of_path (F.get_out_path path `Checking) in
+    fun meta in_path ->
+      let md_elab = F.md_of in_path `Elaboration in
+      let md_check = F.md_of in_path `Checking in
       (* meta transform the constraints to universos constraints *)
       let mk_entry = function
         | Entry.Rules(_,rs) ->
@@ -57,23 +57,22 @@ struct
         | _  -> assert false
       in
       let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
-      let entries = Parser.Parse_channel.parse md_check (open_in path) in
+      let cstr_file = F.in_from_string in_path `Checking in
+      let entries = Parser.Parse_channel.parse md_check (F.in_channel_of_file cstr_file) in
       let entries' = List.flatten (List.map mk_entry entries) in
       List.iter S.add entries'
 
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
   let print_model meta model in_path =
-    let elab_file = F.get_out_path in_path `Elaboration in
-    let md = F.md_of_path elab_file in
+    let elab_file = F.in_from_string in_path `Elaboration in
     (* extract declarations from [file_univ] *)
     let mk_entry = function
-      | Entry.Decl(_,id,_,_) -> Basic.mk_name md id
+      | Entry.Decl(_,id,_,_) -> Basic.mk_name elab_file.md id
       | _ -> assert false
     in
-    let ic = open_in elab_file in
-    let entries = Parser.Parse_channel.parse md ic in
-    let oc = open_out (F.get_out_path in_path `Solution) in
-    let fmt = Format.formatter_of_out_channel oc in
+    let entries = Parser.Parse_channel.parse elab_file.md (F.in_channel_of_file elab_file) in
+    let sol_file = F.out_from_string in_path `Solution in
+    let fmt = F.fmt_of_file sol_file in
     let print_rule e =
       let name = mk_entry e in
       let sol = model name in
@@ -83,7 +82,9 @@ struct
       (* Solution is encoded as rewrite rules to make the files type check. *)
       Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
     in
-    List.iter print_rule entries
+    List.iter print_rule entries;
+    F.close_in elab_file;
+    F.close_out sol_file
 
   let solve = S.solve
 end
