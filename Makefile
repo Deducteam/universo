@@ -26,16 +26,26 @@ univ:
 
 .PHONY: test
 test: bin theory univ
-	$(UNIVERSO) -d s $(MODE) -I $(MATITA_PATH)/theory \
+	@$(UNIVERSO) -d s $(MODE) -I $(MATITA_PATH)/theory \
 	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
 	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory      $(MATITA_PATH)/compatibility/theory.dk	\
 	--theory         $(MATITA_PATH)/theory/cic.dk \
 	$(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output
 
+.PHONY: test2
+test2: bin theory univ
+	@$(UNIVERSO) -d s $(MODE) -I $(MATITA_PATH)/theory \
+	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
+	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
+	--to-theory      $(MATITA_PATH)/compatibility/theory.dk	\
+	--theory         $(MATITA_PATH)/theory/cic.dk \
+	$(MATITA_PATH)/input/test.dk \
+	$(MATITA_PATH)/input/test2.dk -o $(MATITA_PATH)/output
+
 .PHONY: logic
 logic: bin theory univ
-	$(UNIVERSO) -d s $(MODE) -I $(MATITA_PATH)/theory \
+	@$(UNIVERSO) -d s $(MODE) -I $(MATITA_PATH)/theory \
 	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
 	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory      $(MATITA_PATH)/compatibility/theory.dk	\
