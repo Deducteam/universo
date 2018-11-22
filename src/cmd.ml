@@ -1,9 +1,6 @@
 module F = Common.Files
 module U = Common.Universes
 
-(** The path to the original theory *)
-let theory        = ref ""
-
 (** The path to the rewrite rules mapping universes from the original theory to the one of Universo *)
 let compat_theory = ref ""
 
@@ -42,8 +39,8 @@ let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
 
 (** [mk_theory meta] returns a signature that corresponds to the original where universes of universo have been plugged in. This allows us to type check as if we were in the original theory but Universo can recognize easily a universe. *)
 let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
-  let ic = open_in !theory in
-  let md = F.md_of_path !theory in
+  let ic = open_in !F.theory in
+  let md = F.md_of_path !F.theory in
   let entries = Parser.Parse_channel.parse md ic in
   let sg = universo () in
   (* The line below does the main trick: it normalizes every entry of the original theory with the universes of Universo *)
@@ -67,7 +64,6 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   let meta_out = Dkmeta.meta_of_file false !compat_output in
   { sg;
     in_path;
-    md_theory=F.md_of_path !theory;
     meta_out;
   }
 

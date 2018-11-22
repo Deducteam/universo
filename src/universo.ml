@@ -30,14 +30,13 @@ type execution_mode =
 (** By default, Universo go through all the steps *)
 let mode = Pervasives.ref Normal
 
-let add_requires fmt mds = List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Pp.print_mident md)  mds
-
 (** [elaborate file] generates two new files [file'] and [file_univ].
     [file'] is the same as [file] except that all universes are replaced by fresh variables.
     [file_univ] contains the declaration of these variables. Everything is done modulo the logic. *)
 let elaborate : string  -> unit = fun in_path ->
   let in_file = F.in_from_string in_path `Input in
   let env = Cmd.to_elaboration_env in_file.path in
+  F.add_requires (F.fmt_of_file env.file) [F.md_of_path !F.theory];
   let entries = P.parse in_file.md (F.in_channel_of_file in_file) in
   (* This steps generates the fresh universe variables *)
   let entries' = List.map (Elaboration.Elaborate.mk_entry env) entries in
@@ -45,10 +44,11 @@ let elaborate : string  -> unit = fun in_path ->
   let out_file = F.out_from_string in_path `Output in
   let out_fmt = F.fmt_of_file out_file in
   (* The elaborated file depends on the out_sol_md file that contains solution. If the mode is JustElaborate, then this file is empty and import the declaration of the fresh universes *)
-  add_requires out_fmt [F.md_of in_path `Elaboration; F.md_of in_path `Solution];
+  F.add_requires out_fmt [F.md_of_path !F.theory; F.md_of in_path `Elaboration; F.md_of in_path `Solution];
   List.iter (Pp.print_entry out_fmt) entries';
   F.close_in in_file;
-  F.close_out out_file
+  F.close_out out_file;
+  F.close_out env.file
 
 (** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
     ASSUME also that the dependencies have been type checked before. *)
@@ -62,6 +62,7 @@ let check : string -> unit = fun in_path ->
   List.iter (Checking.Checker.mk_entry env) entries';
   L.log_check "[CHECK] Printing constraints...";
   let cstr_file = F.out_from_string in_path `Checking in
+  F.add_requires (F.fmt_of_file cstr_file) [F.md_of_path !F.theory; F.md_of in_path `Elaboration];
   (* Constraints are printed only at the end so that we can rearrange them for Dedukti *)
   C.flush {C.file=cstr_file; meta=env.meta_out};
   F.close_in file;
@@ -115,7 +116,7 @@ let cmd_options =
     , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
     , " Set the output directory" )
   ; ( "--theory"
-    , Arg.String (fun s -> Cmd.theory := s)
+    , Arg.String (fun s -> F.theory := s)
     , " Theory file" )
   ; ( "--to-theory"
     , Arg.String (fun s -> Cmd.compat_theory := s)

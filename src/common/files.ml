@@ -21,6 +21,8 @@ type 'a t =
 (** output where new files are created *)
 let output_directory = ref None
 
+let theory = ref ""
+
 (** suffix used for files containing universe declarations *)
 let elaboration_suffix = "_univ"
 
@@ -111,3 +113,5 @@ let close_in : cin t -> unit = fun file ->
 
 let md_of : path -> step -> B.mident = fun in_path step ->
   md_of_path (get_out_path in_path step)
+
+let add_requires fmt mds = List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Pp.print_mident md)  mds

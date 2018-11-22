@@ -11,8 +11,6 @@ type t =
     (** The current signature used for type checking *)
     in_path:F.path;
     (** path of the original file that should be typed checked *)
-    md_theory:B.mident;
-    (** path of the original file that should be typed checked *)
     meta_out:Dkmeta.cfg;
     (** Meta configuration to translate back universes of Universo to the original theory universes *)
   }
@@ -20,7 +18,6 @@ type t =
 (** Only used as default value for [global_env] *)
 let default : t = {sg        = Signature.make "";
                    in_path   = "";
-                   md_theory = B.mk_mident "";
                    meta_out  = Dkmeta.default_config}
 
 (** [globel_env] is a reference to the current type checking environment. *)
@@ -113,7 +110,7 @@ struct
       | Rule.Gamma(_,rn) ->
         (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
         (* FIXME: this is a bug of dkmeta that rule names are not preserved *)
-        if (md rn) = !global_env.md_theory  then
+        if (md rn) = F.md_of_path !F.theory  then
           false
         else
           are_convertible sg t1 t2

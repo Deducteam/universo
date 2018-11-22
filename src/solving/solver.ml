@@ -54,7 +54,8 @@ struct
       let mk_entry = function
         | Entry.Rules(_,rs) ->
           List.map (fun (r:Rule.untyped_rule) -> from_rule r.pat r.rhs) rs
-        | _  -> assert false
+        | Entry.Require _ -> []
+        | _ -> assert false
       in
       let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
       let cstr_file = F.in_from_string in_path `Checking in
@@ -67,20 +68,24 @@ struct
     let elab_file = F.in_from_string in_path `Elaboration in
     (* extract declarations from [file_univ] *)
     let mk_entry = function
-      | Entry.Decl(_,id,_,_) -> Basic.mk_name elab_file.md id
+      | Entry.Decl(_,id,_,_) -> Some(Basic.mk_name elab_file.md id)
+      | Entry.Require _ -> None
       | _ -> assert false
     in
     let entries = Parser.Parse_channel.parse elab_file.md (F.in_channel_of_file elab_file) in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
+    F.add_requires fmt [F.md_of in_path `Elaboration; F.md_of_path !F.theory];
     let print_rule e =
-      let name = mk_entry e in
-      let sol = model name in
-      let rhs = U.term_of_univ sol in
-      (* Solution is translated back to the original theory *)
-      let rhs' = Dkmeta.mk_term meta rhs in
-      (* Solution is encoded as rewrite rules to make the files type check. *)
-      Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
+      match mk_entry e with
+      | None -> ()
+      | Some name ->
+        let sol = model name in
+        let rhs = U.term_of_univ sol in
+        (* Solution is translated back to the original theory *)
+        let rhs' = Dkmeta.mk_term meta rhs in
+        (* Solution is encoded as rewrite rules to make the files type check. *)
+        Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
     in
     List.iter print_rule entries;
     F.close_in elab_file;
