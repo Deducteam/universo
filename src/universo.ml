@@ -48,7 +48,9 @@ let elaborate : string  -> unit = fun in_path ->
   List.iter (Pp.print_entry out_fmt) entries';
   F.close_in in_file;
   F.close_out out_file;
-  F.close_out env.file
+  F.close_out env.file;
+  F.export in_path `Elaboration;
+  F.export in_path `Output
 
 (** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
     ASSUME also that the dependencies have been type checked before. *)
@@ -67,7 +69,7 @@ let check : string -> unit = fun in_path ->
   C.flush {C.file=cstr_file; meta=env.meta_out};
   F.close_in file;
   F.close_out cstr_file;
-  Signature.export env.sg
+  F.export in_path `Checking
 
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)

@@ -114,4 +114,10 @@ let close_in : cin t -> unit = fun file ->
 let md_of : path -> step -> B.mident = fun in_path step ->
   md_of_path (get_out_path in_path step)
 
-let add_requires fmt mds = List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Pp.print_mident md)  mds
+let add_requires : Format.formatter ->  B.mident list -> unit = fun fmt mds ->
+  List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Pp.print_mident md)  mds
+
+let export : path -> step -> unit = fun in_path step ->
+  let in_file = in_from_string in_path step in
+  let sg = signature_of_file in_file.path in
+  Signature.export sg

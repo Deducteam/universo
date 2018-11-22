@@ -65,11 +65,14 @@ let print_constraints env =
   in
   List.iter print_eq_var !constraints.eqvar;
   List.iter (fun (l,r) -> print_predicate (Axiom(l,r))) !constraints.axiom;
-  print_dot ();
+  if List.length !constraints.axiom <> 0 then
+    print_dot ();
   List.iter (fun (l,r) -> print_predicate (Cumul(l,r))) !constraints.cumul;
-  print_dot ();
+  if List.length !constraints.cumul <> 0 then
+    print_dot ();
   List.iter (fun (l,m,r) -> print_predicate (Rule(l,m,r))) !constraints.rule;
-  print_dot ();
+  if List.length !constraints.rule <> 0 then
+    print_dot ();
   Format.fprintf fmt "@." (* flush last dot *)
 
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
