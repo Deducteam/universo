@@ -1,6 +1,5 @@
 module B = Basic
 module L = Common.Log
-module O = Common.Oracle
 module U = Common.Universes
 module Z = Z3
 
@@ -31,13 +30,14 @@ module type ALGEBRAIC =
 sig
   type t = Z.Expr.expr
 
-  val mk_name : B.name -> string
-  val mk_var  : string -> t
-  val mk_univ : U.univ -> t
-  val mk_axiom : t -> t -> t
-  val mk_cumul : t -> t -> t
-  val mk_rule : t -> t -> t -> t
-  val solution_of_var : int -> Z.Model.model -> string -> U.univ
+  val mk_name   : B.name -> string
+  val mk_var    : string -> t
+  val mk_univ   : U.univ -> t
+  val mk_axiom  : t -> t -> t
+  val mk_cumul  : t -> t -> t
+  val mk_rule   : t -> t -> t -> t
+  val mk_bounds : string -> int -> t
+  val solution_of_var : int -> Z.Model.model -> string -> U.univ option
 end
 
 
@@ -80,19 +80,14 @@ struct
 
   (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
   let register_vars vars i =
-    let univs = O.enumerate i in
-    SSet.iter (fun var ->
-        let or_eqs = List.map (fun u -> Z.Boolean.mk_eq ctx (mk_var var) (S.mk_univ u)) univs in
-        add (Z.Boolean.mk_or ctx or_eqs)) vars
+    SSet.iter (fun var -> add (S.mk_bounds var i)) vars
 
   (** [mk_cstr c] construct the Z3 constraint from the universe constraint [c] *)
   let mk_cstr = fun c ->
     let open U in
     match c with
     | Pred p -> mk_pred p
-    | EqVar(l,r) -> Z.Boolean.mk_eq ctx (mk_var (S.mk_name r)) (mk_var (S.mk_name l))
-
-
+    | EqVar(l,r) -> Z.Boolean.mk_eq ctx (mk_var (S.mk_name l)) (mk_var (S.mk_name r))
 
   (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
   let rec check theory_of i =
@@ -100,9 +95,8 @@ struct
     let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
-    if i = 3 then
-      (* FIXME: hard coded upper bound *)
-      if i > 6 then failwith "Probably the Constraints are inconsistent";
+    (* FIXME: hard coded upper bound *)
+    if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
       L.log_solver "[SOLVER] No solution found with %d universes" i;
@@ -116,8 +110,7 @@ struct
         let hmodel = Hashtbl.create 10001 in
         (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
         let find var =
-          let univs = O.enumerate i in
-          match solution_of_var univs model var with
+          match S.solution_of_var i model var with
           | None -> U.Prop
           | Some u -> u
         in
@@ -126,7 +119,7 @@ struct
           if Hashtbl.mem hmodel var then
             Hashtbl.find hmodel var
           else
-            let t = find (mk_var var) in
+            let t = find var in
             Hashtbl.add hmodel var t;
             t
         in
