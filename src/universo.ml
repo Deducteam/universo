@@ -66,7 +66,8 @@ let check : string -> unit = fun in_path ->
   (* Constraints are printed only at the end so that we can rearrange them for Dedukti *)
   C.flush {C.file=cstr_file; meta=env.meta_out};
   F.close_in file;
-  F.close_out cstr_file
+  F.close_out cstr_file;
+  Signature.export env.sg
 
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)

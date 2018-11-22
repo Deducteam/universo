@@ -62,10 +62,7 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   Signature.import_signature sg theory_signature;
   Signature.import_signature sg (elab_signature in_path);
   let meta_out = Dkmeta.meta_of_file false !compat_output in
-  { sg;
-    in_path;
-    meta_out;
-  }
+  { sg; in_path; meta_out}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
 let theory_meta : unit -> Dkmeta.cfg = fun () ->
