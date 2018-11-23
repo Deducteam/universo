@@ -11,7 +11,7 @@ let blu fmt = "\027[34m" ^^ fmt ^^ "\027[0m%!"
 let mag fmt = "\027[35m" ^^ fmt ^^ "\027[0m%!"
 let cya fmt = "\027[36m" ^^ fmt ^^ "\027[0m%!"
 
-let log color  fmt = D.debug D_universo (color fmt)
+let log color  fmt = D.debug D_universo (color fmt); Format.eprintf "@."
 
 let log_check  fmt = log mag fmt
 

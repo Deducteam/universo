@@ -16,9 +16,9 @@ type print_cstrs =
     rule: (U.univ * U.univ * U.univ) list;
   }
 
-let print_cstrs_empty = {eqvar=[];axiom=[];cumul=[];rule=[]}
+let empty = {eqvar=[];axiom=[];cumul=[];rule=[]}
 
-let constraints : print_cstrs ref = ref print_cstrs_empty
+let constraints : print_cstrs ref = ref empty
 
 let register_cstr : U.cstr -> unit = function
   | U.EqVar(l,r) ->
@@ -99,4 +99,4 @@ let mk_cstr f cstr =
     register_cstr cstr';
     true
 
-let flush env = print_constraints env
+let flush env = print_constraints env; constraints := empty

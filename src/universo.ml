@@ -1,9 +1,11 @@
 module C = Common.Constraints
+module E = Elaboration.Elaborate
+module F = Common.Files
 module L = Common.Log
 module P = Parser.Parse_channel
-module F = Common.Files
 module O = Common.Oracle
 module U = Common.Universes
+
 module Syn = Solving.Solver.Z3Syn
 module Arith = Solving.Solver.Z3Arith
 module ZSyn = Solving.Z3cfg.Make(Syn)
@@ -39,7 +41,7 @@ let elaborate : string  -> unit = fun in_path ->
   F.add_requires (F.fmt_of_file env.file) [F.md_of_path !F.theory];
   let entries = P.parse in_file.md (F.in_channel_of_file in_file) in
   (* This steps generates the fresh universe variables *)
-  let entries' = List.map (Elaboration.Elaborate.mk_entry env) entries in
+  let entries' = List.map (E.mk_entry env) entries in
   (* Write the elaborated terms in the normal file (in the output directory) *)
   let out_file = F.out_from_string in_path `Output in
   let out_fmt = F.fmt_of_file out_file in
@@ -49,8 +51,7 @@ let elaborate : string  -> unit = fun in_path ->
   F.close_in in_file;
   F.close_out out_file;
   F.close_out env.file;
-  F.export in_path `Elaboration;
-  F.export in_path `Output
+  F.export in_path `Elaboration
 
 (** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
     ASSUME also that the dependencies have been type checked before. *)
@@ -69,7 +70,9 @@ let check : string -> unit = fun in_path ->
   C.flush {C.file=cstr_file; meta=env.meta_out};
   F.close_in file;
   F.close_out cstr_file;
-  F.export in_path `Checking
+  F.export in_path `Checking;
+  F.export in_path `Solution;
+  F.export in_path `Output
 
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
@@ -151,8 +154,8 @@ let _ =
       Arg.parse options (fun f -> files := f :: !files) usage;
       List.rev !files
     in
-    List.iter run_on_file files;
     List.iter generate_empty_sol_file files;
+    List.iter run_on_file files;
     if !mode = Normal || !mode = JustSolve then
       solve files;
   with
