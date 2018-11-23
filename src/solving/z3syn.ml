@@ -1,5 +1,6 @@
-module U = Common.Universes
+module B = Basic
 module O = Common.Oracle
+module U = Common.Universes
 module Z = Z3cfg
 
 (** Z3 Solver with non interpreted symbol Functions *)
@@ -20,8 +21,9 @@ let mk_set =
   Z.Expr.mk_const_s Z.ctx "Set" sort
 
 
-(** [var_of_name name] returns a variable string for Z3. ASSUME that all identifiers representing fresh universe variables are unique, hence the module can be forgetten. *)
-let mk_name cst = Basic.string_of_ident (Basic.id cst)
+(** [var_of_name name] returns a variable string for Z3. *)
+let mk_name cst = B.string_of_mident (B.md cst) ^ (B.string_of_ident (B.id cst))
+
 
 (** non-interpreted symbol for Type i *)
 (* FIXME: should be given by the model *)

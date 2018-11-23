@@ -8,7 +8,7 @@ module ZI = ZA.Integer
 type t = Z.Expr.expr
 
 let mk_name : B.name -> string = fun name ->
-  B.string_of_ident (B.id name)
+  B.string_of_mident (B.md name) ^ (B.string_of_ident (B.id name))
 
 let int_sort = ZI.mk_sort Z.ctx
 
