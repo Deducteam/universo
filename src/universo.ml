@@ -62,7 +62,9 @@ let check : string -> unit = fun in_path ->
   let env = Cmd.to_checking_env in_path in
   let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
+  Signature.unsafe := false;
   List.iter (Checking.Checker.mk_entry env) entries';
+  Signature.unsafe := true;
   L.log_check "[CHECK] Printing constraints...";
   let cstr_file = F.out_from_string in_path `Checking in
   F.add_requires (F.fmt_of_file cstr_file) [F.md_of_path !F.theory; F.md_of in_path `Elaboration];
