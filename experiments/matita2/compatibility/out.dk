@@ -1,0 +1,17 @@
+[] universo.Sort --> cic.Sort.
+
+[] universo.type --> cic.type.
+
+[] universo.S    --> cic.s.
+
+[] universo.0    --> cic.z.
+
+[] universo.prop --> cic.prop.
+
+[] universo.Cumul --> cic.Cumul.
+
+[] universo.Axiom --> cic.Axiom.
+
+[] universo.Rule --> cic.Rule.
+
+[] universo.True --> cic.True.

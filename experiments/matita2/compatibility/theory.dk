@@ -1,0 +1,25 @@
+[] cic.Sort    --> universo.Sort.
+
+[] cic.prop    --> universo.prop.
+
+[] cic.type    --> universo.type.
+
+[] cic.Nat     --> universo.Nat. (; FIXME: not general enough ;)
+
+[] cic.z       --> universo.0. (; FIXME: not general enough ;)
+
+[] cic.s       --> universo.S. (; FIXME: not general enough ;)
+
+[] cic.Axiom   --> universo.Axiom.
+
+[] cic.Rule    --> universo.Rule.
+
+[] cic.Cumul   --> universo.Cumul.
+
+[] cic.True    --> universo.True.
+
+[] cic.lift    --> universo.lift.
+
+[] cic.lift'   --> universo.lift'.
+
+[] cic.Univ    --> universo.Univ.

@@ -78,26 +78,6 @@ The abstract goes here.
 
 \section{CTS}
 
-\begin{definition}[decidable CTS]
-  A \textit{decidable} CTS is a CTS where every relation \(\mathcal{R}, \mathcal{A}, \mathcal{C}\) is decidable.
-\end{definition}
-
-\begin{definition}[convergent CTS]
-  A \textit{convergent} CTS is a decidable CTS with the property that the decidability can be decided with a convergent rewriting system.
-\end{definition}
-
-\begin{definition}
-  A \textit{finite convergent} CTS is a convergent CTS with the propety that every universe can be represented with a finite number of symbols.
-\end{definition}
-
-\begin{example}
-  The CTS of Coq, Agda, Matita, Lean, CoqHOTT are \textit{convergent}. Checking the decidability for these CTS is almost the same as deciding the order of natural numbers.
-\end{example}
-
-\begin{theorem}
-  A finite convergent CTS can be decided with a finite number of rules.
-\end{theorem}
-
 Using typical ambiguity such as in TODO, one may generate constraints while type checking terms. Consistency of these constraints implies that the terms are well-typed. However, one have to invent a procedure to solve these constraints. For all the systems presented above, this is done by an ad-hoc algorithm implemented by those systems. This is doable because each of these system implement one particular CTS. However, it is not clear how these algorithms could be extended for all \textit{convergent} CTS. We aim to solve this issue by calling a SMT solver instead. However, one has to provide a model for the SMT solver.n  If the maximum number of universes needed is known, then this model can given in a logic with non-interpreted symbols. However, if it is unknown, then a number of unbounded universes is needed, even if in practice most of the proofs use at most four or five universes. Hence, this require to use a more sophisticated logic. TODO: using injectivity on constructor is sufficient?
 
 % 0 : nat
@@ -115,8 +95,18 @@ Using typical ambiguity such as in TODO, one may generate constraints while type
 % forall x, S x = S y ==> x = y
 % forall x, Type x = Type y ==> x = y
 
+\section{CTS in Dedukti}
 
+We revisit here the known encoding of PTS and Cumulative Type Systems in Dedukti. Introducing \textit{typical ambiguity} in Dedukti with \universo{} led us to change a little the encodings of CTS (and PTS) in Dedukti. The encoding given by A. Assaf gives the following type for the explicit \texttt{lift} operator:
+\begin{minted}{dedukti}
+  lift : s1 : Sort -> s2 : Sort -> Univ s1 -> Univ (max s1 s2).
+\end{minted}
 
+Why the return type lives in \mintinline{dedukti}{max s1 s2}? This is to ensure consistency of our encoding, otherwise it would be possible to go from a higher universe to a lower one. However, this little hack makes the encoding a little bit complicated. Indeed, in this encoding, some \textit{canonicity rules} that allows to compute a canonical form when \textit{lift} and \textit{prod} appear together needs other rules to be type checked. Moreover, by doing so, the encoding is clearly not confluent which is needed to prove subject reduction. To overcome this issue, Assaf claims the consistency of its encoding only when the type of universes is \textit{confined}\footnote{TODO}. It would be easier if the return type of \textit{lift} would be : \mintinline{dedukti}{univ s2}, but then, how to ensure that \texttt{s1} is \textit{smaller} then \texttt{s2}? Our idea is to give the following type to the lift symbol:
+\begin{minted}{dedukti}
+  lift : s1 : Sort -> s2 : Sort -> Cumul s1 s2 -> Univ s1 -> Univ (max s1 s2).
+\end{minted}
+where \mintinline{dedukti}{Cumul} is a definable symbol that reduces to \texttt{True} only if \texttt{s1} is smaller than \texttt{s2}.
 \section{Universo}
 
 \universo{} is a tool written in OCaml that was designed to minimize the number of universes needed in a proof written in the Calculus Of Inductive Constructions. However, the current implementation works only if proofs are expressed first in Dedukti. The idea behind \universo{} is quite simple and works in \(4\) steps:
