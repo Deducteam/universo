@@ -1,1 +1,1 @@
-- _cstr.dk is importing for type checking. However predicate constraints such as Rule/Cumul/Axiom takes to much time to be build as decision tree, hence that makes the type checking a lot, lot slower than it should be.
+- A rule of the form True --> True is generated see (solving.ml). Probably the mistake comes from a meta signature that contains too many things

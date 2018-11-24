@@ -119,5 +119,21 @@ let add_requires : Format.formatter ->  B.mident list -> unit = fun fmt mds ->
 
 let export : path -> step -> unit = fun in_path step ->
   let in_file = in_from_string in_path step in
-  let sg = signature_of_file in_file.path in
-  Signature.export sg
+  match step with
+  | `Checking ->
+    let entries = Parser.Parse_channel.parse in_file.md (in_channel_of_file in_file) in
+    let filter = function
+      | Entry.Rules(_,r::_) ->
+        begin
+          match r.pat with
+          | Rule.Pattern(_,_,[]) -> true
+          | _ -> false
+        end
+      | _ -> true
+    in
+    let entries = List.filter filter entries in
+    let sg = Dkmeta.to_signature in_file.path entries in
+    Signature.export sg
+  | _ ->
+    let sg = signature_of_file in_file.path in
+    Signature.export sg

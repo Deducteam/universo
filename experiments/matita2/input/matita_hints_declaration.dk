@@ -117,5 +117,3 @@ def hint_declaration_CProp2 :
       a : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
       b : cic.Univ (cic.type (cic.s (cic.s cic.z))) =>
       cic.univ cic.prop (cic.type cic.z) cic.I.
-
-
