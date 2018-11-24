@@ -1,3 +1,4 @@
+module B = Basic
 module F = Common.Files
 module U = Common.Universes
 
@@ -26,7 +27,7 @@ let universo () =
 (** [theory_sort ()] returns the type of universes in the original theory *)
 let theory_sort : unit -> Term.term = fun () ->
   let meta = Dkmeta.meta_of_file false !compat_output in
-  let sort = Term.mk_Const Basic.dloc U.sort in
+  let sort = Term.mk_Const B.dloc U.sort in
   (* compat_output (universo.sort) --> <theory>.sort *)
   Dkmeta.mk_term meta sort
 

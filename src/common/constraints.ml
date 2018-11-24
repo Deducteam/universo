@@ -50,7 +50,6 @@ let print_constraints env =
   let fmt = F.fmt_of_file env.file in
   let normalize t = Dkmeta.mk_term env.meta t in
   let print_rule pp l r =
-    env.meta.meta_rules <- None;
     Format.fprintf fmt "@.[] %a --> %a" pp l pp r
   in
   let print_dot () = Format.fprintf fmt "." in
