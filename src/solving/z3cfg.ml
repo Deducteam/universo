@@ -62,13 +62,25 @@ struct
     vars := SSet.add s !vars;
     S.mk_var s
 
+  let vars_of_univs univs =
+    let f = function
+      | U.Var name -> vars := SSet.add (S.mk_name name) !vars
+      | _ -> ()
+    in
+    List.iter f univs
+
+  let vars_of_pred = function
+    | U.Axiom(s,s') -> vars_of_univs [s;s']
+    | U.Cumul(s,s') -> vars_of_univs [s;s']
+    | U.Rule(s,s',s'') -> vars_of_univs [s;s';s'']
+
   (** [mk_pred p] construct the Z3 predicate from a universe predicate *)
   let mk_pred = fun p ->
-    let open U in
+    vars_of_pred p;  (* FIXME: SO HACKISH *)
     match p with
-    | Axiom(s,s') -> S.mk_axiom (S.mk_univ s) (S.mk_univ s')
-    | Cumul(s,s') -> S.mk_cumul (S.mk_univ s) (S.mk_univ s')
-    | Rule(s,s',s'') -> S.mk_rule (S.mk_univ s) (S.mk_univ s') (S.mk_univ s'')
+    | U.Axiom(s,s') -> S.mk_axiom (S.mk_univ s) (S.mk_univ s')
+    | U.Cumul(s,s') -> S.mk_cumul (S.mk_univ s) (S.mk_univ s')
+    | U.Rule(s,s',s'') -> S.mk_rule (S.mk_univ s) (S.mk_univ s') (S.mk_univ s'')
 
   (** [mk_theory m] construct a Z3 theory for the non-interpreted predicate using the theory [t]. *)
   let mk_theory t =
@@ -95,6 +107,8 @@ struct
     let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
+    if i = 3 then
+         Format.printf "%s@." (Z.Solver.to_string solver);
     (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with

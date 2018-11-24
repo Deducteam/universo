@@ -31,7 +31,7 @@ test: bin theory univ
 	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory      $(MATITA_PATH)/compatibility/theory.dk	\
 	--theory         $(MATITA_PATH)/theory/cic.dk \
-	$(MATITA_PATH)/input/matita_hints_declaration.dk -o $(MATITA_PATH)/output
+	$(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output
 
 .PHONY: test2
 test2: bin theory univ
