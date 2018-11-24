@@ -95,6 +95,7 @@ struct
   let solve = S.solve
 end
 
+(** Performance are bad with LRA *)
 module MakeUF(S:SOLVER) : S =
 struct
 
