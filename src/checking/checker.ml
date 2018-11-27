@@ -13,12 +13,15 @@ type t =
     (** path of the original file that should be typed checked *)
     meta_out:Dkmeta.cfg;
     (** Meta configuration to translate back universes of Universo to the original theory universes *)
+    constraints: (B.name, U.pred) Hashtbl.t
+    (** additional user constraints *)
   }
 
 (** Only used as default value for [global_env] *)
-let default : t = {sg        = Signature.make "";
-                   in_path   = "";
-                   meta_out  = Dkmeta.default_config}
+let default : t = {sg          = Signature.make "";
+                   in_path     = "";
+                   meta_out    = Dkmeta.default_config;
+                   constraints = Hashtbl.create 11}
 
 (** [globel_env] is a reference to the current type checking environment. *)
 (* This is a reference because we have to use it in the Reduction Engine and we have no control over
@@ -121,6 +124,30 @@ end
 
 module T = Typing.Make(RE)
 
+let check_user_constraints : (B.name, U.pred) Hashtbl.t -> B.name -> Term.term -> unit =
+  fun constraints name ty ->
+    let get_uvar ty =
+      match ty with
+      (* this line higly depends on the encoding :'( *)
+      | Term.App(_, (Term.Const(_,name) as t) ,_) when V.is_uvar t -> name
+      | _ -> assert false
+    in
+    if Hashtbl.mem constraints name then
+      let pred = Hashtbl.find constraints name in
+      let uvar = get_uvar ty in
+      let replace_univ : U.univ -> U.univ =
+        function
+        | Var _ -> Var uvar
+        | _ as t -> t
+      in
+      let replace : U.pred -> U.pred =
+        function
+        | Axiom(s,s') -> Axiom(replace_univ s, replace_univ s')
+        | Cumul(s,s') -> Cumul(replace_univ s, replace_univ s')
+        | Rule(s,s',s'') -> Rule(replace_univ s, replace_univ s', replace_univ s'')
+      in
+      ignore(C.mk_cstr (fun _ -> assert false) (U.Pred (replace pred)))
+
 (** [mk_entry env e] type checks the entry e in the same way then dkcheck does. However, the convertibility tests is hacked so that we can add constraints dynamically while type checking the term. This is really close to what is done with typical ambiguity in Coq. *)
 let mk_entry : t -> Entry.entry -> unit = fun env e ->
   let open Entry in
@@ -133,6 +160,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
   match e with
   | Decl(lc,id,st,ty) ->
     L.log_check "[CHECK] %a" Pp.print_ident id;
+    check_user_constraints env.constraints (Basic.mk_name (F.md_of env.in_path `Output) id) ty;
     (* Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id; *)
     begin
       match T.inference env.sg ty with

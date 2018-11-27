@@ -30,6 +30,7 @@ test: bin theory univ
 	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
 	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory      $(MATITA_PATH)/compatibility/theory.dk	\
+	--constraints    $(MATITA_PATH)/compatibility/constraints.dk \
 	--theory         $(MATITA_PATH)/theory/cic.dk \
 	$(MATITA_PATH)/input/test.dk -o $(MATITA_PATH)/output
 
@@ -76,6 +77,7 @@ matita: bin theory univ
 	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
 	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
 	--to-theory      $(MATITA_PATH)/compatibility/theory.dk	\
+	--constraints    $(MATITA_PATH)/compatibility/constraints.dk \
 	--theory         $(MATITA_PATH)/theory/cic.dk \
 	$(FILES) -o $(MATITA_PATH)/output
 

@@ -134,7 +134,11 @@ let cmd_options =
     , " Rewrite rules mapping theory's universes to be replaced to Universo's variables" )
   ; ( "--of-universo"
     , Arg.String  (fun s -> Cmd.compat_output := s)
-    , " Rewrite rules mapping Universo's universes to the theory's universes" )]
+    , " Rewrite rules mapping Universo's universes to the theory's universes" )
+  ; ( "--constraints"
+    , Arg.String  (fun s -> Cmd.constraints_path := s)
+    , " Rewrite rules adding additional constraints" )
+  ]
 
 (** [generate_empty_sol_file file] generates the file [file_sol] that requires the file [file_univ].
     This is necessary when universo is used with another mode than the Normal one (see elaboration). *)

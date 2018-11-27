@@ -1,1 +1,2 @@
-- A rule of the form True --> True is generated see (solving.ml). Probably the mistake comes from a meta signature that contains too many things
+- checker.ml suppose that the second argument is a sort. One can make that generic using rewrite rules
+- 4 universes is not enough

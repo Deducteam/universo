@@ -11,6 +11,31 @@ let compat_input  = ref ""
 (** The path to the rewrite rules mapping universo construction to the one of the theory *)
 let compat_output = ref ""
 
+(** The path to the rewrite rules that contains additional constraints for some identifiers *)
+let constraints_path = ref ""
+
+let mk_constraints : Dkmeta.cfg -> (B.name, U.pred) Hashtbl.t = fun meta ->
+  let ic = open_in !constraints_path in
+  let md = F.md_of_path !constraints_path in
+  let table = Hashtbl.create 11 in
+  let mk_rule : Rule.untyped_rule -> unit = fun r ->
+    let open Rule in
+    let name = match r.pat with
+      | Rule.Pattern(_,name,[]) -> name
+      | _ -> failwith "Constraints are not in correct format"
+    in
+    let pred = try U.extract_pred (Dkmeta.mk_term meta r.rhs)
+      with U.Not_pred -> failwith "Constraints are not in correct format"
+    in
+    Hashtbl.add table name pred
+  in
+  let mk_entry = function
+    | Entry.Rules(_,rs) ->
+      List.iter mk_rule rs
+    | _ -> failwith "Constraints are not in correct format"
+  in
+  Parser.Parse_channel.handle md mk_entry ic;
+  table
 
 (** [add_rules sg rs] add the rewrite rules [rs] to the signature [sg] *)
 let add_rules sg rs =
@@ -63,7 +88,8 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   Signature.import_signature sg theory_signature;
   Signature.import_signature sg (elab_signature in_path);
   let meta_out = Dkmeta.meta_of_file false !compat_output in
-  { sg; in_path; meta_out}
+  let constraints = mk_constraints meta in
+  { sg; in_path; meta_out; constraints}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
 let theory_meta : unit -> Dkmeta.cfg = fun () ->
