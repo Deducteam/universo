@@ -86,7 +86,7 @@ let solve : string list -> unit = fun in_paths ->
   List.iter add_constraints in_paths;
   L.log_univ "[SOLVING CONSTRAINTS...]";
   let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
-  let i,model = S.solve mk_theory in
+  let i,model = S.solve mk_theory !C.predicative in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
   let meta_out = Dkmeta.meta_of_file false !Cmd.compat_output in
   List.iter (S.print_model meta_out model) in_paths
@@ -123,6 +123,9 @@ let cmd_options =
   ; ( "-o"
     , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
     , " Set the output directory" )
+  ; ( "--predicative"
+    , Arg.Set  C.predicative
+    , " Rewrite rules adding additional constraints")
   ; ( "--theory"
     , Arg.String (fun s -> F.theory := s)
     , " Theory file" )

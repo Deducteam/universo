@@ -16,6 +16,8 @@ type print_cstrs =
     rule: (U.univ * U.univ * U.univ) list;
   }
 
+let predicative = ref false
+
 let empty = {eqvar=[];axiom=[];cumul=[];rule=[]}
 
 let constraints : print_cstrs ref = ref empty

@@ -4,9 +4,15 @@ type theory = (U.pred * bool) list
 type theory_maker = int -> theory
 
 (* FIXME: do not scale for any CTS *)
-let rec enumerate i =
+let rec enumerate ?(predicative=false) i =
   if i = 1 then
-    [U.Prop]
+    if predicative then
+      [U.Type 0]
+    else
+      [U.Prop]
+  else
+  if predicative then
+    U.Type(i-1)::(enumerate ~predicative (i-1))
   else
     U.Type (i-2)::(enumerate (i-1))
 

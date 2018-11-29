@@ -59,8 +59,8 @@ let mk_rule s s' s'' =
   Z.Expr.mk_app Z.ctx cumul [s;s';s'']
 
 (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
-let mk_bounds var i =
-  let univs = O.enumerate i in
+let mk_bounds predicative var i =
+  let univs = O.enumerate ~predicative i in
   let or_eqs = List.map (fun u -> Z.Boolean.mk_eq Z.ctx (mk_var var) (mk_univ u)) univs in
   Z.Boolean.mk_or Z.ctx or_eqs
 

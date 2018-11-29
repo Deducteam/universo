@@ -3,18 +3,20 @@ module L = Common.Log
 module O = Common.Oracle
 module U = Common.Universes
 
-(** model is a function that associate to each fresh universe a concrete universe *)
+(** [model] is a function that associate to each fresh universe a concrete universe. *)
 type model = Basic.name -> U.univ
+
+(** [is_predicative] says if the solution should live in a predicative theory. *)
+type is_predicative = bool
 
 (** Signature for an abstract solver *)
 module type SOLVER =
 sig
-
   (** [add pred] add the predicate [cstr] to the solver  *)
   val add   : U.cstr -> unit
 
   (** [solve mk_theory] call the solver and returns the mimimum number of universes needed to solve the constraints as long as the model. The theory used by solver depends on the number of universes needed. Hence one needs to provide a function [mk_theory] that builds a theory when at most [i] are used.*)
-  val solve   : O.theory_maker -> int * model
+  val solve   : O.theory_maker -> is_predicative -> int * model
 
 end
 
@@ -29,7 +31,7 @@ sig
 
   val print_model : Dkmeta.cfg -> model -> F.path -> unit
 
-  val solve : O.theory_maker -> int * model
+  val solve : O.theory_maker -> is_predicative -> int * model
 end
 
 

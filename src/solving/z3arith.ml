@@ -44,9 +44,12 @@ let mk_rule : t -> t -> t -> t = fun x y z ->
     (ZB.mk_eq Z.ctx z mk_prop)
     (ZB.mk_eq Z.ctx z (mk_max x y))
 
-let mk_bounds : string -> int -> t = fun var i ->
+let mk_bounds : bool -> string -> int -> t = fun predicative var i ->
   let var = mk_var var in
-  ZB.mk_and Z.ctx [ZA.mk_le Z.ctx (to_int 0) var; ZA.mk_lt Z.ctx var (to_int i)]
+  if predicative then
+    ZB.mk_and Z.ctx [ZA.mk_le Z.ctx (to_int 1) var; ZA.mk_lt Z.ctx var (to_int i)]
+  else
+    ZB.mk_and Z.ctx [ZA.mk_le Z.ctx (to_int 0) var; ZA.mk_lt Z.ctx var (to_int i)]
 
 let solution_of_var : int -> Z.Model.model -> string -> U.univ option = fun _ model var ->
   match Z.Model.get_const_interp_e model (mk_var var) with
