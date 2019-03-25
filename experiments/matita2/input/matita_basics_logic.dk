@@ -61578,5 +61578,3 @@ def streicherK :
            (cic.lift (cic.type (cic.s (cic.s cic.z)))
               (cic.type (cic.s (cic.s cic.z))) cic.I T)
            t p).
-
-

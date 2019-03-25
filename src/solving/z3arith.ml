@@ -43,6 +43,9 @@ let mk_rule : t -> t -> t -> t = fun x y z ->
   ZB.mk_ite Z.ctx (ZB.mk_eq Z.ctx y mk_prop)
     (ZB.mk_eq Z.ctx z mk_prop)
     (ZB.mk_eq Z.ctx z (mk_max x y))
+(*    (ZB.mk_ite Z.ctx (ZB.mk_eq Z.ctx x mk_prop)
+       (ZB.mk_and Z.ctx [ZB.mk_eq Z.ctx y mk_prop; ZB.mk_eq Z.ctx z mk_prop])
+       (ZB.mk_eq Z.ctx z (mk_max x y))) *)
 
 let mk_bounds : bool -> string -> int -> t = fun predicative var i ->
   let var = mk_var var in

@@ -93,7 +93,7 @@ let signature_of_file : ?sg:Signature.t -> path -> Signature.t = fun ?sg file ->
   let md = md_of_path file in
   let entries = Parser.Parse_channel.parse md ic in
   close_in ic;
-  Dkmeta.to_signature ?sg file entries
+  Entry.to_signature file ?sg entries
 
 let fmt_of_file : cout t -> Format.formatter = fun file ->
   match file.channel with
@@ -132,7 +132,7 @@ let export : path -> step -> unit = fun in_path step ->
       | _ -> true
     in
     let entries = List.filter filter entries in
-    let sg = Dkmeta.to_signature in_file.path entries in
+    let sg = Entry.to_signature in_file.path entries in
     Signature.export sg
   | _ ->
     let sg = signature_of_file in_file.path in

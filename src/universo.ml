@@ -60,7 +60,7 @@ let check : string -> unit = fun in_path ->
   let file = F.in_from_string in_path `Output in
   let entries = P.parse md (F.in_channel_of_file file) in
   let env = Cmd.to_checking_env in_path in
-  let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
+  let meta = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_theory in
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
   Signature.unsafe := false;
   List.iter (Checking.Checker.mk_entry env) entries';
@@ -80,7 +80,7 @@ let check : string -> unit = fun in_path ->
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
   let add_constraints in_path =
-    let meta = Dkmeta.meta_of_file false !Cmd.compat_theory in
+    let meta = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_theory in
     S.parse meta in_path
   in
   List.iter add_constraints in_paths;
@@ -88,7 +88,7 @@ let solve : string list -> unit = fun in_paths ->
   let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
   let i,model = S.solve mk_theory !C.predicative in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
-  let meta_out = Dkmeta.meta_of_file false !Cmd.compat_output in
+  let meta_out = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_output in
   List.iter (S.print_model meta_out model) in_paths
 
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)

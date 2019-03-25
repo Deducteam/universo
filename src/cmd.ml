@@ -51,7 +51,7 @@ let universo () =
 
 (** [theory_sort ()] returns the type of universes in the original theory *)
 let theory_sort : unit -> Term.term = fun () ->
-  let meta = Dkmeta.meta_of_file false !compat_output in
+  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
   let sort = Term.mk_Const B.dloc U.sort in
   (* compat_output (universo.sort) --> <theory>.sort *)
   Dkmeta.mk_term meta sort
@@ -59,7 +59,7 @@ let theory_sort : unit -> Term.term = fun () ->
 (** [to_elaboration_env f] generates a fresh environement to elaborate file [f]. *)
 let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
   let file = F.out_from_string in_path `Elaboration in
-  let meta = Dkmeta.meta_of_file false !compat_input in
+  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_input in
   let theory_sort = theory_sort () in
   {file; theory_sort; meta}
 
@@ -71,7 +71,7 @@ let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
   let sg = universo () in
   (* The line below does the main trick: it normalizes every entry of the original theory with the universes of Universo *)
   let entries' = List.map (Dkmeta.mk_entry meta md) entries in
-  let sg = Dkmeta.to_signature !F.theory ~sg entries' in
+  let sg = Entry.to_signature !F.theory ~sg entries' in
   (* We include the compat theory so that the type checker transforms automatically a universe from the original theory to the one of Universo. *)
   F.signature_of_file ~sg !compat_theory
 
@@ -82,17 +82,17 @@ let elab_signature : string -> Signature.t = fun in_path ->
 
 (** [to_checking_env f] returns the type checking environement for the file [f] *)
 let to_checking_env : string -> Checking.Checker.t = fun in_path ->
-  let meta = Dkmeta.meta_of_file false !compat_theory in
+  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_theory in
   let theory_signature = mk_theory meta in
   let sg = Signature.make (Filename.basename in_path) in
   Signature.import_signature sg theory_signature;
   Signature.import_signature sg (elab_signature in_path);
-  let meta_out = Dkmeta.meta_of_file false !compat_output in
+  let meta_out = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
   let constraints = mk_constraints meta in
   { sg; in_path; meta_out; constraints}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
 let theory_meta : unit -> Dkmeta.cfg = fun () ->
   let open Dkmeta in
-  let meta = Dkmeta.meta_of_file false !compat_theory in
+  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_theory in
   {sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}

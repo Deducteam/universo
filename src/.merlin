@@ -1,7 +1,9 @@
+EXCLUDE_QUERY_DIR
 B /home/fthire/.opam/4.04.2/lib/dedukti
 B /home/fthire/.opam/4.04.2/lib/dkmeta
 B /home/fthire/.opam/4.04.2/lib/num
 B /home/fthire/.opam/4.04.2/lib/ocaml
+B /home/fthire/.opam/4.04.2/lib/ocaml/threads
 B /home/fthire/.opam/4.04.2/lib/z3
 B ../_build/default/src/.universo.eobjs
 B ../_build/default/src/checking/.checking.objs
@@ -12,6 +14,7 @@ S /home/fthire/.opam/4.04.2/lib/dedukti
 S /home/fthire/.opam/4.04.2/lib/dkmeta
 S /home/fthire/.opam/4.04.2/lib/num
 S /home/fthire/.opam/4.04.2/lib/ocaml
+S /home/fthire/.opam/4.04.2/lib/ocaml/threads
 S /home/fthire/.opam/4.04.2/lib/z3
 S .
 S checking
