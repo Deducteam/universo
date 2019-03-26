@@ -50,7 +50,8 @@ let add_rule  sg vl vr =
 
 let print_constraints env =
   let fmt = F.fmt_of_file env.file in
-  let normalize t = Dkmeta.mk_term env.meta t in
+  let meta = {env.meta with meta_rules = match env.meta.meta_rules with | None -> None | Some mrules -> Some (dummy_name::mrules)} in
+  let normalize t = Dkmeta.mk_term meta t in
   let print_rule pp l r =
     Format.fprintf fmt "@.[] %a --> %a" pp l pp r
   in
@@ -75,6 +76,7 @@ let print_constraints env =
   if List.length !constraints.rule <> 0 then
     print_dot ();
   Format.fprintf fmt "@." (* flush last dot *)
+
 
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
     l >= r. *)
@@ -101,3 +103,10 @@ let mk_cstr f cstr =
     true
 
 let flush env = print_constraints env; constraints := empty
+
+let deps () =
+  let deps = ref [] in
+  List.iter
+    (fun (_,r) ->
+       if not (List.mem (Basic.md r) !deps) then deps := (Basic.md r)::!deps) !constraints.eqvar;
+  !deps

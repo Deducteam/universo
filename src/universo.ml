@@ -67,7 +67,13 @@ let check : string -> unit = fun in_path ->
   Signature.unsafe := true;
   L.log_check "[CHECK] Printing constraints...";
   let cstr_file = F.out_from_string in_path `Checking in
-  F.add_requires (F.fmt_of_file cstr_file) [F.md_of_path !F.theory; F.md_of in_path `Elaboration];
+  let requires_mds =
+    let deps = C.deps () in
+    let elab_dep = F.md_of in_path `Elaboration in
+    let deps = if List.mem elab_dep deps then deps else elab_dep::deps in
+    (F.md_of_path !F.theory)::deps
+  in
+  F.add_requires (F.fmt_of_file cstr_file) requires_mds;
   (* Constraints are printed only at the end so that we can rearrange them for Dedukti *)
   C.flush {C.file=cstr_file; meta=env.meta_out};
   F.close_in file;
