@@ -91,7 +91,6 @@ let mk_var_cstr f l r =
   else (
     f r l; U.EqVar(r,l))
 
-
 let mk_cstr f cstr =
   match cstr with
   | (U.Pred _) as cstr ->

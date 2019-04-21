@@ -6,7 +6,7 @@ DKS = $(wildcard *.dk)
 DKOS=$(DKS:.dk=.dko)
 
 DKDEP=dkdep -I ../theory
-DKCHECK=dkcheck -I ../theory -q
+DKCHECK=~/Git/Dedukti/dkcheck.native -I ../theory -q
 DKINDENT=dkindent
 all: $(DKOS)
 E=-errors-in-snf
