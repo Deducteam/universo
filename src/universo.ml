@@ -1,3 +1,5 @@
+(** Main file *)
+
 module C = Common.Constraints
 module E = Elaboration.Elaborate
 module F = Common.Files

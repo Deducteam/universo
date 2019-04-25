@@ -20,10 +20,13 @@ let mk_enum i =
 
 let mk_var s = Z.Expr.mk_const_s Z.ctx s sort
 
+let mk_sinf = Z.Expr.mk_const_s Z.ctx "Sinf" sort
+
 (** [mk_univ u] construct a Z3 expression from a universe. *)
 let mk_univ  = function
-  | U.Var x -> mk_var (B.string_of_ident (B.id x))
+  | U.Var x -> mk_var (mk_name x)
   | U.Enum i -> mk_enum i
+  | U.Sinf -> mk_sinf
 
 let bool_sort = Z.Boolean.mk_sort Z.ctx
 

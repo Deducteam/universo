@@ -107,6 +107,8 @@ struct
     let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
+    Format.eprintf "%s@." (Z3.Solver.to_string solver);
+    (* if i = 2 then ignore(assert false); *)
     (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
@@ -123,7 +125,7 @@ struct
         (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
         let find var =
           match S.solution_of_var i model var with
-          | None -> failwith "todo var not found"
+          | None -> assert false
           | Some u -> u
         in
         let model (cst:Basic.name) : U.univ =
