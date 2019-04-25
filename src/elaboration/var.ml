@@ -17,7 +17,7 @@ let basename = "?"
 (** Check if a term should be elaborated by a fresh variable *)
 let is_pre_var t =
   match t with
-  | Term.Const(_,n) when n = U.pvar -> true
+  | Term.Const(_,n) when n = U.pvar () -> true
   | _ -> false
 
 (** Check if a term is universe variable, i.e. its ident should be ?11, ?43... *)

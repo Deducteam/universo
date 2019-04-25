@@ -50,8 +50,7 @@ let add_rule  sg vl vr =
 
 let print_constraints env =
   let fmt = F.fmt_of_file env.file in
-  let meta = {env.meta with meta_rules = match env.meta.meta_rules with | None -> None | Some mrules -> Some (dummy_name::mrules)} in
-  let normalize t = Dkmeta.mk_term meta t in
+  let normalize t = t in
   let print_rule pp l r =
     Format.fprintf fmt "@.[] %a --> %a" pp l pp r
   in
@@ -62,7 +61,7 @@ let print_constraints env =
   in
   let print_predicate p =
     let l' = normalize (U.term_of_pred p) in
-    let r' = normalize U.true_ in
+    let r' = normalize (U.true_ ()) in
     print_rule Pp.print_term l' r'
   in
   List.iter print_eq_var !constraints.eqvar;

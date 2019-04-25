@@ -2,9 +2,7 @@ open Basic
 
 type univ =
     Var of name
-  | Prop
-  | Set
-  | Type of int
+  | Enum of int
 
 type pred =
   | Axiom of univ * univ
@@ -15,67 +13,67 @@ type cstr = Pred of pred | EqVar of name * name
 
 module C = Set.Make(struct type t = cstr let compare = compare end)
 
-let md_universo = mk_mident "universo"
+let md_theory = ref @@ mk_mident ""
+
 let md_univ = ref (mk_mident "")
 
-let sort  = mk_name md_universo (mk_ident "Sort")
 
-let typ   = mk_name md_universo (mk_ident "type")
+let pvar  () = mk_name !md_theory (mk_ident "var")
 
-let set   = mk_name md_universo (mk_ident "set")
+let sort  () = mk_name !md_theory (mk_ident "Sort")
 
-let prop  = mk_name md_universo (mk_ident "prop")
+let typ   () = mk_name !md_theory (mk_ident "type")
 
-let univ  = mk_name md_universo (mk_ident "Univ")
+let set   () = mk_name !md_theory (mk_ident "set")
 
-let lift' = mk_name md_universo (mk_ident "lift'")
+let prop  () = mk_name !md_theory (mk_ident "prop")
 
-let axiom = mk_name md_universo (mk_ident "Axiom")
+let univ  () = mk_name !md_theory (mk_ident "Univ")
 
-let rule  = mk_name md_universo (mk_ident "Rule")
+let cast' () = mk_name !md_theory (mk_ident "cast'")
 
-let cumul = mk_name md_universo (mk_ident "Cumul")
+let axiom () = mk_name !md_theory (mk_ident "Axiom")
 
-let pvar  = mk_name md_universo (mk_ident "var")
+let rule  () = mk_name !md_theory (mk_ident "Rule")
 
-let z     = mk_name md_universo (mk_ident "0")
+let cumul () = mk_name !md_theory (mk_ident "Cumul")
 
-let s     = mk_name md_universo (mk_ident "S")
+let enum  () = mk_name !md_theory (mk_ident "enum")
 
+let uzero () = mk_name !md_theory (mk_ident "uzero")
 
-let true_ = Basic.(Term.mk_Const dloc (mk_name (md_universo) (mk_ident "True")))
+let usucc () = mk_name !md_theory (mk_ident "usucc")
 
-let rec term_of_level l =
-  let lc = Basic.dloc in
-  if l = 0 then
-    Term.mk_Const lc z
+let subtype () = mk_name !md_theory (mk_ident "SubType")
+
+let forall () = mk_name !md_theory (mk_ident "forall")
+
+let true_ () = Term.mk_Const dloc (mk_name !md_theory (mk_ident "true"))
+
+let rec term_of_level i =
+  assert (i>=0);
+  if i = 0 then
+    Term.mk_Const Basic.dloc (uzero ())
   else
-    Term.mk_App2 (Term.mk_Const lc s) [(term_of_level (l-1))]
+    Term.mk_App (Term.mk_Const Basic.dloc (usucc ())) (term_of_level (i-1)) []
 
 let term_of_univ u =
   let lc = Basic.dloc in
   match u with
   | Var n -> Term.mk_Const lc n
-  | Set    -> Term.mk_Const lc set
-  | Prop   -> Term.mk_Const lc prop
-  | Type l ->  Term.mk_App2 (Term.mk_Const lc typ) [term_of_level l]
+  | Enum i -> Term.mk_App (Term.mk_Const Basic.dloc (enum ())) (term_of_level i) []
 
 let term_of_pred p =
   let lc = Basic.dloc in
   match p with
-  | Axiom(s,s') -> Term.mk_App2 (Term.mk_Const lc axiom)
+  | Axiom(s,s') -> Term.mk_App2 (Term.mk_Const lc (axiom ()))
                      [term_of_univ s;term_of_univ s']
-  | Cumul(s,s') -> Term.mk_App2 (Term.mk_Const lc cumul)
+  | Cumul(s,s') -> Term.mk_App2 (Term.mk_Const lc (cumul ()))
                      [term_of_univ s;term_of_univ s']
-  | Rule(s,s',s'') -> Term.mk_App2 (Term.mk_Const lc rule)
+  | Rule(s,s',s'') -> Term.mk_App2 (Term.mk_Const lc (rule ()))
                         [term_of_univ s; term_of_univ s'; term_of_univ s'']
 
-let rec pattern_of_level l =
-  let lc = Basic.dloc in
-  if l = 0 then
-    Rule.Pattern(lc,z,[])
-  else
-    Rule.Pattern(lc,s,[pattern_of_level (l-1)])
+let pattern_of_level _ = failwith "todo pattern of level"
 
 let is_const cst t =
   match t with
@@ -88,40 +86,65 @@ let is_var md_elab t =
   | Term.Const(_,n) -> md n = md_elab
   | _ -> false
 
-let is_lift' t =
+let is_enum t =
   match t with
-  | Term.Const(_,n) -> md n = !md_univ
-  | Term.App(f,_,[_;_]) when is_const lift' f -> true
+  | Term.App(f,_,[]) when is_const (enum ()) f -> true
   | _ -> false
 
-let extract_lift' t =
+let is_subtype t =
   match t with
-  | Term.App(f,s1,[s2;_]) when is_const lift' f -> s1,s2
+  | Term.App(f,_,[_;_;_]) when is_const (subtype ()) f -> true
+  | _ -> false
+
+let extract_subtype t =
+  match t with
+  | Term.App(f,_,[_;_;_]) as s when is_const (subtype ()) f -> s
+  | _ -> assert false
+
+let is_forall t =
+  match t with
+  | Term.App(f,_,[_;_]) when is_const (forall ()) f -> true
+  | _ -> false
+
+let extract_forall t =
+  match t with
+  | Term.App(f,_,[_;Term.Lam(_,_,_,t)]) when is_const (forall ()) f -> t
+  | _ -> assert false
+
+let is_cast' t =
+  match t with
+  | Term.Const(_,n) -> md n = !md_univ
+  | Term.App(f,_,[_;_;_;_]) when is_const (cast' ()) f -> true
+  | _ -> false
+
+let extract_cast' t =
+  match t with
+  | Term.App(f,s1,[s2;a;b;_]) when is_const (cast' ()) f -> s1,s2,a,b
   | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
 
-let rec extract_level l =
-  match l with
-  | Term.Const(_,n) when Basic.name_eq n z -> 0
-  | Term.App(f,l,[]) when is_const s f -> 1 + (extract_level l)
+let rec extract_level : Term.term -> int = fun t ->
+  match t with
+  | Term.Const(_,n) when Basic.name_eq n (uzero ()) -> 0
+  | Term.App (Term.Const(_,n),l,[]) when Basic.name_eq n (usucc ()) ->
+    1 + (extract_level l)
   | _ -> assert false
 
 exception Not_univ
 exception Not_pred
 
-let extract_univ s =
-  match s with
-  | Term.Const(_,n) when Basic.name_eq n prop -> Prop
-  | Term.Const(_,n) when Basic.name_eq n set -> Set
-  | Term.Const(_,n)  -> Var n
-  | Term.App(f,l,[]) when is_const typ f -> Type (extract_level l)
-  | _ -> raise Not_univ
+let extract_univ : Term.term -> univ = fun t ->
+  match t with
+  | Term.Const(_,n) -> Var n
+  | Term.App (Term.Const(_,c),n,[]) when Basic.name_eq c (enum ()) ->
+    Enum (extract_level n)
+  | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
 
 let extract_pred t =
   match t with
-  | Term.App(f,s,[s'])     when is_const axiom f ->
+  | Term.App(f,s,[s'])     when is_const (axiom ()) f ->
     Axiom(extract_univ s, extract_univ s')
-  | Term.App(f,s,[s'])     when is_const cumul f ->
+  | Term.App(f,s,[s'])     when is_const (cumul ()) f ->
     Cumul(extract_univ s, extract_univ s')
-  | Term.App(f,s,[s';s'']) when is_const rule f ->
+  | Term.App(f,s,[s';s'']) when is_const (rule ()) f ->
     Rule(extract_univ s, extract_univ s', extract_univ s'')
-  | _ -> raise Not_pred
+  | _ -> Format.eprintf "Extract pred: %a@." Pp.print_term t; raise Not_pred

@@ -63,28 +63,46 @@ struct
            makes [l] convertible to [r]. Order matters and is handled by the module U. *)
         if V.is_uvar l && V.is_uvar r then
           C.mk_cstr add_rule (U.EqVar(V.name_of_uvar l, V.name_of_uvar r))
+
+        else if V.is_uvar l && U.is_enum r then
+          let r = U.extract_univ r in
+          ignore(C.mk_cstr add_rule (U.Pred(U.Cumul(Var (V.name_of_uvar l),r))));
+          C.mk_cstr add_rule (U.Pred(U.Cumul(r, Var (V.name_of_uvar l))))
+        else if V.is_uvar r && U.is_enum l then
+          failwith "todo left enum"
           (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
           (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
-        else if (Term.term_eq U.true_ l) then
-          C.mk_cstr add_rule (U.Pred(U.extract_pred r))
+        else if (Term.term_eq (U.true_ ()) l) then
+          if U.is_subtype r then
+            let s = U.extract_subtype r in
+            are_convertible !global_env.sg  (U.true_ ()) s
+          else if U.is_forall r then
+            let s = U.extract_forall r in
+            are_convertible !global_env.sg (U.true_ ()) s
+          else
+            C.mk_cstr add_rule (U.Pred(U.extract_pred r))
           (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. This quite ugly to be so dependent of that rule, but I have found no nice solution to resolve that one. *)
-        else if U.is_lift' l && not (U.is_lift' r) then
-          let s1,s2 = U.extract_lift' l in
+        else if U.is_cast' l && not (U.is_cast' r) then
+          let _,_,a,b = U.extract_cast' l in
           (* We have to compute there whnf because lift' s s' is already a whnf but not s and s' *)
-          let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in
+          (* let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in *)
+          are_convertible !global_env.sg a b
+          (*
           if Reduction.are_convertible !global_env.sg s1 s2 then
             true
           else (
             assert (V.is_uvar s1 && V.is_uvar s2);
-            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2)))
-        else if not (U.is_lift' l) && (U.is_lift' r) then
-          let s1,s2 = U.extract_lift' r in
-          let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in
+            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2))) *)
+
+        else if not (U.is_cast' l) && (U.is_cast' r) then
+          let _,_,a,b = U.extract_cast' r in
+          are_convertible !global_env.sg a b
+          (*let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in
           if Reduction.are_convertible !global_env.sg s1 s2 then
             true
           else (
             assert (V.is_uvar s1 && V.is_uvar s2);
-            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2)))
+            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2))) *)
         else
           false
 
@@ -103,7 +121,8 @@ struct
 
   and are_convertible sg t1 t2 =
     try are_convertible_lst sg [(t1,t2)]
-    with Reduction.NotConvertible -> false
+    with Reduction.NotConvertible ->
+      false
 
   and matching_test r sg t1 t2 =
     if Term.term_eq t1 t2 then
@@ -112,11 +131,10 @@ struct
       match r with
       | Rule.Gamma(_,rn) ->
         (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
-        (* FIXME: this is a bug of dkmeta that rule names are not preserved *)
-        if (md rn) = F.md_of_path !F.theory  then
-          false
-        else
+        if not (Str.string_match (Str.regexp "cast'") (string_of_ident (id rn)) 0) then
           are_convertible sg t1 t2
+        else
+          false
       | Rule.Delta(_) ->
         are_convertible sg t1 t2
       | Rule.Beta -> assert false
@@ -163,9 +181,9 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
     check_user_constraints env.constraints (Basic.mk_name (F.md_of env.in_path `Output) id) ty;
     (* Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id; *)
     begin
-      match T.inference env.sg ty with
-      | Kind | Type _ -> Signature.add_declaration env.sg lc id st ty
-      | s -> raise (Typing.TypingError (Typing.SortExpected (ty,[],s)))
+        match T.inference env.sg ty with
+        | Kind | Type _ -> Signature.add_declaration env.sg lc id st ty
+        | s -> raise (Typing.TypingError (Typing.SortExpected (ty,[],s)))
     end
   | Def(lc,id,opaque,mty,te) ->
     L.log_check "[CHECK] %a" Pp.print_ident id;

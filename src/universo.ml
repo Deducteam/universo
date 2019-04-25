@@ -10,11 +10,11 @@ module Syn = Solving.Solver.Z3Syn
 module Arith = Solving.Solver.Z3Arith
 module ZSyn = Solving.Z3cfg.Make(Syn)
 module ZArith = Solving.Z3cfg.Make(Arith)
-module S = Solving.Solver.Make(ZArith)
+module S = Solving.Solver.Make(ZSyn)
 
 let _ =
   (* For debugging purposes, it is better to see error messages in SNF *)
-  Errors.errors_in_snf := true;
+  Errors.errors_in_snf := false;
   (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
   Signature.unsafe := true
 
@@ -24,7 +24,7 @@ let _ =
     3) Solve the constraints
     4) Reconstruct the files with the solution *)
 type execution_mode =
-  | Normal (** Go through the four steps above *)
+  | Normal (** Go through the four steps *)
   | JustElaborate (** Do not generate constraints (only step 1). *)
   | JustCheck (** Only generate constraints (only step 2). ASSUME that elaboration has been done before. *)
   | JustSolve (** Only solve the constraints (only step 3). ASSUME that constraints has been generated before. *)
@@ -38,7 +38,6 @@ let mode = Pervasives.ref Normal
 let elaborate : string  -> unit = fun in_path ->
   let in_file = F.in_from_string in_path `Input in
   let env = Cmd.to_elaboration_env in_file.path in
-  F.add_requires (F.fmt_of_file env.file) [F.md_of_path !F.theory];
   let entries = P.parse in_file.md (F.in_channel_of_file in_file) in
   (* This steps generates the fresh universe variables *)
   let entries' = List.map (E.mk_entry env) entries in
@@ -46,7 +45,7 @@ let elaborate : string  -> unit = fun in_path ->
   let out_file = F.out_from_string in_path `Output in
   let out_fmt = F.fmt_of_file out_file in
   (* The elaborated file depends on the out_sol_md file that contains solution. If the mode is JustElaborate, then this file is empty and import the declaration of the fresh universes *)
-  F.add_requires out_fmt [F.md_of_path !F.theory; F.md_of in_path `Elaboration; F.md_of in_path `Solution];
+  F.add_requires out_fmt [F.md_of in_path `Elaboration; F.md_of in_path `Solution];
   List.iter (Pp.print_entry out_fmt) entries';
   F.close_in in_file;
   F.close_out out_file;
@@ -60,21 +59,19 @@ let check : string -> unit = fun in_path ->
   let file = F.in_from_string in_path `Output in
   let entries = P.parse md (F.in_channel_of_file file) in
   let env = Cmd.to_checking_env in_path in
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_theory in
-  let entries' = List.map (Dkmeta.mk_entry meta md) entries in
-  Signature.unsafe := false;
-  List.iter (Checking.Checker.mk_entry env) entries';
+  Signature.unsafe := false; (* For this step, we want the real type checker *)
+  List.iter (Checking.Checker.mk_entry env) entries;
   Signature.unsafe := true;
   L.log_check "[CHECK] Printing constraints...";
   let cstr_file = F.out_from_string in_path `Checking in
   let requires_mds =
     let deps = C.deps () in
     let elab_dep = F.md_of in_path `Elaboration in
-    let deps = if List.mem elab_dep deps then deps else elab_dep::deps in
-    (F.md_of_path !F.theory)::deps
+    if List.mem elab_dep deps then deps else elab_dep::deps
   in
   F.add_requires (F.fmt_of_file cstr_file) requires_mds;
   (* Constraints are printed only at the end so that we can rearrange them for Dedukti *)
+  (* FIXME: Now that the generation of Dtree is lazy, probably it is useless *)
   C.flush {C.file=cstr_file; meta=env.meta_out};
   F.close_in file;
   F.close_out cstr_file;
@@ -86,7 +83,7 @@ let check : string -> unit = fun in_path ->
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
   let add_constraints in_path =
-    let meta = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_theory in
+    let meta = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_input in
     S.parse meta in_path
   in
   List.iter add_constraints in_paths;
@@ -133,11 +130,8 @@ let cmd_options =
     , Arg.Set  C.predicative
     , " Rewrite rules adding additional constraints")
   ; ( "--theory"
-    , Arg.String (fun s -> F.theory := s)
+    , Arg.String (fun s -> F.theory := s; U.md_theory := F.md_of_path s)
     , " Theory file" )
-  ; ( "--to-theory"
-    , Arg.String (fun s -> Cmd.compat_theory := s)
-    , " Rewrite rules mapping input theory universes' to Universo's universes" )
   ; ( "--to-elaboration"
     , Arg.String (fun s -> Cmd.compat_input := s)
     , " Rewrite rules mapping theory's universes to be replaced to Universo's variables" )
@@ -147,6 +141,9 @@ let cmd_options =
   ; ( "--constraints"
     , Arg.String  (fun s -> Cmd.constraints_path := s)
     , " Rewrite rules adding additional constraints" )
+  ; ( "--target"
+    , Arg.String  (fun s -> Cmd.target_path := s)
+    , " Target specification file")
   ]
 
 (** [generate_empty_sol_file file] generates the file [file_sol] that requires the file [file_univ].

@@ -36,7 +36,7 @@ sig
   val mk_axiom  : t -> t -> t
   val mk_cumul  : t -> t -> t
   val mk_rule   : t -> t -> t -> t
-  val mk_bounds : bool -> string -> int -> t
+  val mk_bounds : string -> int -> t
   val solution_of_var : int -> Z.Model.model -> string -> U.univ option
 end
 
@@ -91,8 +91,8 @@ struct
           add (Z.Boolean.mk_not ctx (mk_pred p))) t
 
   (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
-  let register_vars predicative vars i =
-    SSet.iter (fun var -> add (S.mk_bounds predicative var i)) vars
+  let register_vars vars i =
+    SSet.iter (fun var -> add (S.mk_bounds var i)) vars
 
   (** [mk_cstr c] construct the Z3 constraint from the universe constraint [c] *)
   let mk_cstr = fun c ->
@@ -106,7 +106,7 @@ struct
     Z3.Solver.push solver;
     let theory = theory_of i in
     mk_theory theory;
-    register_vars predicative !vars i;
+    register_vars !vars i;
     (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";
     match Z3.Solver.check solver [] with
@@ -123,7 +123,7 @@ struct
         (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
         let find var =
           match S.solution_of_var i model var with
-          | None -> U.Prop
+          | None -> failwith "todo var not found"
           | Some u -> u
         in
         let model (cst:Basic.name) : U.univ =

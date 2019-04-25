@@ -3,24 +3,19 @@ module U = Universes
 type theory = (U.pred * bool) list
 type theory_maker = int -> theory
 
-(* FIXME: do not scale for any CTS *)
-let rec enumerate ?(predicative=false) i =
-  if i = 1 then
-    if predicative then
-      [U.Type 0]
-    else
-      [U.Prop]
+let rec enumerate : int -> U.univ list = fun i ->
+  if i = 0 then
+    [U.Enum 0]
   else
-  if predicative then
-    U.Type(i-1)::(enumerate ~predicative (i-1))
-  else
-    U.Type (i-2)::(enumerate (i-1))
+    U.Enum i::(enumerate (i-1))
 
 (** [is_true meta p] check if the predicate [p] is true in the original theory. *)
 let is_true meta p =
   let t = U.term_of_pred p in
+  Format.eprintf "b:%a@." Pp.print_term t;
   let t' = Dkmeta.mk_term meta t in
-  Term.term_eq (U.true_) t'
+  Format.eprintf "a:%a@." Pp.print_term t';
+  Term.term_eq (U.true_ ()) t'
 
 (** [is_true_axiom meta s s'] check if the predicate [Axiom s s'] is true in the original theory. *)
 let is_true_axiom meta s s' =

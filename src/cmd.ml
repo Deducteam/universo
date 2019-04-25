@@ -14,7 +14,10 @@ let compat_output = ref ""
 (** The path to the rewrite rules that contains additional constraints for some identifiers *)
 let constraints_path = ref ""
 
-let mk_constraints : Dkmeta.cfg -> (B.name, U.pred) Hashtbl.t = fun meta ->
+(** The path that contains the target specification *)
+let target_path = ref ""
+
+let mk_constraints : unit -> (B.name, U.pred) Hashtbl.t = fun () ->
   let ic = open_in !constraints_path in
   let md = F.md_of_path !constraints_path in
   let table = Hashtbl.create 11 in
@@ -24,7 +27,8 @@ let mk_constraints : Dkmeta.cfg -> (B.name, U.pred) Hashtbl.t = fun meta ->
       | Rule.Pattern(_,name,[]) -> name
       | _ -> failwith "Constraints are not in correct format"
     in
-    let pred = try U.extract_pred (Dkmeta.mk_term meta r.rhs)
+    (* let pred = try U.extract_pred (Dkmeta.mk_term meta r.rhs) *)
+    let pred = try U.extract_pred r.rhs
       with U.Not_pred -> failwith "Constraints are not in correct format"
     in
     Hashtbl.add table name pred
@@ -46,13 +50,12 @@ let add_rules sg rs =
   List.iter (add_rule sg) rs
 
   (** Signature that contains a generic theory of universes for Universo. Imperative features of Dedukti forces us to generate this signature for each file otherwise, this signature would contain too many declarations *)
-let universo () =
-  F.signature_of_file "encodings/universo.dk"
+let universo () = F.signature_of_file "encodings/universo.dk"
 
 (** [theory_sort ()] returns the type of universes in the original theory *)
 let theory_sort : unit -> Term.term = fun () ->
   let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
-  let sort = Term.mk_Const B.dloc U.sort in
+  let sort = Term.mk_Const B.dloc (U.sort ()) in
   (* compat_output (universo.sort) --> <theory>.sort *)
   Dkmeta.mk_term meta sort
 
@@ -63,17 +66,12 @@ let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
   let theory_sort = theory_sort () in
   {file; theory_sort; meta}
 
-(** [mk_theory meta] returns a signature that corresponds to the original where universes of universo have been plugged in. This allows us to type check as if we were in the original theory but Universo can recognize easily a universe. *)
-let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
+(** [mk_theory ()] returns the theory used by universo. *)
+let mk_theory : unit -> Signature.t = fun () ->
   let ic = open_in !F.theory in
   let md = F.md_of_path !F.theory in
   let entries = Parser.Parse_channel.parse md ic in
-  let sg = universo () in
-  (* The line below does the main trick: it normalizes every entry of the original theory with the universes of Universo *)
-  let entries' = List.map (Dkmeta.mk_entry meta md) entries in
-  let sg = Entry.to_signature !F.theory ~sg entries' in
-  (* We include the compat theory so that the type checker transforms automatically a universe from the original theory to the one of Universo. *)
-  F.signature_of_file ~sg !compat_theory
+  Entry.to_signature !F.theory entries
 
 (** [elab_signature f] returns the signature containing all the universes declaration associated to
     file [f] *)
@@ -82,17 +80,15 @@ let elab_signature : string -> Signature.t = fun in_path ->
 
 (** [to_checking_env f] returns the type checking environement for the file [f] *)
 let to_checking_env : string -> Checking.Checker.t = fun in_path ->
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_theory in
-  let theory_signature = mk_theory meta in
+  let theory_signature = mk_theory () in
   let sg = Signature.make (Filename.basename in_path) in
   Signature.import_signature sg theory_signature;
   Signature.import_signature sg (elab_signature in_path);
   let meta_out = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
-  let constraints = mk_constraints meta in
+  let constraints = mk_constraints () in
   { sg; in_path; meta_out; constraints}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
 let theory_meta : unit -> Dkmeta.cfg = fun () ->
-  let open Dkmeta in
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_theory in
-  {sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}
+  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
+  Dkmeta.meta_of_file meta !target_path

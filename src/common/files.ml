@@ -21,8 +21,6 @@ type 'a t =
 (** output where new files are created *)
 let output_directory = ref None
 
-let theory = ref ""
-
 (** suffix used for files containing universe declarations *)
 let elaboration_suffix = "_univ"
 
@@ -56,6 +54,8 @@ let suffix_of_step : step -> string = function
   | `Solution -> solution_suffix
   | `Input
   | `Output -> normal_suffix
+
+let theory : path ref = ref ""
 
 (** [md_of_file f] returns the [mident] of the file [f] *)
 let md_of_path : path -> Basic.mident = fun path ->
