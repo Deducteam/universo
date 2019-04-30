@@ -107,7 +107,7 @@ struct
     let theory = theory_of i in
     mk_theory theory;
     register_vars !vars i;
-    Format.eprintf "%s@." (Z3.Solver.to_string solver);
+    (* Format.eprintf "%s@." (Z3.Solver.to_string solver); *)
     (* if i = 2 then ignore(assert false); *)
     (* FIXME: hard coded upper bound *)
     if i > 6 then failwith "Probably the Constraints are inconsistent";

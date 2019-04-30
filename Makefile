@@ -47,7 +47,7 @@ $(MATITA_UNIV_FILES): $(MATITA_OUT)/%_univ.dk: $(MATITA_OUT)/%.dk
 $(MATITA_CSTR_FILES): $(MATITA_OUT)/%_cstr.dk: $(MATITA_OUT)/%.dk bin
 	$(UNIVERSO) $(OPTIONS) --check-only -o $(dir $@) $<
 
-$(MATITA_SOL_FILES): $(MATITA_OUT)/%_sol.dk: $(MATITA_OUT)/%_cstr.dk
+$(MATITA_SOL_FILES): $(MATITA_OUT)/%_sol.dk: $(MATITA_OUT)/%_cstr.dk $(MATITA_OUT)/%.dk
 	$(UNIVERSO) $(OPTIONS) --solve-only -o $(dir $@) $(MATITA_OUT_FILES)
 
 $(MATITA_OUT_FILES): $(MATITA_OUT)/%.dk: $(MATITA_IN)/%.dk bin
@@ -60,3 +60,7 @@ debug:
 .PHONY: clean
 clean:
 	@dune clean
+
+.PHONY: install
+install:
+	@dune install

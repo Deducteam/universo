@@ -54,7 +54,7 @@ let universo () = F.signature_of_file "encodings/universo.dk"
 
 (** [theory_sort ()] returns the type of universes in the original theory *)
 let theory_sort : unit -> Term.term = fun () ->
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
+  let meta = Dkmeta.meta_of_file !compat_output Dkmeta.default_config in
   let sort = Term.mk_Const B.dloc (U.sort ()) in
   (* compat_output (universo.sort) --> <theory>.sort *)
   Dkmeta.mk_term meta sort
@@ -62,7 +62,7 @@ let theory_sort : unit -> Term.term = fun () ->
 (** [to_elaboration_env f] generates a fresh environement to elaborate file [f]. *)
 let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
   let file = F.out_from_string in_path `Elaboration in
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_input in
+  let meta = Dkmeta.meta_of_file !compat_input Dkmeta.default_config in
   let theory_sort = theory_sort () in
   {file; theory_sort; meta}
 
@@ -84,11 +84,11 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   let sg = Signature.make (Filename.basename in_path) in
   Signature.import_signature sg theory_signature;
   Signature.import_signature sg (elab_signature in_path);
-  let meta_out = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
+  let meta_out = Dkmeta.meta_of_file !compat_output Dkmeta.default_config in
   let constraints = mk_constraints () in
   { sg; in_path; meta_out; constraints}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
 let theory_meta : unit -> Dkmeta.cfg = fun () ->
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
-  Dkmeta.meta_of_file meta !target_path
+  let meta = Dkmeta.meta_of_file !compat_output Dkmeta.default_config in
+  Dkmeta.meta_of_file !target_path meta

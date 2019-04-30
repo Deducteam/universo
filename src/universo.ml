@@ -85,7 +85,7 @@ let check : string -> unit = fun in_path ->
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
   let add_constraints in_path =
-    let meta = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_input in
+    let meta = Dkmeta.meta_of_file !Cmd.compat_input Dkmeta.default_config in
     S.parse meta in_path
   in
   List.iter add_constraints in_paths;
@@ -93,7 +93,7 @@ let solve : string list -> unit = fun in_paths ->
   let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
   let i,model = S.solve mk_theory !C.predicative in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
-  let meta_out = Dkmeta.meta_of_file Dkmeta.default_config !Cmd.compat_output in
+  let meta_out = Dkmeta.meta_of_file !Cmd.compat_output Dkmeta.default_config in
   List.iter (S.print_model meta_out model) in_paths
 
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
