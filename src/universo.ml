@@ -61,22 +61,18 @@ let check : string -> unit = fun in_path ->
   let file = F.in_from_string in_path `Output in
   let entries = P.parse md (F.in_channel_of_file file) in
   let env = Cmd.to_checking_env in_path in
-  Signature.unsafe := false; (* For this step, we want the real type checker *)
-  List.iter (Checking.Checker.mk_entry env) entries;
-  Signature.unsafe := true;
-  L.log_check "[CHECK] Printing constraints...";
-  let cstr_file = F.out_from_string in_path `Checking in
   let requires_mds =
-    let deps = C.deps () in
+    let deps = C.get_deps () in
     let elab_dep = F.md_of in_path `Elaboration in
     if List.mem elab_dep deps then deps else elab_dep::deps
   in
-  F.add_requires (F.fmt_of_file cstr_file) requires_mds;
-  (* Constraints are printed only at the end so that we can rearrange them for Dedukti *)
-  (* FIXME: Now that the generation of Dtree is lazy, probably it is useless *)
-  C.flush {C.file=cstr_file; meta=env.meta_out};
+  F.add_requires (F.fmt_of_file env.out_file) requires_mds;
+  Signature.unsafe := false; (* For this step, we want the real type checker *)
+  List.iter (Checking.Checker.mk_entry env) entries;
+  Signature.unsafe := true;
+  C.flush ();
   F.close_in file;
-  F.close_out cstr_file;
+  F.close_out env.out_file;
   F.export in_path `Checking;
   F.export in_path `Solution;
   F.export in_path `Output

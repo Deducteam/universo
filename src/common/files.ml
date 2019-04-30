@@ -18,6 +18,12 @@ type 'a t =
     channel : 'a channel
   }
 
+let out_default =
+  {
+    path = "";
+    md = B.mk_mident "";
+    channel = Out(stdout, Format.formatter_of_out_channel stdout)}
+
 (** output where new files are created *)
 let output_directory = ref None
 

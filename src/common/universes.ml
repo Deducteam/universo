@@ -151,4 +151,4 @@ let extract_pred t =
     Cumul(extract_univ s, extract_univ s')
   | Term.App(f,s,[s';s'']) when is_const (rule ()) f ->
     Rule(extract_univ s, extract_univ s', extract_univ s'')
-  | _ -> Format.eprintf "Extract pred: %a@." Pp.print_term t; raise Not_pred
+  | _ -> raise Not_pred

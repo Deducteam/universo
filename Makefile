@@ -24,6 +24,8 @@ MATITA_OUT=$(MATITA_PATH)/output
 MATITA_IN_FILES=$(wildcard $(MATITA_IN)/*.dk)
 MATITA_LIB=$(notdir $(basename $(MATITA_IN_FILES)))
 
+DKDEP    = dkdep -s --ignore -I $(MATITA_IN)
+
 ifneq ($(MAKECMDGOALS), clean)
 	-include .library_depend_dko
 endif
@@ -48,14 +50,14 @@ $(MATITA_CSTR_FILES): $(MATITA_OUT)/%_cstr.dk: $(MATITA_OUT)/%.dk bin
 	$(UNIVERSO) $(OPTIONS) --check-only -o $(dir $@) $<
 
 $(MATITA_SOL_FILES): $(MATITA_OUT)/%_sol.dk: $(MATITA_OUT)/%_cstr.dk $(MATITA_OUT)/%.dk
-	$(UNIVERSO) $(OPTIONS) --solve-only -o $(dir $@) $(MATITA_OUT_FILES)
+	$(UNIVERSO) $(OPTIONS) --solve-only -o $(dir $@) $(shell $(DKDEP) $(MATITA_IN)/$*.dk)
 
 $(MATITA_OUT_FILES): $(MATITA_OUT)/%.dk: $(MATITA_IN)/%.dk bin
 	$(UNIVERSO) $(OPTIONS) --elab-only -o $(dir $@) $<
 
 .PHONY: debug
 debug:
-	@echo $(MATITA_LIB)
+	$(DKDEP) $(MATITA_IN)/test.dk
 
 .PHONY: clean
 clean:

@@ -18,20 +18,6 @@ type print_cstrs =
 
 let predicative = ref false
 
-let empty = {eqvar=[];axiom=[];cumul=[];rule=[]}
-
-let constraints : print_cstrs ref = ref empty
-
-let register_cstr : U.cstr -> unit = function
-  | U.EqVar(l,r) ->
-    constraints := {!constraints with eqvar = (l,r)::!constraints.eqvar}
-  | U.Pred(Axiom(l,r)) ->
-    constraints := {!constraints with axiom = (l,r)::!constraints.axiom}
-  | U.Pred(Cumul(l,r)) ->
-    constraints := {!constraints with cumul = (l,r)::!constraints.cumul}
-  | U.Pred(Rule(l,m,r)) ->
-    constraints := {!constraints with rule = (l,m,r)::!constraints.rule}
-
 let dummy_name = Rule.Gamma(false, B.mk_name (B.mk_mident "dummy") (B.mk_ident "dummy"))
 
 (* FIXME: copy/paste from checker.ml *)
@@ -48,34 +34,16 @@ let add_rule  sg vl vr =
   in
   Signature.add_rules sg  [Rule.to_rule_infos rule]
 
-let print_constraints env =
-  let fmt = F.fmt_of_file env.file in
-  let normalize t = t in
-  let print_rule pp l r =
-    Format.fprintf fmt "@.[] %a --> %a" pp l pp r
-  in
-  let print_dot () = Format.fprintf fmt "." in
-  let print_eq_var (l,r) =
-    add_rule env.meta.sg l r;
-    print_rule Pp.print_name l r; print_dot ()
-  in
-  let print_predicate p =
-    let l' = normalize (U.term_of_pred p) in
-    let r' = normalize (U.true_ ()) in
-    print_rule Pp.print_term l' r'
-  in
-  List.iter print_eq_var !constraints.eqvar;
-  List.iter (fun (l,r) -> print_predicate (Axiom(l,r))) !constraints.axiom;
-  if List.length !constraints.axiom <> 0 then
-    print_dot ();
-  List.iter (fun (l,r) -> print_predicate (Cumul(l,r))) !constraints.cumul;
-  if List.length !constraints.cumul <> 0 then
-    print_dot ();
-  List.iter (fun (l,m,r) -> print_predicate (Rule(l,m,r))) !constraints.rule;
-  if List.length !constraints.rule <> 0 then
-    print_dot ();
-  Format.fprintf fmt "@." (* flush last dot *)
+let print_rule pp fmt (l,r) =
+  Format.fprintf fmt "@.[] %a --> %a" pp l pp r
 
+let print_eq_var fmt (l,r) =
+  Format.fprintf fmt "%a.@." (print_rule Pp.print_name) (l,r)
+
+let print_predicate fmt p =
+  let l' = U.term_of_pred p in
+  let r' = U.true_ () in
+  Format.fprintf fmt "%a.@." (print_rule Pp.print_term) (l', r')
 
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
     l >= r. *)
@@ -86,25 +54,25 @@ let mk_var_cstr f l r =
   let nl = get_number (Basic.string_of_ident @@ Basic.id l) in
   let nr = get_number (Basic.string_of_ident @@ Basic.id r) in
   if nr < nl then (
-    f l r; U.EqVar(l,r))
+    f l r; (l,r))
   else (
-    f r l; U.EqVar(r,l))
+    f r l; (r,l))
 
-let mk_cstr f cstr =
+let deps = ref []
+
+let mk_cstr env f cstr =
+  let fmt = F.fmt_of_file env.file in
   match cstr with
-  | (U.Pred _) as cstr ->
-    register_cstr cstr;
+  | U.Pred p ->
+    Format.fprintf fmt "%a@." print_predicate p;
     true
   | U.EqVar(l,r) ->
-    let cstr' = mk_var_cstr f l r in
-    register_cstr cstr';
+    let (l,r) = mk_var_cstr f l r in
+    add_rule env.meta.sg l r;
+    if not (List.mem (Basic.md r) !deps) then deps := (Basic.md r)::!deps;
+    Format.fprintf fmt "%a@." print_eq_var (l,r);
     true
 
-let flush env = print_constraints env; constraints := empty
+let get_deps () = !deps
 
-let deps () =
-  let deps = ref [] in
-  List.iter
-    (fun (_,r) ->
-       if not (List.mem (Basic.md r) !deps) then deps := (Basic.md r)::!deps) !constraints.eqvar;
-  !deps
+let flush () = deps := []
