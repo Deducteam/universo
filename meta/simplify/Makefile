@@ -16,7 +16,7 @@ all: $(MATITA_NF_FILES)
 
 
 $(NF_DIR)/%.dk: $(MATITA_OUT)/%_sol.dk $(MATITA_OUT)/%.dk
-	$(DKMETA) -m $(MATITA_C_OUT) -m $< $(MATITA_OUT)/$*.dk > $@
+	$(DKMETA)  -m $< -m $(MATITA_C_OUT) $(MATITA_OUT)/$*.dk > $@
 
 .PHONY: debug
 debug:

@@ -9,6 +9,7 @@ _build/
 *.dko
 .depend
 experiments/**/*.dk
+meta/**/*.dk
 
 # Editor temporary files.
 *~

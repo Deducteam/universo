@@ -117,13 +117,13 @@ let extract_forall t =
 
 let is_cast' t =
   match t with
-  | Term.Const(_,n) -> md n = !md_univ
-  | Term.App(f,_,[_;_;_;_]) when is_const (cast' ()) f -> true
+  | Term.App(f,_,_) when is_const (cast' ()) f -> true
   | _ -> false
 
 let extract_cast' t =
   match t with
-  | Term.App(f,s1,[s2;a;b;_]) when is_const (cast' ()) f -> s1,s2,a,b
+  | Term.App(f,s1,[s2;a;b;t]) when is_const (cast' ()) f -> s1,s2,a,b,t
+  | Term.App(f,s1,s2::a::b::m::n) when is_const (cast' ()) f -> s1,s2,a,b,Term.mk_App2 m n
   | _ -> Format.eprintf "%a@." Pp.print_term t; assert false
 
 let rec extract_level : Term.term -> int = fun t ->

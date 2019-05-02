@@ -55,7 +55,8 @@ struct
     in
     Signature.add_rules !global_env.sg  [Rule.to_rule_infos rule]
   and whnf sg t =
-    Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
+    let t' = Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t in
+    t'
   and snf sg t =
     Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
 
@@ -75,7 +76,6 @@ struct
         else if V.is_uvar r && U.is_enum l then
           failwith "todo left enum"
           (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
-          (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
         else if (Term.term_eq (U.true_ ()) l) then
           if U.is_subtype r then
             let s = U.extract_subtype r in
@@ -85,35 +85,22 @@ struct
             are_convertible !global_env.sg (U.true_ ()) s
           else
             C.mk_cstr (of_global_env !global_env) add_rule (U.Pred(U.extract_pred r))
-          (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. This quite ugly to be so dependent of that rule, but I have found no nice solution to resolve that one. *)
+          (* Encoding of cumulativity uses the rule cast _ _ A A t --> t. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. This quite ugly to be so dependent of that rule, but I have found no nice solution to resolve that one. *)
         else if U.is_cast' l && not (U.is_cast' r) then
-          let _,_,a,b = U.extract_cast' l in
-          (* We have to compute there whnf because lift' s s' is already a whnf but not s and s' *)
-          (* let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in *)
-          are_convertible !global_env.sg a b
-          (*
-          if Reduction.are_convertible !global_env.sg s1 s2 then
-            true
-          else (
-            assert (V.is_uvar s1 && V.is_uvar s2);
-            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2))) *)
-
+          let _,_,a,b,t = U.extract_cast' l in
+          are_convertible !global_env.sg a b &&
+          are_convertible !global_env.sg t r
         else if not (U.is_cast' l) && (U.is_cast' r) then
-          let _,_,a,b = U.extract_cast' r in
-          are_convertible !global_env.sg a b
-          (*let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in
-          if Reduction.are_convertible !global_env.sg s1 s2 then
-            true
-          else (
-            assert (V.is_uvar s1 && V.is_uvar s2);
-            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2))) *)
+          let _,_,a,b,t = U.extract_cast' r in
+          are_convertible !global_env.sg a b &&
+          are_convertible !global_env.sg l t
         else
           false
 
   and are_convertible_lst sg : (Term.term * Term.term) list -> bool = function
     | [] -> true
     | (l,r)::lst ->
-      if Term.term_eq l r then are_convertible_lst sg lst
+      if Term.term_eq l r then  are_convertible_lst sg lst
       else
         begin
           let l',r' = whnf sg l, whnf sg r in
@@ -128,20 +115,19 @@ struct
     with Reduction.NotConvertible ->
       false
 
-  and matching_test r sg t1 t2 =
+  and matching_test cstr r sg t1 t2 =
     if Term.term_eq t1 t2 then
       true
     else
-      match r with
-      | Rule.Gamma(_,rn) ->
-        (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
+      match cstr,r with
+      | Rule.Linearity _, Rule.Gamma(_,rn) ->
+        (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a.*)
         if not (Str.string_match (Str.regexp "cast'") (string_of_ident (id rn)) 0) then
           are_convertible sg t1 t2
         else
           false
-      | Rule.Delta(_) ->
-        are_convertible sg t1 t2
-      | Rule.Beta -> assert false
+      | Rule.Bracket _, _ -> are_convertible sg t1 t2
+      | _ -> assert false
 end
 
 module T = Typing.Make(RE)
@@ -174,7 +160,6 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
   let open Entry in
   let open Term in
   global_env := env;
-  Format.eprintf "%s@." (F.get_out_path !global_env.in_path `Checking);
   let _add_rules rs =
     let ris = List.map Rule.to_rule_infos rs in
     Signature.add_rules env.sg ris

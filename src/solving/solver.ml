@@ -56,7 +56,8 @@ struct
       let md_check = F.md_of in_path `Checking in
       (* meta transform the constraints to universos constraints *)
       let mk_entry = function
-        | Entry.Rules(_,rs) -> List.map (fun (r:Rule.untyped_rule) -> from_rule r.pat r.rhs) rs
+        | Entry.Rules(_,rs) ->
+          List.map (fun (r:Rule.untyped_rule) -> from_rule r.pat r.rhs) rs
         | Entry.Require _ -> []
         | _ -> assert false
       in
