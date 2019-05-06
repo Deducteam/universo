@@ -2,10 +2,10 @@
 
 Universo is a tool that translates if possible a judgment from one Cumulative Type System (CTS) specifcation to another. How it works is really similar to "Typical ambiguity": concrete universes are elaborated to fresh variables and then the type checking of these terms generate constraints that should be solved. Universo works in four steps:
 
-1 - First, terms are elaborated
-2 - Terms are type checked. The type checking generates constraints.
-3 - Constraints are solved via a SMT Solver (currently only Z3 is used)
-4 - We reconstruct the terms via the solution found by Z3 (which in the current version is trivial)
+1. First, terms are elaborated
+2. Terms are type checked. The type checking generates constraints.
+3. Constraints are solved via a SMT Solver (currently only Z3 is used)
+4. We reconstruct the terms via the solution found by Z3 (which in the current version is trivial)
 
 The first three steps can be computed independently (see the usage paragraph).
 

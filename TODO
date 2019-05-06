@@ -2,3 +2,11 @@
 - 4 universes is not enough for the whole library but almost (39 files on 40).
 - One should understand why the function in vector_finset cannot be encoded in 3 universes.
 - Enrich Makefile's rule so that we do not type check many many times the same files.
+- use import_signature for theory file
+- create a configuration file and its format
+- Have a way to disallow constraints for some identifier
+- Have a way to instrument the solver (such as z3) to allow LRA for example
+- Figure out how the solver can be speed up
+- having a smt2 problem
+- configure the minimum/maximum of universes
+- FIx makefile
