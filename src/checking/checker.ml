@@ -33,7 +33,7 @@ let global_env : t ref = ref default
 
 let of_global_env env = { C.file = env.out_file; C.meta = env.meta_out}
 
-module RE : Reduction.RE =
+module RE : Reduction.S =
 struct
   open Basic
 
