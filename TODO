@@ -9,4 +9,5 @@
 - Figure out how the solver can be speed up
 - having a smt2 problem
 - configure the minimum/maximum of universes
-- FIx makefile
+- FIX makefile
+- Clean code with new API
