@@ -1,0 +1,42 @@
+def fact :
+  cic.Term
+    (cic.type cic.z)
+    (cic.prod
+       (cic.type cic.z)
+       (cic.type cic.z)
+       (cic.type cic.z)
+       cic.I
+       matita_arithmetics_nat.nat
+       (__:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat)).
+
+def fact_body :
+  cic.Term
+    (cic.type cic.z)
+    (cic.prod
+       (cic.type cic.z)
+       (cic.type cic.z)
+       (cic.type cic.z)
+       cic.I
+       matita_arithmetics_nat.nat
+       (__:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat)).
+
+[__]
+  matita_arithmetics_factorial.fact __
+  -->
+  matita_arithmetics_nat.filter_nat
+    (cic.type cic.z)
+    (__:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat)
+    matita_arithmetics_factorial.fact_body
+    __.
+
+[__]
+  matita_arithmetics_factorial.fact_body __
+  -->
+  matita_arithmetics_nat.match_nat
+    (cic.type cic.z)
+    (__1:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat)
+    (matita_arithmetics_nat.S matita_arithmetics_nat.O)
+    (m:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+     matita_arithmetics_nat.times (matita_arithmetics_factorial.fact m) (matita_arithmetics_nat.S m))
+    __.
+

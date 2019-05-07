@@ -1,0 +1,147 @@
+def exp :
+  cic.Term
+    (cic.type cic.z)
+    (cic.prod
+       (cic.type cic.z)
+       (cic.type cic.z)
+       (cic.type cic.z)
+       cic.I
+       matita_arithmetics_nat.nat
+       (__:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+        cic.prod
+          (cic.type cic.z)
+          (cic.type cic.z)
+          (cic.type cic.z)
+          cic.I
+          matita_arithmetics_nat.nat
+          (__1:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat))).
+
+def exp_body :
+  cic.Term
+    (cic.type cic.z)
+    (cic.prod
+       (cic.type cic.z)
+       (cic.type cic.z)
+       (cic.type cic.z)
+       cic.I
+       matita_arithmetics_nat.nat
+       (__:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+        cic.prod
+          (cic.type cic.z)
+          (cic.type cic.z)
+          (cic.type cic.z)
+          cic.I
+          matita_arithmetics_nat.nat
+          (__1:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat))).
+
+[__1, __]
+  matita_arithmetics_exp.exp __ __1
+  -->
+  matita_arithmetics_nat.filter_nat
+    (cic.type cic.z)
+    (__1:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat)
+    (matita_arithmetics_exp.exp_body __)
+    __1.
+
+[__1, __]
+  matita_arithmetics_exp.exp_body __ __1
+  -->
+  matita_arithmetics_nat.match_nat
+    (cic.type cic.z)
+    (__2:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) => matita_arithmetics_nat.nat)
+    (matita_arithmetics_nat.S matita_arithmetics_nat.O)
+    (p:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+     matita_arithmetics_nat.times (matita_arithmetics_exp.exp __ p) __)
+    __1.
+
+def lt_O_exp :
+  cic.Term
+    cic.prop
+    (cic.prod
+       (cic.type cic.z)
+       cic.prop
+       cic.prop
+       cic.I
+       matita_arithmetics_nat.nat
+       (n:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+        cic.prod
+          (cic.type cic.z)
+          cic.prop
+          cic.prop
+          cic.I
+          matita_arithmetics_nat.nat
+          (m:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+           cic.prod
+             cic.prop
+             cic.prop
+             cic.prop
+             cic.I
+             (matita_arithmetics_nat.lt matita_arithmetics_nat.O n)
+             (__:(cic.Term cic.prop (matita_arithmetics_nat.lt matita_arithmetics_nat.O n)) =>
+              matita_arithmetics_nat.lt matita_arithmetics_nat.O (matita_arithmetics_exp.exp n m)))))
+  :=
+  n:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+  m:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+  matita_arithmetics_nat.nat_ind
+    (cic.cast
+       (cic.type cic.z)
+       (cic.type cic.z)
+       (cic.prod
+          (cic.type cic.z)
+          (cic.type cic.z)
+          (cic.type cic.z)
+          cic.I
+          matita_arithmetics_nat.nat
+          (_x_365:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+           cic.univ cic.prop (cic.type cic.z) cic.I))
+       (cic.prod
+          (cic.type cic.z)
+          (cic.type cic.z)
+          (cic.type cic.z)
+          cic.I
+          matita_arithmetics_nat.nat
+          (_x_365:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+           cic.univ cic.prop (cic.type cic.z) cic.I))
+       cic.I
+       (_x_365:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+        cic.prod
+          cic.prop
+          cic.prop
+          cic.prop
+          cic.I
+          (matita_arithmetics_nat.lt matita_arithmetics_nat.O n)
+          (__:(cic.Term cic.prop (matita_arithmetics_nat.lt matita_arithmetics_nat.O n)) =>
+           matita_arithmetics_nat.lt matita_arithmetics_nat.O (matita_arithmetics_exp.exp n _x_365))))
+    (auto:(cic.Term
+             cic.prop
+             (matita_arithmetics_nat.le (matita_arithmetics_nat.S matita_arithmetics_nat.O) n)) =>
+     matita_arithmetics_nat.lt_O_S matita_arithmetics_nat.O)
+    (a:(cic.Term (cic.type cic.z) matita_arithmetics_nat.nat) =>
+     Hind:(cic.Term
+             cic.prop
+             (cic.prod
+                cic.prop
+                cic.prop
+                cic.prop
+                cic.I
+                (matita_arithmetics_nat.le (matita_arithmetics_nat.S matita_arithmetics_nat.O) n)
+                (__:(cic.Term
+                       cic.prop
+                       (matita_arithmetics_nat.le
+                          (matita_arithmetics_nat.S matita_arithmetics_nat.O)
+                          n)) =>
+                 matita_arithmetics_nat.le
+                   (matita_arithmetics_nat.S matita_arithmetics_nat.O)
+                   (matita_arithmetics_exp.exp n a)))) =>
+     posn:(cic.Term
+             cic.prop
+             (matita_arithmetics_nat.le (matita_arithmetics_nat.S matita_arithmetics_nat.O) n)) =>
+     matita_arithmetics_nat.le_times
+       (matita_arithmetics_nat.S matita_arithmetics_nat.O)
+       (matita_arithmetics_exp.exp n a)
+       (matita_arithmetics_nat.S matita_arithmetics_nat.O)
+       n
+       (Hind posn)
+       posn)
+    m.
+

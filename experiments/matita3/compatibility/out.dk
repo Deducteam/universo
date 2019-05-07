@@ -1,5 +1,5 @@
 []  cic.enum cic.uzero                                     --> cic.prop.
 []  cic.enum (cic.usucc cic.uzero)                         --> cic.type.
-[]  cic.enum (cic.usucc (cic.usucc cic.uzero))             --> cic.type1.
+[]  cic.enum (cic.usucc (cic.usucc cic.uzero))             --> cic.kind.
 
 [] cic.prod cic.prop cic.type cic.type --> cic.prodPT.

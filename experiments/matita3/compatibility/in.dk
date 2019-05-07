@@ -1,4 +1,3 @@
 [s] cic.type s --> cic.var.
 [s] cic.succ s --> cic.var.
-[] cic.prop --> cic.var.
 []  cic.prop --> cic.enum cic.uzero.
