@@ -7,9 +7,11 @@ _build/
 
 # Dedukti files.
 *.dko
+*.dep
 .depend
 experiments/**/output/*.dk
 meta/**/*.dk
+
 
 # Editor temporary files.
 *~

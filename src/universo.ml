@@ -70,6 +70,7 @@ let check : string -> unit = fun in_path ->
   Signature.unsafe := false; (* For this step, we want the real type checker *)
   List.iter (Checking.Checker.mk_entry env) entries;
   Signature.unsafe := true;
+  Signature.export env.sg;
   C.flush ();
   F.close_in file;
   F.close_out env.out_file;
