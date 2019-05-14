@@ -82,16 +82,14 @@ let check : string -> unit = fun in_path ->
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
   let add_constraints in_path =
-    let meta = Dkmeta.meta_of_file !Cmd.compat_input Dkmeta.default_config in
-    S.parse meta in_path
+    S.parse (Cmd.elaboration_meta_cfg ()) in_path
   in
   List.iter add_constraints in_paths;
   L.log_univ "[SOLVING CONSTRAINTS...]";
   let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
   let i,model = S.solve mk_theory !C.predicative in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
-  let meta_out = Dkmeta.meta_of_file !Cmd.compat_output Dkmeta.default_config in
-  List.iter (S.print_model meta_out model) in_paths
+  List.iter (S.print_model (Cmd.output_meta_cfg ()) model) in_paths
 
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
 let run_on_file file =
@@ -125,24 +123,12 @@ let cmd_options =
   ; ( "-o"
     , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
     , " Set the output directory" )
-  ; ( "--predicative"
-    , Arg.Set  C.predicative
-    , " Rewrite rules adding additional constraints")
   ; ( "--theory"
     , Arg.String (fun s -> F.theory := s; U.md_theory := F.md_of_path s)
     , " Theory file" )
-  ; ( "--to-elaboration"
-    , Arg.String (fun s -> Cmd.compat_input := s)
-    , " Rewrite rules mapping theory's universes to be replaced to Universo's variables" )
-  ; ( "--of-universo"
-    , Arg.String  (fun s -> Cmd.compat_output := s)
-    , " Rewrite rules mapping Universo's universes to the theory's universes" )
-  ; ( "--constraints"
-    , Arg.String  (fun s -> Cmd.constraints_path := s)
-    , " Rewrite rules adding additional constraints" )
-  ; ( "--target"
-    , Arg.String  (fun s -> Cmd.target_path := s)
-    , " Target specification file")
+  ; ( "--config"
+    , Arg.String  (fun s -> Cmd.config_path := s)
+    , " Configuration file")
   ]
 
 (** [generate_empty_sol_file file] generates the file [file_sol] that requires the file [file_univ].
@@ -163,6 +149,7 @@ let _ =
     let files =
       let files = ref [] in
       Arg.parse options (fun f -> files := f :: !files) usage;
+      Cmd.parse_config ();
       List.rev !files
     in
     List.iter generate_empty_sol_file files;

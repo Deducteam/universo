@@ -5,20 +5,15 @@ type t =
   {
     file: F.cout F.t;
     (** File where universe declarations are printed *)
-    theory_sort:Term.term;
-    (** Type of a universe in the original theory *)
     meta:Dkmeta.cfg
     (** Meta rules that translates universes to the pre-universe variable *)
   }
-
-(** Return a var environement using an elaboration environement *)
-let var_env : t -> Var.t = fun env -> {file=env.file;theory_sort=env.theory_sort}
 
 (** Takes a term [t] where universes are elaborated as pre-universe variables and returns a term where all the pre-universe variables are fresh universe variables *)
 let rec mk_term : t -> Term.term -> Term.term = fun env ->
   fun t ->
     if Var.is_pre_var t then
-      Var.fresh_uvar (var_env env) ()
+      Var.fresh_uvar env.file ()
     else
       match t with
       | Term.Kind

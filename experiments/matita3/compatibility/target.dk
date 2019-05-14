@@ -63,5 +63,6 @@
 
 []  cic.Rule cic.kind cic.prop cic.prop        --> cic.true.
 []  cic.Rule cic.kind cic.type cic.type        --> cic.true.
+[]  cic.Rule cic.kind cic.kind cic.kind        --> cic.true.
 
 [a] cic.Cumul a a                              --> cic.true.

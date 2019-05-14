@@ -3,3 +3,4 @@
 []  cic.enum (cic.usucc (cic.usucc cic.uzero))             --> cic.kind.
 
 [] cic.prod cic.prop cic.type cic.type --> cic.prodPT.
+[] cic.prod cic.kind cic.kind cic.kind --> cic.prodKK.

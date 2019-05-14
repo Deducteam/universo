@@ -13,7 +13,7 @@ universo:
 	@ln -s _build/install/default/bin/universo universo || true
 
 DKCHECK  = dkcheck
-DKDEP    = dkdep --ignore -I $(MATITA_IN)
+DKDEP    = dkdep --ignore
 
 UNIVERSO = $(shell readlink -f _build/install/default/bin/universo)
 
@@ -39,13 +39,8 @@ MATITA_IN_DEP_FILES=$(MATITA_LIB:%=$(MATITA_IN)/%.dep)
 MATITA_OUT_DEP_FILES=$(MATITA_LIB:%=$(MATITA_OUT)/%.dep)
 
 OPTIONS=-d s \
-	-I $(MATITA_PATH)/theory \
-	-I encodings \
-	--to-elaboration $(MATITA_PATH)/compatibility/in.dk \
-	--of-universo    $(MATITA_PATH)/compatibility/out.dk \
-	--constraints    $(MATITA_PATH)/compatibility/constraints.dk \
 	--theory	 $(MATITA_PATH)/compatibility/cic.dk \
-	--target	 $(MATITA_PATH)/compatibility/target.dk
+	--config	 $(MATITA_PATH)/compatibility/config.dk
 
 $(MATITA_UNIV_FILES): $(MATITA_OUT)/%_univ.dk: $(MATITA_OUT)/%.dk
 
@@ -59,13 +54,14 @@ $(MATITA_OUT_OFILES): $(MATITA_OUT)/%.dko: $(MATITA_OUT)/%.dk $(MATITA_OUT)/%.de
 	$(UNIVERSO) $(OPTIONS) --check-only -o $(dir $@) $<
 
 $(MATITA_SOL_FILES): $(MATITA_OUT)/%_sol.dk: $(MATITA_OUT)/%_cstr.dk $(MATITA_OUT)/%.dk $(UNIVERSO)
-	$(UNIVERSO) $(OPTIONS) --solve-only -o $(dir $@) $(shell $(DKDEP) -s $(MATITA_OUT)/$*.dk)
+	$(UNIVERSO) $(OPTIONS) --solve-only -o $(dir $@) \
+	$(shell $(DKDEP) -I $(MATITA_IN) -s $(MATITA_IN)/$*.dk)
 
 $(MATITA_OUT_FILES): $(MATITA_OUT)/%.dk: $(MATITA_IN)/%.dk $(UNIVERSO)
 	$(UNIVERSO) $(OPTIONS) --elab-only -o $(dir $@) $<
 
 $(MATITA_IN_DEP_FILES): $(MATITA_IN)/%.dep: $(MATITA_IN)/%.dk
-	$(DKDEP) $< > $@
+	$(DKDEP) -I $(MATITA_IN) $< > $@
 
 $(MATITA_OUT_DEP_FILES): $(MATITA_OUT)/%.dep: $(MATITA_IN)/%.dep
 	cat $< | sed 's:$(MATITA_IN):$(MATITA_OUT):g' > $@

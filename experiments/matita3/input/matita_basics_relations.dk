@@ -907,4 +907,3 @@ def distributive :
                 A)
              (f x (g y z))
              (g (f x y) (f x z))))).
-
