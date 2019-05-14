@@ -30,6 +30,8 @@ type execution_mode =
   | JustElaborate (** Do not generate constraints (only step 1). *)
   | JustCheck (** Only generate constraints (only step 2). ASSUME that elaboration has been done before. *)
   | JustSolve (** Only solve the constraints (only step 3). ASSUME that constraints has been generated before. *)
+  | Simplify
+
 
 (** By default, Universo go through all the steps *)
 let mode = Pervasives.ref Normal
@@ -38,6 +40,7 @@ let mode = Pervasives.ref Normal
     [file'] is the same as [file] except that all universes are replaced by fresh variables.
     [file_univ] contains the declaration of these variables. Everything is done modulo the logic. *)
 let elaborate : string  -> unit = fun in_path ->
+  L.log_univ "[CHECK] %s" (F.get_out_path in_path `Elaboration);
   let in_file = F.in_from_string in_path `Input in
   let env = Cmd.to_elaboration_env in_file.path in
   let entries = P.parse in_file.md (F.in_channel_of_file in_file) in
@@ -57,6 +60,7 @@ let elaborate : string  -> unit = fun in_path ->
 (** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
     ASSUME also that the dependencies have been type checked before. *)
 let check : string -> unit = fun in_path ->
+  L.log_univ "[CHECK] %s" (F.get_out_path in_path `Output);
   let md = F.md_of_path in_path in
   let file = F.in_from_string in_path `Output in
   let entries = P.parse md (F.in_channel_of_file file) in
@@ -82,6 +86,7 @@ let check : string -> unit = fun in_path ->
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
   let add_constraints in_path =
+    L.log_univ "[PARSE] %s" (F.get_out_path in_path `Checking);
     S.parse (Cmd.elaboration_meta_cfg ()) in_path
   in
   List.iter add_constraints in_paths;
@@ -91,9 +96,48 @@ let solve : string list -> unit = fun in_paths ->
   L.log_univ "[SOLVED] Solution found with %d universes." i;
   List.iter (S.print_model (Cmd.output_meta_cfg ()) model) in_paths
 
+let simplify : string list -> unit = fun in_paths ->
+  Basic.Debug.enable_flag Dkmeta.D_meta;
+  let remove_files in_path =
+    let steps = [`Elaboration;`Checking;`Solution] in
+    let to_remove_files = List.map (fun s -> F.get_out_path in_path s) steps in
+    List.iter Sys.remove to_remove_files
+  in
+  let normalize_file out_cfg in_path =
+    let meta =
+      let path = F.get_out_path in_path `Solution in
+      let md = F.md_of in_path `Solution in
+      Dkmeta.meta_of_file path ~md out_cfg
+    in
+    let file = F.in_from_string in_path `Output in
+    let input = F.in_channel_of_file file in
+    let md = F.md_of in_path `Output in
+    let entries = Parser.Parse_channel.parse md input in
+    let rec map_opt f l =
+      match l with
+      | [] -> []
+      | a::l -> match f a with | None -> map_opt f l | Some a' -> a'::map_opt f l
+    in
+    (* FIXME: suppose that files does not contain any require *)
+    let mk_entry e =
+      match e with
+      | Entry.Require(_,_) -> None
+      | e -> Some (Dkmeta.mk_entry meta md e)
+    in
+    let entries' = map_opt mk_entry entries in
+    F.close_in file;
+    let output = F.out_from_string in_path `Output in
+    let fmt = F.fmt_of_file output in
+    List.iter (Pp.print_entry fmt) entries';
+    F.close_out output
+  in
+  let out_cfg = Cmd.output_meta_cfg () in
+  List.iter (normalize_file out_cfg) in_paths;
+  List.iter remove_files in_paths
+
+
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
 let run_on_file file =
-  L.log_univ "[FILE] %s" file;
   match !mode with
   | Normal ->
     elaborate file;
@@ -103,9 +147,13 @@ let run_on_file file =
   | JustCheck ->
     check file
   | JustSolve -> ()
+  | Simplify -> ()
 
 let cmd_options =
-  [ ( "-d"
+  [ ( "-l"
+    , Arg.Unit (fun () -> (L.enable_flag "s"))
+    , " Active the debug flag specific to universo")
+  ; ( "-d"
     , Arg.String L.enable_flag
     , " flags enables debugging for all given flags" )
   ; ( "--elab-only"
@@ -117,6 +165,9 @@ let cmd_options =
   ; ( "--solve-only"
     , Arg.Unit (fun _ -> mode := JustSolve)
     , " only solves the constraints" )
+  ; ( "--simplify"
+    , Arg.Unit (fun _ -> mode := Simplify)
+    , " output is simplified so that only usual dk files remain" )
   ; ( "-I"
     , Arg.String Basic.add_path
     , " DIR Add the directory DIR to the load path" )
@@ -152,10 +203,13 @@ let _ =
       Cmd.parse_config ();
       List.rev !files
     in
-    List.iter generate_empty_sol_file files;
+    if !mode <> Simplify then
+      List.iter generate_empty_sol_file files;
     List.iter run_on_file files;
     if !mode = Normal || !mode = JustSolve then
       solve files;
+    if !mode = Simplify then
+       simplify files
   with
   | Env.EnvError(l,e) -> Errors.fail_env_error l e
   | Signature.SignatureError e ->

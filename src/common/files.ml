@@ -50,7 +50,7 @@ let add_suffix : path -> string -> string = fun file suffix ->
 
 (** [add_dir dir file] prefix the filename [file] with the directory [dir] *)
 let add_dir : string -> string -> string = fun dir file ->
-  dir ^ Filename.dir_sep ^ (Filename.basename file)
+  dir ^ (Filename.basename file)
 
 
 (** return the suffix according to the step [s] *)

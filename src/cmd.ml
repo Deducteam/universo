@@ -26,7 +26,6 @@ let parse_config : unit -> unit = fun () ->
     let check_section s = List.mem s sections in
     match e with
     | Decl(_,id,_,_) when check_section (Basic.string_of_ident id) ->
-      Format.eprintf "%s@." !section;
       if !section <> "" then
         begin
           Hashtbl.add config !section (List.rev !parameters);

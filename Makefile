@@ -38,7 +38,8 @@ MATITA_OUT_OFILES=$(MATITA_LIB:%=$(MATITA_OUT)/%.dko)
 MATITA_IN_DEP_FILES=$(MATITA_LIB:%=$(MATITA_IN)/%.dep)
 MATITA_OUT_DEP_FILES=$(MATITA_LIB:%=$(MATITA_OUT)/%.dep)
 
-OPTIONS=-d s \
+OPTIONS=\
+	-l \
 	--theory	 $(MATITA_PATH)/compatibility/cic.dk \
 	--config	 $(MATITA_PATH)/compatibility/config.dk
 
