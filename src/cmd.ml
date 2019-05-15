@@ -22,7 +22,7 @@ let parse_config : unit -> unit = fun () ->
   let parameters = ref [] in
   let mk_entry e =
     let open Entry in
-    let sections = ["elaboration";"target";"output";"constraints"; "end"] in
+    let sections = ["elaboration";"target";"output";"constraints"; "solver"; "arith"; "end"] in
     let check_section s = List.mem s sections in
     match e with
     | Decl(_,id,_,_) when check_section (Basic.string_of_ident id) ->

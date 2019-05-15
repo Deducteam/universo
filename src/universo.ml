@@ -92,17 +92,12 @@ let solve : string list -> unit = fun in_paths ->
   List.iter add_constraints in_paths;
   L.log_univ "[SOLVING CONSTRAINTS...]";
   let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
-  let i,model = S.solve mk_theory !C.predicative in
+  let i,model = S.solve mk_theory in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
   List.iter (S.print_model (Cmd.output_meta_cfg ()) model) in_paths
 
 let simplify : string list -> unit = fun in_paths ->
   Basic.Debug.enable_flag Dkmeta.D_meta;
-  let remove_files in_path =
-    let steps = [`Elaboration;`Checking;`Solution] in
-    let to_remove_files = List.map (fun s -> F.get_out_path in_path s) steps in
-    List.iter Sys.remove to_remove_files
-  in
   let normalize_file out_cfg in_path =
     let meta =
       let path = F.get_out_path in_path `Solution in
@@ -112,28 +107,20 @@ let simplify : string list -> unit = fun in_paths ->
     let file = F.in_from_string in_path `Output in
     let input = F.in_channel_of_file file in
     let md = F.md_of in_path `Output in
-    let entries = Parser.Parse_channel.parse md input in
-    let rec map_opt f l =
-      match l with
-      | [] -> []
-      | a::l -> match f a with | None -> map_opt f l | Some a' -> a'::map_opt f l
-    in
+    let output = F.out_from_string in_path `Simplify in
+    let fmt = F.fmt_of_file output in
     (* FIXME: suppose that files does not contain any require *)
     let mk_entry e =
       match e with
-      | Entry.Require(_,_) -> None
-      | e -> Some (Dkmeta.mk_entry meta md e)
+      | Entry.Require(_,_) -> ()
+      | e -> Format.fprintf fmt "%a@." Pp.print_entry (Dkmeta.mk_entry meta md e)
     in
-    let entries' = map_opt mk_entry entries in
+    Parser.Parse_channel.handle md mk_entry input;
     F.close_in file;
-    let output = F.out_from_string in_path `Output in
-    let fmt = F.fmt_of_file output in
-    List.iter (Pp.print_entry fmt) entries';
     F.close_out output
   in
   let out_cfg = Cmd.output_meta_cfg () in
-  List.iter (normalize_file out_cfg) in_paths;
-  List.iter remove_files in_paths
+  List.iter (normalize_file out_cfg) in_paths
 
 
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
@@ -166,7 +153,7 @@ let cmd_options =
     , Arg.Unit (fun _ -> mode := JustSolve)
     , " only solves the constraints" )
   ; ( "--simplify"
-    , Arg.Unit (fun _ -> mode := Simplify)
+    , Arg.String (fun s -> mode := Simplify; F.simplify_directory := Some s)
     , " output is simplified so that only usual dk files remain" )
   ; ( "-I"
     , Arg.String Basic.add_path

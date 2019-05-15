@@ -25,7 +25,10 @@ let out_default =
     channel = Out(stdout, Format.formatter_of_out_channel stdout)}
 
 (** output where new files are created *)
-let output_directory = ref None
+let output_directory : string option ref = ref None
+
+(** output where simplified files are created *)
+let simplify_directory : string option ref = ref None
 
 (** suffix used for files containing universe declarations *)
 let elaboration_suffix = "_univ"
@@ -40,7 +43,7 @@ let solution_suffix = "_sol"
 let normal_suffix = ""
 
 (** Steps of Universo *)
-type step = [`Input | `Output | `Elaboration | `Checking | `Solution]
+type step = [`Input | `Output | `Elaboration | `Checking | `Solution | `Simplify]
 
 (** [add_sufix file suffix] returns the string [file'] where suffix is_added at then end of [file] *)
 let add_suffix : path -> string -> string = fun file suffix ->
@@ -50,7 +53,7 @@ let add_suffix : path -> string -> string = fun file suffix ->
 
 (** [add_dir dir file] prefix the filename [file] with the directory [dir] *)
 let add_dir : string -> string -> string = fun dir file ->
-  dir ^ (Filename.basename file)
+  dir ^ Filename.dir_sep ^ (Filename.basename file)
 
 
 (** return the suffix according to the step [s] *)
@@ -59,7 +62,9 @@ let suffix_of_step : step -> string = function
   | `Checking -> checking_suffix
   | `Solution -> solution_suffix
   | `Input
+  | `Simplify
   | `Output -> normal_suffix
+
 
 let theory : path ref = ref ""
 
@@ -70,12 +75,18 @@ let md_of_path : path -> Basic.mident = fun path ->
 (** [get_out_path p s] returns the path that corresponds to the step [s] for path [p] *)
 let get_out_path : path -> step -> path = fun path step ->
   let file_suffix = add_suffix path (suffix_of_step step) in
-  match !output_directory with
-  | None -> failwith "Output_directory must be set. See --help for more information"
-  | Some dir ->
-    match step with
-    | `Input -> file_suffix
-    | _ -> add_dir dir file_suffix
+  match step with
+  | `Input -> file_suffix
+  | `Simplify ->
+    begin
+      match !simplify_directory with
+      | None -> assert false
+      | Some dir -> add_dir dir file_suffix
+    end
+  | _ ->
+    match !output_directory with
+    | None -> failwith "Output_directory must be set. See --help for more information"
+    | Some dir -> add_dir dir file_suffix
 
 (** [from_string f s] returns the filename that corresponds to the step [s] for file [f] *)
 let out_from_string : path -> step -> cout t = fun path step ->

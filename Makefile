@@ -79,5 +79,5 @@ clean:
 	@dune clean
 
 .PHONY: install
-install:
+install: all
 	@dune install

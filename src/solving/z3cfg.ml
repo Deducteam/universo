@@ -102,7 +102,7 @@ struct
     | EqVar(l,r) -> Z.Boolean.mk_eq ctx (mk_var (S.mk_name l)) (mk_var (S.mk_name r))
 
   (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
-  let rec check predicative theory_of i =
+  let rec check theory_of i =
     Z3.Solver.push solver;
     let theory = theory_of i in
     mk_theory theory;
@@ -114,7 +114,7 @@ struct
     match Z3.Solver.check solver [] with
     | Z3.Solver.UNSATISFIABLE ->
       L.log_solver "[SOLVER] No solution found with %d universes" i;
-      Z3.Solver.pop solver 1; check predicative theory_of (i+1)
+      Z3.Solver.pop solver 1; check theory_of (i+1)
     | Z3.Solver.UNKNOWN -> assert false
     | Z3.Solver.SATISFIABLE ->
       match Z3.Solver.get_model solver with
@@ -140,7 +140,7 @@ struct
         (i,model)
 
   (** [solve mk_theory] tries to solve the constraints *)
-  let solve mk_theory predicative = check predicative mk_theory 1
+  let solve mk_theory = check mk_theory 1
 
   let add : U.cstr -> unit = fun cstr -> add (mk_cstr cstr)
 end

@@ -33,9 +33,13 @@ let global_env : t ref = ref default
 
 let of_global_env env = { C.file = env.out_file; C.meta = env.meta_out}
 
-module RE : Reduction.S =
+module MakeRE (Conv:Reduction.ConvChecker) : Reduction.S =
 struct
   open Basic
+
+  module R = Reduction.Make(Conv)
+
+  include R
 
   (** Name for rules that reduce variables. Names are irrelevant for Universo. *)
   let dummy_name = Rule.Gamma(false, mk_name (mk_mident "dummy") (mk_ident "dummy"))
@@ -54,11 +58,6 @@ struct
         })
     in
     Signature.add_rules !global_env.sg  [Rule.to_rule_infos rule]
-  and whnf sg t =
-    let t' = Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t in
-    t'
-  and snf sg t =
-    Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
 
   and univ_conversion l r =
     if Term.term_eq l r then (* should not happen *)
@@ -107,7 +106,7 @@ struct
           if univ_conversion l' r' then
             are_convertible_lst sg lst
           else
-            are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
+            are_convertible_lst sg (R.conversion_step (l',r') lst)
         end
 
   and are_convertible sg t1 t2 =
@@ -129,6 +128,8 @@ struct
       | Rule.Bracket _, _ -> are_convertible sg t1 t2
       | _ -> assert false
 end
+
+module rec RE : Reduction.S = MakeRE(RE)
 
 module T = Typing.Make(RE)
 

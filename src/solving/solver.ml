@@ -3,11 +3,21 @@ module L = Common.Log
 module O = Common.Oracle
 module U = Common.Universes
 
+type env =
+  {
+    mk_theory: O.theory_maker;
+    (** construct a list of axioms,rules and cumulativity with there truth value for n universes. *)
+    min: int;
+    (** minimum number of universes to check *)
+    max: int;
+    (** maximum number of universes to check *)
+    smt2_file: bool;
+    (** print an smt2 file *)
+  }
+
+
 (** [model] is a function that associate to each fresh universe a concrete universe. *)
 type model = Basic.name -> U.univ
-
-(** [is_predicative] says if the solution should live in a predicative theory. *)
-type is_predicative = bool
 
 (** Signature for an abstract solver *)
 module type SOLVER =
@@ -16,8 +26,7 @@ sig
   val add   : U.cstr -> unit
 
   (** [solve mk_theory] call the solver and returns the mimimum number of universes needed to solve the constraints as long as the model. The theory used by solver depends on the number of universes needed. Hence one needs to provide a function [mk_theory] that builds a theory when at most [i] are used.*)
-  val solve   : O.theory_maker -> is_predicative -> int * model
-
+  val solve : O.theory_maker -> int * model
 end
 
 (** A concrete implementation of a solver using Z3 with non interpreted symbol functions for universes *)
@@ -31,7 +40,7 @@ sig
 
   val print_model : Dkmeta.cfg -> model -> F.path -> unit
 
-  val solve : O.theory_maker -> is_predicative -> int * model
+  val solve : O.theory_maker -> int * model
 end
 
 

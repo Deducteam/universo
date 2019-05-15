@@ -16,8 +16,6 @@ type print_cstrs =
     rule: (U.univ * U.univ * U.univ) list;
   }
 
-let predicative = ref false
-
 let dummy_name = Rule.Gamma(false, B.mk_name (B.mk_mident "dummy") (B.mk_ident "dummy"))
 
 (* FIXME: copy/paste from checker.ml *)
