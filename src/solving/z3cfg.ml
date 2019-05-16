@@ -10,7 +10,7 @@ type cfg = cfg_item list
 
 (** Concrete configuration. *)
 let cfg = [`Model(true); (* Generate a model *)
-           `Proof(true); (* Give a proof if unsatisfiable *)
+           `Proof(false); (* Give a proof if unsatisfiable *)
            `Trace(false); (* Do not generate trace *)
           ]
 
@@ -26,22 +26,11 @@ let string_of_cfg cfg = List.map string_of_cfg_item cfg
 (** Z3 context elaborated from a Z3 configuration *)
 let ctx = Z.mk_context (string_of_cfg cfg)
 
-module type ALGEBRAIC =
-sig
-  type t = Z.Expr.expr
+module type Z3LOGIC = Utils.LOGIC with type t = Z.Expr.expr
+                                   and type model = Z.Model.model
+                                   and type ctx = Z.context
 
-  val mk_name   : B.name -> string
-  val mk_var    : string -> t
-  val mk_univ   : U.univ -> t
-  val mk_axiom  : t -> t -> t
-  val mk_cumul  : t -> t -> t
-  val mk_rule   : t -> t -> t -> t
-  val mk_bounds : string -> int -> t
-  val solution_of_var : int -> Z.Model.model -> string -> U.univ option
-end
-
-
-module Make(S:ALGEBRAIC) =
+module Make(S:Z3LOGIC) =
 struct
 
   (** Set containing all the variables used by Z3 *)
@@ -60,7 +49,7 @@ struct
   (** [mk_var s] construct a Z3 expression from the Z3 variable [s]. *)
   let mk_var s =
     vars := SSet.add s !vars;
-    S.mk_var s
+    S.mk_var ctx s
 
   let vars_of_univs univs =
     let f = function
@@ -78,9 +67,9 @@ struct
   let mk_pred = fun p ->
     vars_of_pred p;  (* FIXME: SO HACKISH *)
     match p with
-    | U.Axiom(s,s') -> S.mk_axiom (S.mk_univ s) (S.mk_univ s')
-    | U.Cumul(s,s') -> S.mk_cumul (S.mk_univ s) (S.mk_univ s')
-    | U.Rule(s,s',s'') -> S.mk_rule (S.mk_univ s) (S.mk_univ s') (S.mk_univ s'')
+    | U.Axiom(s,s') -> S.mk_axiom ctx (S.mk_univ ctx s) (S.mk_univ ctx s')
+    | U.Cumul(s,s') -> S.mk_cumul ctx (S.mk_univ ctx s) (S.mk_univ ctx s')
+    | U.Rule(s,s',s'') -> S.mk_rule ctx (S.mk_univ ctx s) (S.mk_univ ctx s') (S.mk_univ ctx s'')
 
   (** [mk_theory m] construct a Z3 theory for the non-interpreted predicate using the theory [t]. *)
   let mk_theory t =
@@ -92,7 +81,7 @@ struct
 
   (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
   let register_vars vars i =
-    SSet.iter (fun var -> add (S.mk_bounds var i)) vars
+    SSet.iter (fun var -> add (S.mk_bounds ctx var i)) vars
 
   (** [mk_cstr c] construct the Z3 constraint from the universe constraint [c] *)
   let mk_cstr = fun c ->
@@ -124,7 +113,7 @@ struct
         let hmodel = Hashtbl.create 10001 in
         (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
         let find var =
-          match S.solution_of_var i model var with
+          match S.solution_of_var ctx i model var with
           | None -> assert false
           | Some u -> u
         in

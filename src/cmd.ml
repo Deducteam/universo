@@ -105,3 +105,19 @@ let theory_meta : unit -> Dkmeta.cfg = fun () ->
     let rules = Hashtbl.find config "target" in
     Dkmeta.meta_of_rules rules (output_meta_cfg ())
   with Not_found -> raise @@ Cmd_error NoTargetSpecification
+
+let mk_solver : unit -> (module Solving.Solver.S) = fun () ->
+  let open Solving in
+  let _ : (module Solver.SOLVER) -> (module Solver.S) =
+    if true then
+      (fun (module S) -> (module Solver.MakeUF(S)))
+    else
+      (fun (module S) -> (module Solver.Make(S)))
+  in (*
+  let solver : (module Solver.S) =
+    if true then
+      (module ZSyn)
+    else
+      (module ZArith)
+  in *)
+  failwith "todo"

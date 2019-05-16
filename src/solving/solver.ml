@@ -30,9 +30,9 @@ sig
 end
 
 (** A concrete implementation of a solver using Z3 with non interpreted symbol functions for universes *)
-module Z3Syn : Z3cfg.ALGEBRAIC = Z3syn
 
-module Z3Arith : Z3cfg.ALGEBRAIC = Z3arith
+module ZSyn = Z3cfg.Make(Z3syn)
+module ZArith = Z3cfg.Make(Z3arith)
 
 module type S =
 sig
