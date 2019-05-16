@@ -2,11 +2,9 @@ module B = Basic
 module L = Common.Log
 module U = Common.Universes
 module Z = Z3
+module ZS = Z.Solver
 
-(** Z3 configuration *)
-type cfg_item = [`Model of bool | `Proof of bool | `Trace of bool | `TraceFile of string]
-
-type cfg = cfg_item list
+open Utils
 
 (** Concrete configuration. *)
 let cfg = [`Model(true); (* Generate a model *)
@@ -30,7 +28,7 @@ module type Z3LOGIC = Utils.LOGIC with type t = Z.Expr.expr
                                    and type model = Z.Model.model
                                    and type ctx = Z.context
 
-module Make(S:Z3LOGIC) =
+module Make(ZL:Z3LOGIC) =
 struct
 
   (** Set containing all the variables used by Z3 *)
@@ -49,11 +47,11 @@ struct
   (** [mk_var s] construct a Z3 expression from the Z3 variable [s]. *)
   let mk_var s =
     vars := SSet.add s !vars;
-    S.mk_var ctx s
+    ZL.mk_var ctx s
 
   let vars_of_univs univs =
     let f = function
-      | U.Var name -> vars := SSet.add (S.mk_name name) !vars
+      | U.Var name -> vars := SSet.add (ZL.mk_name name) !vars
       | _ -> ()
     in
     List.iter f univs
@@ -65,11 +63,12 @@ struct
 
   (** [mk_pred p] construct the Z3 predicate from a universe predicate *)
   let mk_pred = fun p ->
-    vars_of_pred p;  (* FIXME: SO HACKISH *)
+    (* register variables first to add bounds constraints afterward *)
+    vars_of_pred p;
     match p with
-    | U.Axiom(s,s') -> S.mk_axiom ctx (S.mk_univ ctx s) (S.mk_univ ctx s')
-    | U.Cumul(s,s') -> S.mk_cumul ctx (S.mk_univ ctx s) (S.mk_univ ctx s')
-    | U.Rule(s,s',s'') -> S.mk_rule ctx (S.mk_univ ctx s) (S.mk_univ ctx s') (S.mk_univ ctx s'')
+    | U.Axiom(s,s') -> ZL.mk_axiom ctx (ZL.mk_univ ctx s) (ZL.mk_univ ctx s')
+    | U.Cumul(s,s') -> ZL.mk_cumul ctx (ZL.mk_univ ctx s) (ZL.mk_univ ctx s')
+    | U.Rule(s,s',s'') -> ZL.mk_rule ctx (ZL.mk_univ ctx s) (ZL.mk_univ ctx s') (ZL.mk_univ ctx s'')
 
   (** [mk_theory m] construct a Z3 theory for the non-interpreted predicate using the theory [t]. *)
   let mk_theory t =
@@ -81,57 +80,44 @@ struct
 
   (** [register_vars vars i] give bound for each variable [var] between [0] and [i] *)
   let register_vars vars i =
-    SSet.iter (fun var -> add (S.mk_bounds ctx var i)) vars
+    SSet.iter (fun var -> add (ZL.mk_bounds ctx var i)) vars
 
   (** [mk_cstr c] construct the Z3 constraint from the universe constraint [c] *)
   let mk_cstr = fun c ->
     let open U in
     match c with
     | Pred p -> mk_pred p
-    | EqVar(l,r) -> Z.Boolean.mk_eq ctx (mk_var (S.mk_name l)) (mk_var (S.mk_name r))
+    | EqVar(l,r) -> Z.Boolean.mk_eq ctx (mk_var (ZL.mk_name l)) (mk_var (ZL.mk_name r))
 
   (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
-  let rec check theory_of i =
-    Z3.Solver.push solver;
-    let theory = theory_of i in
+  let rec check env i =
+    ZS.push solver;
+    let theory = env.mk_theory i in
     mk_theory theory;
     register_vars !vars i;
-    (* Format.eprintf "%s@." (Z3.Solver.to_string solver); *)
-    (* if i = 2 then ignore(assert false); *)
-    (* FIXME: hard coded upper bound *)
-    if i > 6 then failwith "Probably the Constraints are inconsistent";
-    match Z3.Solver.check solver [] with
-    | Z3.Solver.UNSATISFIABLE ->
+    if i > env.max then failwith "No solution found";
+    match ZS.check solver [] with
+    | ZS.UNSATISFIABLE ->
       L.log_solver "[SOLVER] No solution found with %d universes" i;
-      Z3.Solver.pop solver 1; check theory_of (i+1)
-    | Z3.Solver.UNKNOWN -> assert false
-    | Z3.Solver.SATISFIABLE ->
-      match Z3.Solver.get_model solver with
-      | None -> assert false (* the context says that we want a model *)
+      ZS.pop solver 1; check env (i+1)
+    | ZS.UNKNOWN -> assert false
+    | ZS.SATISFIABLE ->
+      match ZS.get_model solver with
+      | None -> assert false
       | Some model ->
-        (* FIXME: This is not useful anymore *)
-        let hmodel = Hashtbl.create 10001 in
-        (* Format.eprintf "%s@." (Z3.Model.to_string model); *)
-        let find var =
-          match S.solution_of_var ctx i model var with
+        let model (cst:Basic.name) : U.univ =
+          let var = ZL.mk_name cst in
+          match ZL.solution_of_var ctx i model var with
           | None -> assert false
           | Some u -> u
-        in
-        let model (cst:Basic.name) : U.univ =
-          let var = S.mk_name cst in
-          if Hashtbl.mem hmodel var then
-            Hashtbl.find hmodel var
-          else
-            let t = find var in
-            Hashtbl.add hmodel var t;
-            t
         in
         (i,model)
 
   (** [solve mk_theory] tries to solve the constraints *)
-  let solve mk_theory = check mk_theory 1
+  let solve env = check env env.min
 
   let add : U.cstr -> unit = fun cstr -> add (mk_cstr cstr)
 end
 
-include Z3
+module Syn : Z3LOGIC = Z3syn
+module Arith : Z3LOGIC = Z3arith

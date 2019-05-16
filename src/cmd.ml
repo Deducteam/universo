@@ -106,18 +106,51 @@ let theory_meta : unit -> Dkmeta.cfg = fun () ->
     Dkmeta.meta_of_rules rules (output_meta_cfg ())
   with Not_found -> raise @@ Cmd_error NoTargetSpecification
 
-let mk_solver : unit -> (module Solving.Solver.S) = fun () ->
+let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun () ->
   let open Solving in
-  let _ : (module Solver.SOLVER) -> (module Solver.S) =
-    if true then
-      (fun (module S) -> (module Solver.MakeUF(S)))
+  let get_rhs (r : Rule.untyped_rule) =
+    let open Rule in
+    match r.rhs with
+    | Term.Const(_,n) -> Basic.string_of_ident (Basic.id n)
+    | _ -> raise @@ Cmd_error (WrongConfiguration(Entry.Rules(Basic.dloc,[r])))
+  in
+  let find_lhs opt r =
+    let open Rule in
+    match r.pat with
+    | Pattern(_,n,_) -> Basic.string_of_ident (Basic.id n) = opt
+    | _ -> false
+  in
+  let options = try Hashtbl.find config "solver" with _ -> [] in
+  let find key default = try get_rhs @@ List.find (find_lhs key)   options with _ -> default  in
+  let smt     = find "smt" "z3" in
+  let logic   = find "logic" "syn" in
+  let opt     = find "opt" "normal" in
+  let (module SS) : (module Utils.SMTSOLVER) =
+    if smt = "z3" then
+      begin
+        let open Z3cfg in
+        if logic = "lra" then
+          (module Make(Arith))
+        else if logic = "syn" then
+          (module Make(Syn))
+        else
+          failwith "Wrong Solver Configuration"
+      end
     else
-      (fun (module S) -> (module Solver.Make(S)))
-  in (*
-  let solver : (module Solver.S) =
-    if true then
-      (module ZSyn)
+      failwith "Wrong Solver Configuration"
+  in
+  let (module S : Utils.SOLVER) =
+    if opt = "uf" then
+      (module Solver.MakeUF(SS))
+    else if opt = "normal" then
+      (module Solver.Make(SS))
     else
-      (module ZArith)
-  in *)
-  failwith "todo"
+      failwith "Wrong Solver Configuration"
+  in
+  let open Utils in
+  let min         = int_of_string (find "minimum" "1") in
+  let max         = int_of_string (find "maximum" "6") in
+  let print       = find "print" "false" = "true" in
+  let mk_theory i = Common.Oracle.mk_theory (theory_meta ()) i in
+  let env = {mk_theory;min;max;print} in
+  (module S:Utils.SOLVER), env

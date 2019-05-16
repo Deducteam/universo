@@ -17,6 +17,18 @@ end
 (** [model] is a function that associate to each fresh universe a concrete universe. *)
 type model = Basic.name -> Common.Universes.univ
 
+type env =
+  {
+    mk_theory: Common.Oracle.theory_maker;
+    (** construct a list of axioms,rules and cumulativity with there truth value for n universes. *)
+    min: int;
+    (** minimum number of universes to check *)
+    max: int;
+    (** maximum number of universes to check *)
+    print: bool;
+    (** print the problem in a file *)
+  }
+
 module type SMTSOLVER =
 sig
 
@@ -24,7 +36,7 @@ sig
   val add   : Common.Universes.cstr -> unit
 
   (** [solve mk_theory] call the solver and returns the mimimum number of universes needed to solve the constraints as long as the model. The theory used by solver depends on the number of universes needed. Hence one needs to provide a function [mk_theory] that builds a theory when at most [i] are used.*)
-  val solve : Common.Oracle.theory_maker -> int * model
+  val solve : env -> int * model
 end
 
 module type SOLVER =
@@ -33,5 +45,5 @@ sig
 
   val print_model : Dkmeta.cfg -> model -> Common.Files.path -> unit
 
-  val solve : Common.Oracle.theory_maker -> int * model
+  val solve : env -> int * model
 end

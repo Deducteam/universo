@@ -8,8 +8,6 @@ module P = Parser.Parse_channel
 module O = Common.Oracle
 module U = Common.Universes
 
-module S = Solving.Solver.MakeUF(Solving.Solver.ZSyn)
-
 let _ =
   (* For debugging purposes, it is better to see error messages in SNF *)
   Errors.errors_in_snf := false;
@@ -81,14 +79,14 @@ let check : string -> unit = fun in_path ->
 (** [solve files] call a SMT solver on the constraints generated for all the files [files].
     ASSUME that [file_cstr] and [file_univ] have been generated for all [file] in [files]. *)
 let solve : string list -> unit = fun in_paths ->
+  let (module S:Solving.Utils.SOLVER),env = Cmd.mk_solver () in
   let add_constraints in_path =
     L.log_univ "[PARSE] %s" (F.get_out_path in_path `Checking);
     S.parse (Cmd.elaboration_meta_cfg ()) in_path
   in
   List.iter add_constraints in_paths;
   L.log_univ "[SOLVING CONSTRAINTS...]";
-  let mk_theory i = O.mk_theory (Cmd.theory_meta ()) i in
-  let i,model = S.solve mk_theory in
+  let i,model = S.solve env in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
   List.iter (S.print_model (Cmd.output_meta_cfg ()) model) in_paths
 

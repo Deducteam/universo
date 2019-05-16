@@ -3,46 +3,7 @@ module L = Common.Log
 module O = Common.Oracle
 module U = Common.Universes
 
-type env =
-  {
-    mk_theory: O.theory_maker;
-    (** construct a list of axioms,rules and cumulativity with there truth value for n universes. *)
-    min: int;
-    (** minimum number of universes to check *)
-    max: int;
-    (** maximum number of universes to check *)
-    smt2_file: bool;
-    (** print an smt2 file *)
-  }
-
-
-(** [model] is a function that associate to each fresh universe a concrete universe. *)
-type model = Basic.name -> U.univ
-
-(** Signature for an abstract solver *)
-module type SOLVER =
-sig
-  (** [add pred] add the predicate [cstr] to the solver  *)
-  val add   : U.cstr -> unit
-
-  (** [solve mk_theory] call the solver and returns the mimimum number of universes needed to solve the constraints as long as the model. The theory used by solver depends on the number of universes needed. Hence one needs to provide a function [mk_theory] that builds a theory when at most [i] are used.*)
-  val solve : O.theory_maker -> int * model
-end
-
-(** A concrete implementation of a solver using Z3 with non interpreted symbol functions for universes *)
-
-module ZSyn = Z3cfg.Make(Z3syn)
-module ZArith = Z3cfg.Make(Z3arith)
-
-module type S =
-sig
-  val parse : Dkmeta.cfg -> F.path -> unit
-
-  val print_model : Dkmeta.cfg -> model -> F.path -> unit
-
-  val solve : O.theory_maker -> int * model
-end
-
+open Utils
 
 (** [from_rule pat rhs] add the assertion [pat = rhs] to Z3. *)
 let from_rule : Rule.pattern -> Term.term -> U.cstr = fun pat right ->
@@ -55,7 +16,7 @@ let from_rule : Rule.pattern -> Term.term -> U.cstr = fun pat right ->
     let right' = Elaboration.Var.name_of_uvar right in
     U.EqVar(left',right')
 
-module Make(S:SOLVER) : S =
+module Make(S:SMTSOLVER) : SOLVER =
 struct
 
   (** [parse meta s] parses a constraint file. *)
@@ -108,7 +69,7 @@ struct
 end
 
 (** Performance are bad with LRA *)
-module MakeUF(S:SOLVER) : S =
+module MakeUF(S:SMTSOLVER) : SOLVER =
 struct
 
   module SP = Set.Make(struct type t = U.pred let compare = compare end)
@@ -175,7 +136,7 @@ struct
     F.close_in elab_file;
     F.close_out sol_file
 
-  let solve mk_theory =
+  let solve env =
     let meta = {Dkmeta.default_config with sg = sg} in
     let normalize : U.pred -> U.pred = fun p ->
       U.extract_pred (Dkmeta.mk_term meta (U.term_of_pred p))
@@ -184,6 +145,6 @@ struct
     let sp' = SP.map normalize !sp in
     L.log_solver "[NORMALIZE DONE]";
     SP.iter (fun p -> S.add (Pred p)) sp';
-    S.solve mk_theory
+    S.solve env
 
 end
