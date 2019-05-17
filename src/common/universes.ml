@@ -3,7 +3,7 @@ open Basic
 type univ =
     Var of name
   | Enum of int
-  | Sinf
+
 
 type pred =
   | Axiom of univ * univ
@@ -65,7 +65,6 @@ let term_of_univ u =
   match u with
   | Var n -> Term.mk_Const lc n
   | Enum i -> Term.mk_App (Term.mk_Const Basic.dloc (enum ())) (term_of_level i) []
-  | _ -> sinf ()
 
 let term_of_pred p =
   let lc = Basic.dloc in

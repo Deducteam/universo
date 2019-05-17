@@ -12,8 +12,18 @@ type cmd_error =
   | WrongConfiguration of Entry.entry
   | NoOutputSection
   | NoElaborationSection
+  | Misc of string
 
 exception Cmd_error of cmd_error
+
+let sections =
+  ["elaboration"
+  ;"target"
+  ;"output"
+  ;"constraints"
+  ; "solver"
+  ; "solver_specification"
+  ; "end"]
 
 let parse_config : unit -> unit = fun () ->
   let ic = open_in !config_path in
@@ -22,7 +32,6 @@ let parse_config : unit -> unit = fun () ->
   let parameters = ref [] in
   let mk_entry e =
     let open Entry in
-    let sections = ["elaboration";"target";"output";"constraints"; "solver"; "arith"; "end"] in
     let check_section s = List.mem s sections in
     match e with
     | Decl(_,id,_,_) when check_section (Basic.string_of_ident id) ->
@@ -34,7 +43,9 @@ let parse_config : unit -> unit = fun () ->
       section := Basic.string_of_ident id
     | Rules(_,rs) ->
       parameters := rs @ !parameters
-    | _ -> failwith (Format.asprintf "Configuration file (entry not recognized): %a" Pp.print_entry e)
+    | _ -> raise @@
+      Cmd_error( Misc(Format.asprintf
+                        "Configuration file (entry not recognized): %a" Pp.print_entry e))
   in
   Parser.Parse_channel.handle md mk_entry ic
 
@@ -106,6 +117,33 @@ let theory_meta : unit -> Dkmeta.cfg = fun () ->
     Dkmeta.meta_of_rules rules (output_meta_cfg ())
   with Not_found -> raise @@ Cmd_error NoTargetSpecification
 
+
+let find_predicate s r =
+  let open Rule in
+  match r.pat with
+  | Pattern(_,n',_) -> Basic.string_of_ident (Basic.id n') = s
+  | _ -> false
+
+let get_solver_specification_config : string -> string list * Term.term = fun s ->
+  try
+    let rs = Hashtbl.find config "solver_specification" in
+    let r = List.find (find_predicate s) rs in
+    let to_string = function
+      | Rule.Var(_,id,_,_) -> Basic.string_of_ident id
+      | _ -> assert false
+    in
+    match r.pat with
+    | Rule.Pattern(_,_,l) -> List.map to_string l,r.rhs
+    | _ -> assert false
+  with _ -> raise @@ Cmd_error (Misc ("Wrong solver specification"))
+
+let mk_specification : unit -> (module Solving.Utils.SOLVER_SPECIFICATION) = fun () ->
+  (module (struct
+            let axiom_specification = get_solver_specification_config "axiom"
+            let rule_specification = get_solver_specification_config   "rule"
+            let cumul_specification = get_solver_specification_config "cumul"
+          end))
+
 let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun () ->
   let open Solving in
   let get_rhs (r : Rule.untyped_rule) =
@@ -130,14 +168,15 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
       begin
         let open Z3cfg in
         if logic = "lra" then
-          (module Make(Arith))
+          let (module SPEC:Utils.SOLVER_SPECIFICATION) = mk_specification () in
+          (module Make(Arith(SPEC)))
         else if logic = "syn" then
           (module Make(Syn))
         else
-          failwith "Wrong Solver Configuration"
+         raise @@ Cmd_error (Misc ("Wrong solver specification: logic"))
       end
     else
-      failwith "Wrong Solver Configuration"
+      raise @@ Cmd_error (Misc ("Wrong solver specification: smt"))
   in
   let (module S : Utils.SOLVER) =
     if opt = "uf" then
@@ -145,7 +184,7 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
     else if opt = "normal" then
       (module Solver.Make(SS))
     else
-      failwith "Wrong Solver Configuration"
+      raise @@ Cmd_error (Misc ("Wrong solver specification: opt"))
   in
   let open Utils in
   let min         = int_of_string (find "minimum" "1") in

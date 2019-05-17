@@ -7,4 +7,4 @@ module type Z3LOGIC = Utils.LOGIC with type t = Z3.Expr.expr
 module Make(ZL:Z3LOGIC) : SMTSOLVER
 
 module Syn : Z3LOGIC
-module Arith : Z3LOGIC
+module Arith(S:SOLVER_SPECIFICATION) : Z3LOGIC

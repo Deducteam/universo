@@ -1,3 +1,4 @@
 (library
         (name solving)
-        (libraries dedukti checking z3))
+        (libraries dedukti checking z3)
+	(flags (:standard -w -34-37)))

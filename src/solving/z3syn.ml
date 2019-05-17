@@ -22,13 +22,10 @@ let mk_enum ctx i =
 
 let mk_var ctx s = Z.Expr.mk_const_s ctx s (sort ctx)
 
-let mk_sinf ctx = Z.Expr.mk_const_s ctx "Sinf" (sort ctx)
-
 (** [mk_univ ctx u] construct a Z3 expression from a universe. *)
 let mk_univ ctx = function
   | U.Var x -> mk_var ctx (mk_name x)
   | U.Enum i -> mk_enum ctx i
-  | U.Sinf -> mk_sinf ctx
 
 let bool_sort ctx = Z.Boolean.mk_sort ctx
 
@@ -77,3 +74,5 @@ let solution_of_var ctx i model var =
       List.iter (find_univ e) univs;
       None
     with Found(u) -> Some u
+
+let mk_theory = true

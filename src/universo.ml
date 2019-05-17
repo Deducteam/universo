@@ -197,5 +197,7 @@ let _ =
      Errors.fail_env_error Basic.dloc (Env.EnvErrorSignature e)
   | Typing.TypingError e ->
     Errors.fail_env_error Basic.dloc (Env.EnvErrorType e)
+  | Cmd.Cmd_error(Misc(s)) ->
+    Errors.fail_exit (-1) Basic.dloc "%s@." s
   | Sys_error err -> Printf.eprintf "ERROR %s.\n" err; exit 1
   | Exit          -> exit 3

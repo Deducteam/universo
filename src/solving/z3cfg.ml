@@ -91,11 +91,12 @@ struct
 
   (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
   let rec check env i =
+    if i > env.max then failwith "No solution found";
     ZS.push solver;
     let theory = env.mk_theory i in
-    mk_theory theory;
+    if ZL.mk_theory then
+      mk_theory theory;
     register_vars !vars i;
-    if i > env.max then failwith "No solution found";
     match ZS.check solver [] with
     | ZS.UNSATISFIABLE ->
       L.log_solver "[SOLVER] No solution found with %d universes" i;
@@ -114,10 +115,12 @@ struct
         (i,model)
 
   (** [solve mk_theory] tries to solve the constraints *)
-  let solve env = check env env.min
+  let solve env =
+    L.log_solver "[SOLVER] Solving...";
+    check env env.min
 
   let add : U.cstr -> unit = fun cstr -> add (mk_cstr cstr)
 end
 
 module Syn : Z3LOGIC = Z3syn
-module Arith : Z3LOGIC = Z3arith
+module Arith = Z3arith.Make
