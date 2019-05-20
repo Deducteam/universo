@@ -131,7 +131,16 @@ let run_on_file file =
   | Simplify -> ()
 
 let cmd_options =
-  [ ( "-l"
+  [ ( "-o"
+    , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
+    , " (MANDATORY) Set the output directory" )
+  ; ( "--theory"
+    , Arg.String (fun s -> F.theory := s; U.md_theory := F.md_of_path s)
+    , " (MANDATORY) Theory file" )
+  ; ( "--config"
+    , Arg.String  (fun s -> Cmd.config_path := s)
+    , " (MANDATORY) Configuration file")
+  ; ( "-l"
     , Arg.Unit (fun () -> (L.enable_flag "s"))
     , " Active the debug flag specific to universo")
   ; ( "-d"
@@ -152,15 +161,6 @@ let cmd_options =
   ; ( "-I"
     , Arg.String Basic.add_path
     , " DIR Add the directory DIR to the load path" )
-  ; ( "-o"
-    , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
-    , " Set the output directory" )
-  ; ( "--theory"
-    , Arg.String (fun s -> F.theory := s; U.md_theory := F.md_of_path s)
-    , " Theory file" )
-  ; ( "--config"
-    , Arg.String  (fun s -> Cmd.config_path := s)
-    , " Configuration file")
   ]
 
 (** [generate_empty_sol_file file] generates the file [file_sol] that requires the file [file_univ].

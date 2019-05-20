@@ -5,4 +5,4 @@
 - Figure out how the solver can be speed up
 - having a smt2 problem
 - Clean code with new API
-- checker.ml suppose that the second argument is a sort. One can make that generic using rewrite rules
+- Clean configuration file, have a dedicated section for each logic which are indepenent from the solver
