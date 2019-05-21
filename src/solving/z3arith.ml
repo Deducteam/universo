@@ -1,4 +1,5 @@
 module B = Basic
+module L = Common.Logic
 module U = Common.Universes
 module Z = Z3
 module ZA = Z.Arithmetic
@@ -6,7 +7,7 @@ module ZB = Z.Boolean
 module ZI = ZA.Integer
 
 
-module Make(Spec:Utils.SOLVER_SPECIFICATION) =
+module Make(Spec:L.LRA_SPECIFICATION) =
 struct
   type t = Z.Expr.expr
   type model = Z.Model.model
@@ -36,142 +37,31 @@ struct
       (mk_max ctx l r)
 
 
-  module Reification =
-  struct
+  let mk : type a. (ctx,a) L.op -> (a,t) L.arrow =
+    fun op ->
+    match op with
+    | L.True  ctx -> L.Zero (ZB.mk_true ctx)
+    | L.False ctx -> L.Zero (ZB.mk_false ctx)
+    | L.Zero  ctx -> L.Zero (to_int ctx 0)
 
-    type z
+    | L.Succ ctx  -> L.One (fun a -> ZA.mk_add ctx [a; to_int ctx 1])
 
-    type 'a s = S
+    | L.Eq   ctx  -> L.Two (ZB.mk_eq ctx)
+    | L.Max  ctx  -> L.Two (mk_max ctx)
+    | L.IMax ctx  -> L.Two (mk_imax ctx)
+    | L.Le   ctx  -> L.Two (ZA.mk_le ctx)
 
-    type 'a fin =
-      | F1 : ('a s) fin
-      | FS : 'a fin -> ('a s) fin
-
-    type 'a term =
-      | Var   : 'a fin -> 'a term
-      | True  : 'a term
-      | False : 'a term
-      | Succ  : 'a term           -> 'a term
-      | Eq    : 'a term * 'a term -> 'a term
-      | Max   : 'a term * 'a term -> 'a term
-      | IMax  : 'a term * 'a term -> 'a term
-      | Le    : 'a term * 'a term -> 'a term
-
-    let rec check : type a. t list -> a fin -> int -> t =  fun env n i ->
-      let lookup env i = List.nth env i in
-      match n with
-      | F1   -> lookup env i
-      | FS n -> check env n (i+1)
-
-    let check env n = check env n 0
-
-    let rec apply ctx env = fun t ->
-      match t with
-      | Var n      -> check env n
-      | True       -> ZB.mk_true ctx
-      | False      -> ZB.mk_false ctx
-      | Succ l     -> ZA.mk_add ctx [apply ctx env l;to_int ctx 1]
-      | Eq(l,r)    -> ZB.mk_eq ctx (apply ctx env l) (apply ctx env r)
-      | Max(l,r)   -> mk_max ctx (apply ctx env l) (apply ctx env r)
-      | IMax(l,r)  -> mk_imax ctx (apply ctx env l) (apply ctx env r)
-      | Le(a,b)    -> ZA.mk_le ctx (apply ctx env a) (apply ctx env b)
-
-    let rec reify : (string * 'a fin) list -> Term.term -> 'a term = fun env t ->
-      let of_str s = Basic.mk_name (Basic.mk_mident "z3") (Basic.mk_ident s) in
-      match t with
-      | DB(_,a,_) ->
-        begin
-          try
-            Var(List.assoc (Basic.string_of_ident a) env)
-          with Not_found -> failwith "Wrong configuration pattern for rule"
-        end
-      | Const(_,n) ->
-        if Basic.name_eq n (of_str "true") then
-          True
-        else if Basic.name_eq n (of_str "false") then
-          False
-        else
-          failwith "Wrong configuration pattern for rule"
-      | App(Const(_,n),l,[]) ->
-        if Basic.name_eq n (of_str "succ") then
-          Succ(reify env l)
-        else
-          failwith "Wrong configuration pattern for rule"
-      | App(Const(_,n),l,[r]) ->
-        if Basic.name_eq n (of_str "eq") then
-          Eq(reify env l, reify env r)
-        else if Basic.name_eq n (of_str "max") then
-          Max(reify env l, reify env r)
-        else if Basic.name_eq n (of_str "imax") then
-          IMax(reify env l, reify env r)
-        else if Basic.name_eq n (of_str "le") then
-          Le(reify env l, reify env r)
-        else
-          failwith "Wrong configuration pattern for rule"
-      | _ -> failwith "Wrong configuration pattern for rule"
-
-    let mk_env2 l a' b' =
-      match l with
-      | [a;b] ->
-        [(a, F1); (b, (FS F1))], [a';b']
-      | _ -> assert false
-
-    let mk_env3 l a' b' c' =
-      match l with
-      | [a;b;c] ->
-        [(a, F1); (b, (FS F1)); (c, (FS (FS F1)))], [a';b';c']
-      | _ -> assert false
-
-    let mk_axiom =
-      let mk_axiom = ref (fun _ _ _ -> assert false) in
-      fun  ctx a b ->
-        let built = ref false in
-        if !built then
-          !mk_axiom ctx a b
-        else
-          begin
-            built := true;
-            let args,term = Spec.axiom_specification in
-            let env_reify,env_apply = mk_env2 args a b in
-            apply ctx env_apply (reify env_reify term)
-          end
-
-    let mk_rule =
-      let mk_rule = ref (fun _ _ _ _ -> assert false) in
-      fun  ctx a b c ->
-        let built = ref false in
-        if !built then
-          !mk_rule ctx a b c
-        else
-          begin
-            built := true;
-            let args,term = Spec.rule_specification in
-            let env_reify,env_apply = mk_env3 args a b c in
-            apply ctx env_apply (reify env_reify term)
-          end
-
-    let mk_cumul ctx a b =
-      let mk_cumul = ref (fun _ _ _ -> assert false) in
-      let built = ref false in
-      if !built then
-        !mk_cumul ctx a b
-      else
-        begin
-          built := true;
-          let args,term = Spec.cumul_specification in
-          let env_reify,env_apply = mk_env2 args a b in
-          apply ctx env_apply (reify env_reify term)
-        end
-  end
-
-  let mk_axiom = Reification.mk_axiom
+    | L.Ite  ctx  -> L.Three (ZB.mk_ite ctx)
 
 
-  let mk_rule = Reification.mk_rule
+  let mk = {L.mk=mk}
 
 
-  let mk_cumul = Reification.mk_cumul
+  let mk_axiom = Spec.mk_axiom mk
 
+  let mk_rule  = Spec.mk_rule mk
+
+  let mk_cumul = Spec.mk_cumul mk
 
   let mk_bounds ctx string up =
     let right =

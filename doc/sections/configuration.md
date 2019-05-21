@@ -10,12 +10,12 @@ The sections recognized by Universo are:
 - `elaboration`
 - `output`
 - `solver`
-- `qf_specifcation`
+- `qfuf_specifcation`
 - `lra_specification`
 - `constraints`
 - `end`
 
-Only the section `constraints` is optional. Depending the logic you used for the SMT solver, only one of the specification section is needed: Either `qf_specification` or `lra_specition`.
+Only the section `constraints` is optional. Depending the logic you used for the SMT solver, only one of the specification section is needed: Either `qfuf_specification` or `lra_specition`.
 
 # Meta rewrite rules
 
@@ -65,15 +65,15 @@ Notice that:
 This section contains only parameters to configure the SMT solver.
 
 - `solver` (default `z3`): can only take the value `z3` currently
-- `logic` (default `qf`): can take the values `qf` or `lra`
-- `opt` (default `normal`): can take the values `normal` or `uf`. We realized that doing our own union-find was faster with `qf`. `uf` uses an union-find before calling `z3`
+- `logic` (default `qfuf`): can take the values `qfuf` or `lra`
+- `opt` (default `normal`): can take the values `normal` or `uf`. We realized that doing our own union-find was faster with `qfuf`. `uf` uses an union-find before calling `z3`
 - `minimum` (default `0`): the minimum number of universes wanted
 - `maximum` (default `-1`): the maximum number of universes wanted. If negative, then this number is not bounded. Only possible with `lra`.
 - `print` (default false): print the problem in the file `./universo.smt2` (smt2-lib format)
 
-## qf_specification
+## qfuf_specification
 
-This section contains the target specification wanted (used when the logic is `qf`). For example in the case of STLC:
+This section contains the target specification wanted (used when the logic is `qfuf`). For example in the case of STLC:
 
 ``` dedukti
 []  cic.Axiom cic.prop cic.type                --> cic.true.
@@ -89,6 +89,8 @@ This interpretation has to be a term over the following signature:
 - eq/2, ite/3, and/2, or/2, true/0, false/0
 - succ/1, max/2, imax/2, le/2, plus/2, zero/0
 
+`imax(a,b)` is a shortcut for `ite (eq b zero) zero (max a b)`
+
 For example:
 
 ``` dedukti
@@ -96,7 +98,6 @@ For example:
 [a,b,c] rule  a b c --> eq (imax a b) c.
 [a,b]   cumul a b   --> eq a b.
 ```
-
 
 ## end
 

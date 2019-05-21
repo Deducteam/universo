@@ -1,5 +1,7 @@
 module B = Basic
 module F = Common.Files
+module L = Common.Logic
+module O = Common.Oracle
 module U = Common.Universes
 
 (** The path that contains the configuration file *)
@@ -18,11 +20,11 @@ exception Cmd_error of cmd_error
 
 let sections =
   ["elaboration"
-  ;"target"
   ;"output"
   ;"constraints"
   ; "solver"
-  ; "solver_specification"
+  ; "lra_specification"
+  ; "qfuf_specification"
   ; "end"]
 
 let parse_config : unit -> unit = fun () ->
@@ -111,10 +113,14 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   { sg; in_path; meta_out=output_meta_cfg (); constraints; out_file}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
-let theory_meta : unit -> Dkmeta.cfg = fun () ->
+let mk_qfuf_specification : unit -> (module L.QFUF_SPECIFICATION) = fun () ->
   try
-    let rules = Hashtbl.find config "target" in
-    Dkmeta.meta_of_rules rules (output_meta_cfg ())
+    let rules = Hashtbl.find config "qfuf_specifcation" in
+    let meta = Dkmeta.meta_of_rules rules (output_meta_cfg ()) in
+    (module (struct
+      let enumerate = O.enumerate
+      let mk_theory  = O.mk_theory meta
+    end))
   with Not_found -> raise @@ Cmd_error NoTargetSpecification
 
 
@@ -124,9 +130,9 @@ let find_predicate s r =
   | Pattern(_,n',_) -> Basic.string_of_ident (Basic.id n') = s
   | _ -> false
 
-let get_solver_specification_config : string -> string list * Term.term = fun s ->
+let get_lra_specification_config : string -> string list * Term.term = fun s ->
   try
-    let rs = Hashtbl.find config "solver_specification" in
+    let rs = Hashtbl.find config "lra_specification" in
     let r = List.find (find_predicate s) rs in
     let to_string = function
       | Rule.Var(_,id,_,_) -> Basic.string_of_ident id
@@ -137,11 +143,11 @@ let get_solver_specification_config : string -> string list * Term.term = fun s 
     | _ -> assert false
   with _ -> raise @@ Cmd_error (Misc ("Wrong solver specification"))
 
-let mk_specification : unit -> (module Solving.Utils.SOLVER_SPECIFICATION) = fun () ->
+let mk_lra_reification : unit -> (module L.LRA_REIFICATION) = fun () ->
   (module (struct
-            let axiom_specification = get_solver_specification_config "axiom"
-            let rule_specification = get_solver_specification_config   "rule"
-            let cumul_specification = get_solver_specification_config "cumul"
+            let axiom_specification = get_lra_specification_config "axiom"
+            let rule_specification = get_lra_specification_config   "rule"
+            let cumul_specification = get_lra_specification_config "cumul"
           end))
 
 let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun () ->
@@ -168,10 +174,11 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
       begin
         let open Z3cfg in
         if logic = "lra" then
-          let (module SPEC:Utils.SOLVER_SPECIFICATION) = mk_specification () in
-          (module Make(Arith(SPEC)))
-        else if logic = "syn" then
-          (module Make(Syn))
+          let (module R:L.LRA_REIFICATION) = mk_lra_reification () in
+          (module Make(Arith(L.MakeLraSpecif(R))))
+        else if logic = "qfuf" then
+          let (module S:L.QFUF_SPECIFICATION) = mk_qfuf_specification () in
+          (module Make(Syn(S)))
         else
          raise @@ Cmd_error (Misc ("Wrong solver specification: logic"))
       end
@@ -190,6 +197,5 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
   let min         = int_of_string (find "minimum" "1") in
   let max         = int_of_string (find "maximum" "6") in
   let print       = find "print" "false" = "true" in
-  let mk_theory i = Common.Oracle.mk_theory (theory_meta ()) i in
-  let env = {mk_theory;min;max;print} in
+  let env = {min;max;print} in
   (module S:Utils.SOLVER), env

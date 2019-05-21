@@ -6,3 +6,4 @@
 - having a smt2 problem
 - Clean code with new API
 - Clean configuration file, have a dedicated section for each logic which are indepenent from the solver
+- qfuf_specification should be optional

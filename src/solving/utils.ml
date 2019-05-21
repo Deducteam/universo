@@ -1,10 +1,3 @@
-module type SOLVER_SPECIFICATION =
-sig
-  val axiom_specification : string list * Term.term
-  val rule_specification  : string list * Term.term
-  val cumul_specification : string list * Term.term
-end
-
 module type LOGIC =
 sig
   type t
@@ -19,7 +12,7 @@ sig
   val mk_rule   : ctx -> t -> t -> t -> t
   val mk_bounds : ctx -> string -> int -> t
   val solution_of_var : ctx -> int -> model -> string -> Common.Universes.univ option
-  val mk_theory : bool
+  val mk_theory : bool ref
 end
 
 (** [model] is a function that associate to each fresh universe a concrete universe. *)
@@ -27,8 +20,6 @@ type model = Basic.name -> Common.Universes.univ
 
 type env =
   {
-    mk_theory: Common.Oracle.theory_maker;
-    (** construct a list of axioms,rules and cumulativity with there truth value for n universes. *)
     min: int;
     (** minimum number of universes to check *)
     max: int;
