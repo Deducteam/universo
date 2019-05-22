@@ -20,18 +20,15 @@ module Make(S:SMTSOLVER) : SOLVER =
 struct
 
   (** [parse meta s] parses a constraint file. *)
-  let parse : Dkmeta.cfg -> string -> unit =
-    fun meta in_path ->
-      let md_elab = F.md_of in_path `Elaboration in
+  let parse : string -> unit =
+    fun in_path ->
       let md_check = F.md_of in_path `Checking in
-      (* meta transform the constraints to universos constraints *)
       let mk_entry = function
         | Entry.Rules(_,rs) ->
           List.map (fun (r:Rule.untyped_rule) -> from_rule r.pat r.rhs) rs
         | Entry.Require _ -> []
         | _ -> assert false
       in
-      let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
       let cstr_file = F.in_from_string in_path `Checking in
       let entries = Parser.Parse_channel.parse md_check (F.in_channel_of_file cstr_file) in
       let entries' = List.flatten (List.map mk_entry entries) in
@@ -84,17 +81,14 @@ struct
     | U.Pred p -> sp := SP.add p !sp
 
   (** [parse meta s] parses a constraint file. *)
-  let parse : Dkmeta.cfg -> string -> unit =
-    fun meta in_path ->
-      let md_elab = F.md_of in_path `Elaboration in
+  let parse : string -> unit =
+    fun in_path ->
       let md_check = F.md_of in_path `Checking in
-      (* meta transform the constraints to universos constraints *)
       let mk_entry = function
         | Entry.Rules(_,rs) -> List.iter mk_rule rs
         | Entry.Require _ -> ()
         | _ -> assert false
       in
-      let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
       let cstr_file = F.in_from_string in_path `Checking in
       let entries = Parser.Parse_channel.parse md_check (F.in_channel_of_file cstr_file) in
       List.iter mk_entry entries

@@ -24,9 +24,9 @@ let string_of_cfg cfg = List.map string_of_cfg_item cfg
 (** Z3 context elaborated from a Z3 configuration *)
 let ctx = Z.mk_context (string_of_cfg cfg)
 
-module type Z3LOGIC = Utils.LOGIC with type t = Z.Expr.expr
-                                   and type model = Z.Model.model
-                                   and type ctx = Z.context
+module type Z3LOGIC = Utils.LOGIC with type t         = Z.Expr.expr
+                                   and type smt_model = Z.Model.model
+                                   and type ctx       = Z.context
 
 module Make(ZL:Z3LOGIC) =
 struct
@@ -94,7 +94,7 @@ struct
     if i > env.max then failwith "No solution found";
     ZS.push solver;
     let theory = env.mk_theory i in
-    if ZL.mk_theory then
+    if ZL.logic = `Qfuf then
       mk_theory theory;
     register_vars !vars i;
     match ZS.check solver [] with
@@ -108,9 +108,7 @@ struct
       | Some model ->
         let model (cst:Basic.name) : U.univ =
           let var = ZL.mk_name cst in
-          match ZL.solution_of_var ctx i model var with
-          | None -> assert false
-          | Some u -> u
+          ZL.solution_of_var ctx i model var
         in
         (i,model)
 

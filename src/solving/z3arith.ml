@@ -9,9 +9,11 @@ module ZI = ZA.Integer
 
 module Make(Spec:L.LRA_SPECIFICATION) =
 struct
-  type t = Z.Expr.expr
-  type model = Z.Model.model
-  type ctx = Z.context
+  type t         = Z.Expr.expr
+  type smt_model = Z.Model.model
+  type ctx       = Z.context
+
+  let logic = `Lra
 
   let mk_name : B.name -> string = fun name ->
     B.string_of_mident (B.md name) ^ (B.string_of_ident (B.id name))
@@ -73,13 +75,13 @@ struct
     let left = ZA.mk_le ctx (to_int ctx 0) (mk_var ctx string) in
     ZB.mk_and ctx [left;right]
 
-  let solution_of_var : ctx -> int -> Z.Model.model -> string -> U.univ option =
+  let solution_of_var : ctx -> int -> Z.Model.model -> string -> U.univ =
     fun ctx _ model var ->
     match Z.Model.get_const_interp_e model (mk_var ctx var) with
     | None -> assert false
     | Some e ->
       let v = Big_int.int_of_big_int (ZI.get_big_int e) in
-      Some (U.Enum v)
+      U.Enum v
 
   let mk_theory = false
 

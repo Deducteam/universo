@@ -113,14 +113,11 @@ let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   { sg; in_path; meta_out=output_meta_cfg (); constraints; out_file}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
-let mk_qfuf_specification : unit -> (module L.QFUF_SPECIFICATION) = fun () ->
+let mk_theory : unit -> int -> O.theory = fun () ->
   try
-    let rules = Hashtbl.find config "qfuf_specifcation" in
+    let rules = Hashtbl.find config "qfuf_specification" in
     let meta = Dkmeta.meta_of_rules rules (output_meta_cfg ()) in
-    (module (struct
-      let enumerate = O.enumerate
-      let mk_theory  = O.mk_theory meta
-    end))
+    O.mk_theory meta
   with Not_found -> raise @@ Cmd_error NoTargetSpecification
 
 
@@ -177,8 +174,7 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
           let (module R:L.LRA_REIFICATION) = mk_lra_reification () in
           (module Make(Arith(L.MakeLraSpecif(R))))
         else if logic = "qfuf" then
-          let (module S:L.QFUF_SPECIFICATION) = mk_qfuf_specification () in
-          (module Make(Syn(S)))
+          (module Make(Syn))
         else
          raise @@ Cmd_error (Misc ("Wrong solver specification: logic"))
       end
@@ -197,5 +193,6 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
   let min         = int_of_string (find "minimum" "1") in
   let max         = int_of_string (find "maximum" "6") in
   let print       = find "print" "false" = "true" in
-  let env = {min;max;print} in
+  let mk_theory   = mk_theory () in
+  let env = {min;max;print;mk_theory} in
   (module S:Utils.SOLVER), env

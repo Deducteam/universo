@@ -82,7 +82,7 @@ let solve : string list -> unit = fun in_paths ->
   let (module S:Solving.Utils.SOLVER),env = Cmd.mk_solver () in
   let add_constraints in_path =
     L.log_univ "[PARSE] %s" (F.get_out_path in_path `Checking);
-    S.parse (Cmd.elaboration_meta_cfg ()) in_path
+    S.parse in_path
   in
   List.iter add_constraints in_paths;
   L.log_univ "[SOLVING CONSTRAINTS...]";
