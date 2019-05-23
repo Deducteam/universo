@@ -24,7 +24,8 @@ let rec mk_term : t -> Term.term -> Term.term = fun env ->
         Term.mk_App2 (mk_term env f) (List.map (mk_term env) (a::args))
       | Term.Lam (lc,id,Some ty,te) ->
         Term.mk_Lam lc id (Some (mk_term env ty)) (mk_term env te)
-      | Term.Lam (_,_,None,_) -> failwith "Cannot elaborate untyped lambdas"
+      | Term.Lam (lc,id,None,te) ->
+        Term.mk_Lam lc id None (mk_term env te)
       | Term.Pi (lc,id,tya,tyb) ->
         Term.mk_Pi lc id (mk_term env tya) (mk_term env tyb)
 
