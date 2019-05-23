@@ -1,6 +1,8 @@
+(** This module declares all the types and signatures needed to implement an smt solver. *)
+
 type logic = [ `Qfuf | `Lra ]
-(** Qfuf is a logic with non-interpreted symbols, can be slow
-    Lra is linear arithmetic. Fast, but it requires an interpretation.
+(** Qfuf is a logic with non-interpreted symbols, can be slow.
+    Lra is linear arithmetic. Fast, but it requires an interpretation of CTS specification into linear arithmetic.
  *)
 
 (** Any SMT Logic *)

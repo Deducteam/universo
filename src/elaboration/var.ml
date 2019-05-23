@@ -44,7 +44,7 @@ let fresh_uvar : F.cout F.t -> unit -> Term.term =
   let uvar = Basic.mk_name file.md id in
   let uterm = Term.mk_Const Basic.dloc uvar in
   let sort_type = Term.mk_Const Basic.dloc
-      (Basic.mk_name (F.md_of_path !F.theory) (Basic.mk_ident "Sort")) in
+      (Basic.mk_name (F.get_theory ()).F.md (Basic.mk_ident "Sort")) in
   begin
     Format.fprintf (F.fmt_of_file file) "%a@."
       Pp.print_entry (Entry.Decl(Basic.dloc, id, Signature.Definable, sort_type))

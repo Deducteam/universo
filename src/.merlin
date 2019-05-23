@@ -5,6 +5,7 @@ B /home/fthire/.opam/4.04.2/lib/num
 B /home/fthire/.opam/4.04.2/lib/ocaml
 B /home/fthire/.opam/4.04.2/lib/ocaml/threads
 B /home/fthire/.opam/4.04.2/lib/z3
+B ../_build/default/src/.api.objs
 B ../_build/default/src/.universo.eobjs
 B ../_build/default/src/checking/.checking.objs
 B ../_build/default/src/common/.common.objs
@@ -21,4 +22,4 @@ S checking
 S common
 S elaboration
 S solving
-FLG -w @a-4-29-40-41-42-44-45-48-58-59-60-40 -strict-sequence -strict-formats -short-paths -keep-locs
+FLG -open Api -w @a-4-29-40-41-42-44-45-48-58-59-60-40 -strict-sequence -strict-formats -short-paths -keep-locs -w @a-4-29-40-41-42-44-45-48-58-59-60-40 -strict-sequence -strict-formats -short-paths -keep-locs

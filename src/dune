@@ -1,3 +1,9 @@
+(library
+	(name api)
+	(synopsis "Universo API")
+	(modules)
+	(libraries common elaboration checking solving))
+
 (executable
         (name universo)
         (public_name universo)

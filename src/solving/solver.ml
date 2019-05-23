@@ -46,7 +46,8 @@ struct
     let entries = Parser.Parse_channel.parse elab_file.md (F.in_channel_of_file elab_file) in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
-    F.add_requires fmt [F.md_of in_path `Elaboration; F.md_of_path !F.theory];
+    let theory = F.get_theory () in
+    F.add_requires fmt [F.md_of in_path `Elaboration; theory.F.md];
     let print_rule e =
       match mk_entry e with
       | None -> ()
@@ -59,8 +60,8 @@ struct
         Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
     in
     List.iter print_rule entries;
-    F.close_in elab_file;
-    F.close_out sol_file
+    F.close elab_file;
+    F.close sol_file
 
   let solve = S.solve
 end
@@ -114,7 +115,8 @@ struct
     let entries = Parser.Parse_channel.parse elab_file.md (F.in_channel_of_file elab_file) in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
-    F.add_requires fmt [F.md_of in_path `Elaboration; F.md_of_path !F.theory];
+    let theory = F.get_theory () in
+    F.add_requires fmt [F.md_of in_path `Elaboration; theory.F.md];
     let print_rule e =
       match mk_entry e with
       | None -> ()
@@ -127,8 +129,8 @@ struct
         Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
     in
     List.iter print_rule entries;
-    F.close_in elab_file;
-    F.close_out sol_file
+    F.close elab_file;
+    F.close sol_file
 
   let solve env =
     let meta = {Dkmeta.default_config with sg = sg} in

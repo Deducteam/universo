@@ -46,9 +46,9 @@ let elaborate : string  -> unit = fun in_path ->
   (* The elaborated file depends on the out_sol_md file that contains solution. If the mode is JustElaborate, then this file is empty and import the declaration of the fresh universes *)
   F.add_requires out_fmt [F.md_of in_path `Elaboration; F.md_of in_path `Solution];
   List.iter (Pp.print_entry out_fmt) entries';
-  F.close_in in_file;
-  F.close_out out_file;
-  F.close_out env.file;
+  F.close in_file;
+  F.close out_file;
+  F.close env.file;
   F.export in_path `Elaboration
 
 (** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
@@ -70,8 +70,8 @@ let check : string -> unit = fun in_path ->
   Signature.unsafe := true;
   Signature.export env.sg;
   C.flush ();
-  F.close_in file;
-  F.close_out env.out_file;
+  F.close file;
+  F.close env.out_file;
   F.export in_path `Checking;
   F.export in_path `Solution;
   F.export in_path `Output
@@ -110,8 +110,8 @@ let simplify : string list -> unit = fun in_paths ->
       | e -> Format.fprintf fmt "%a@." Pp.print_entry (Dkmeta.mk_entry meta md e)
     in
     Parser.Parse_channel.handle md mk_entry input;
-    F.close_in file;
-    F.close_out output
+    F.close file;
+    F.close output
   in
   let out_cfg = Cmd.output_meta_cfg () in
   List.iter (normalize_file out_cfg) in_paths
@@ -135,7 +135,7 @@ let cmd_options =
     , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
     , " (MANDATORY) Set the output directory" )
   ; ( "--theory"
-    , Arg.String (fun s -> F.theory := s; U.md_theory := F.md_of_path s)
+    , Arg.String (fun s -> F.mk_theory s; U.md_theory := F.md_of_path s)
     , " (MANDATORY) Theory file" )
   ; ( "--config"
     , Arg.String  (fun s -> Cmd.config_path := s)

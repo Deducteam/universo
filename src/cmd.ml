@@ -92,10 +92,9 @@ let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
 
 (** [mk_theory ()] returns the theory used by universo. *)
 let mk_theory : unit -> Signature.t = fun () ->
-  let ic = open_in !F.theory in
-  let md = F.md_of_path !F.theory in
-  let entries = Parser.Parse_channel.parse md ic in
-  Entry.to_signature !F.theory entries
+  let theory = F.get_theory () in
+  let entries = Parser.Parse_channel.parse theory.md (F.in_channel_of_file theory) in
+  Entry.to_signature theory.path entries
 
 (** [elab_signature f] returns the signature containing all the universes declaration associated to
     file [f] *)

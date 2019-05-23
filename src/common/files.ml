@@ -1,12 +1,13 @@
+(** File utilities *)
 module B = Basic
 
-(** File utilities *)
-
+(** path to a file *)
 type path = string
 
 type cin
 type cout
 
+(** Gather out_channel and in_channel in a GADT for input and output files. In the case of an output file, we store also the formatter associated with. *)
 type _ channel =
   | In : in_channel ->  cin channel
   | Out : out_channel * Format.formatter -> cout channel
@@ -14,36 +15,48 @@ type _ channel =
 type 'a t =
   {
     path : path;
+    (** Path to the current file *)
+
     md : B.mident;
+    (** Md of this file *)
+
     channel : 'a channel
+    (** OCaml channel to this file *)
   }
 
-let out_default =
-  {
-    path = "";
-    md = B.mk_mident "";
-    channel = Out(stdout, Format.formatter_of_out_channel stdout)}
-
-(** output where new files are created *)
+(** Output directory where output files are created *)
 let output_directory : string option ref = ref None
 
-(** output where simplified files are created *)
+(** Simplify directory where simplified files are created. *)
 let simplify_directory : string option ref = ref None
 
-(** suffix used for files containing universe declarations *)
+(** Suffix used for files containing universe declarations *)
 let elaboration_suffix = "_univ"
 
-(** suffix used for files containing universe constraints *)
+(** Suffix used for files containing universe constraints *)
 let checking_suffix = "_cstr"
 
-(** suffix used for files containing universe solution *)
+(** Suffix used for files containing universe solution *)
 let solution_suffix = "_sol"
 
-(** suffix used for elaborated file with fresh universe variables *)
+(** Suffix used for elaborated file where sorts are replaced by fresh variables *)
 let normal_suffix = ""
 
-(** Steps of Universo *)
-type step = [`Input | `Output | `Elaboration | `Checking | `Solution | `Simplify]
+(** The steps used to refer the files used by Universo *)
+type step = [
+  | `Input
+  (** Input module *)
+  | `Output
+  (** Output module *)
+  | `Elaboration
+  (** File with universe declarations *)
+  | `Checking
+  (** File with constraints *)
+  | `Solution
+  (** File containing the solution *)
+  | `Simplify
+  (** Output file where the variables are replaced by the solution *)
+]
 
 (** [add_sufix file suffix] returns the string [file'] where suffix is_added at then end of [file] *)
 let add_suffix : path -> string -> string = fun file suffix ->
@@ -65,12 +78,21 @@ let suffix_of_step : step -> string = function
   | `Simplify
   | `Output -> normal_suffix
 
-
-let theory : path ref = ref ""
-
 (** [md_of_file f] returns the [mident] of the file [f] *)
 let md_of_path : path -> Basic.mident = fun path ->
   Basic.mk_mident (Filename.basename path)
+
+let theory : cin t option ref = ref None
+
+let mk_theory : path -> unit = fun path ->
+  let md = md_of_path path in
+  let ic = open_in path in
+  theory := Some {path;md;channel=In ic}
+
+let get_theory : unit -> cin t = fun () ->
+  match !theory with
+  | None -> failwith "Theory not given"
+  | Some t -> t
 
 (** [get_out_path p s] returns the path that corresponds to the step [s] for path [p] *)
 let get_out_path : path -> step -> path = fun path step ->
@@ -112,22 +134,23 @@ let signature_of_file : ?sg:Signature.t -> path -> Signature.t = fun ?sg file ->
   close_in ic;
   Entry.to_signature file ?sg entries
 
+(** [fmt_of_file out_file] returns the formatter associated to an [out_file] *)
 let fmt_of_file : cout t -> Format.formatter = fun file ->
   match file.channel with
   | Out(_,fmt) -> fmt
 
+(** [in_channel_of_file in_file] returns the channel associated to an [in_file] *)
 let in_channel_of_file : cin t -> in_channel = fun file ->
   match file.channel with
   | In ic -> ic
 
-let close_out : cout t -> unit = fun file ->
+(** [close file] closes [file] *)
+let close : type a. a t -> unit = fun file ->
   match file.channel with
   | Out (oc,_) -> close_out oc
-
-let close_in : cin t -> unit = fun file ->
-  match file.channel with
   | In ic -> close_in ic
 
+(** [md_of path step] returns the mident associated to the Universo file [file] for step [step]. *)
 let md_of : path -> step -> B.mident = fun in_path step ->
   md_of_path (get_out_path in_path step)
 
