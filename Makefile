@@ -3,7 +3,7 @@ all: bin
 
 .PHONY: bin
 bin:
-	@dune build
+	@dune build --verbose
 
 .PHONY: doc
 doc:

@@ -1,3 +1,4 @@
+include    Common.Import
 module B = Basic
 module F = Common.Files
 module L = Common.Log
@@ -40,7 +41,7 @@ struct
 
   (** [add_rule vl vr] add to the current signature the rule that maps [vl] to [vr]. *)
   (* FIXME: this rules are not exported hence redundant rules might be added when the current module is      impoted somewhere else *)
-  let rec add_rule  vl vr =
+  let rec add_rule vl vr =
     let pat = Rule.Pattern(Basic.dloc,vl,[]) in
     let rhs = Term.mk_Const Basic.dloc vr in
     let rule = Rule.(
@@ -54,7 +55,7 @@ struct
     Signature.add_rules (get !global_env).sg  [Rule.to_rule_infos rule]
 
   and univ_conversion l r =
-    if Term.term_eq l r then (* should not happen *)
+    if Term.term_eq l r then
       true
     else
         (* If two universes should be equal, then we add the constraint [l =?= r] AND a rule that
@@ -67,7 +68,9 @@ struct
           ignore(C.mk_cstr (of_global_env (get !global_env)) add_rule (U.Pred(U.Cumul(Var (V.name_of_uvar l),r))));
           C.mk_cstr (of_global_env (get !global_env)) add_rule (U.Pred(U.Cumul(r, Var (V.name_of_uvar l))))
         else if V.is_uvar r && U.is_enum l then
-          failwith "todo left enum"
+          let l = U.extract_univ l in
+          ignore(C.mk_cstr (of_global_env (get !global_env)) add_rule (U.Pred(U.Cumul(Var (V.name_of_uvar r),l))));
+          C.mk_cstr (of_global_env (get !global_env)) add_rule (U.Pred(U.Cumul(l, Var (V.name_of_uvar r))))
           (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
         else if (Term.term_eq (U.true_ ()) l) then
           if U.is_subtype r then
@@ -96,7 +99,11 @@ struct
       if Term.term_eq l r then  are_convertible_lst sg lst
       else
         begin
+          (*Format.printf "l:%a@." Pp.print_term l;
+            Format.printf "r:%a@." Pp.print_term r; *)
           let l',r' = whnf sg l, whnf sg r in
+          (* Format.printf "l':%a@." Pp.print_term l';
+             Format.printf "r':%a@." Pp.print_term r'; *)
           if univ_conversion l' r' then
             are_convertible_lst sg lst
           else
@@ -179,7 +186,7 @@ let mk_entry : t -> Entry.entry -> unit = fun env e ->
         | Some ty -> T.checking env.sg te ty; ty
       in
       match ty with
-      | Kind -> raise (Env.EnvError (lc, Env.KindLevelDefinition id))
+      | Kind -> raise (Env.EnvError (Some(EE.get_name ()), lc, Env.KindLevelDefinition id))
       | _ ->
         if opaque then Signature.add_declaration env.sg lc id Signature.Static ty
         else

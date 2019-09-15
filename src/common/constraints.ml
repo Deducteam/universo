@@ -1,3 +1,4 @@
+include    Import
 module B = Basic
 module F = Files
 module U = Universes
@@ -46,12 +47,20 @@ let print_predicate fmt p =
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
     l >= r. *)
 let mk_var_cstr f l r =
+  (* FIXME: is it really necessary to compare number and not the full string ? *)
   let get_number s =
     int_of_string (String.sub s 1 (String.length s - 1))
   in
-  let nl = get_number (Basic.string_of_ident @@ Basic.id l) in
-  let nr = get_number (Basic.string_of_ident @@ Basic.id r) in
-  if nr < nl then (
+  let il = Basic.string_of_ident @@ Basic.id l in
+  let ir = Basic.string_of_ident @@ Basic.id r in
+  let nl = get_number il in
+  let nr = get_number ir in
+  if nl = 0 && nr = 0 then
+    if r < l then (
+      f l r ; (l,r))
+    else (
+      f r l ; (r,l))
+  else if nr < nl then (
     f l r; (l,r))
   else (
     f r l; (r,l))

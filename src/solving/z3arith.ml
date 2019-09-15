@@ -58,7 +58,6 @@ struct
 
   let mk = {L.mk=mk}
 
-
   let mk_axiom = Spec.mk_axiom mk
 
   let mk_rule  = Spec.mk_rule mk

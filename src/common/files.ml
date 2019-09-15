@@ -1,5 +1,6 @@
-(** File utilities *)
-module B = Basic
+include     Import
+module B  = Basic
+
 
 (** path to a file *)
 type path = string
@@ -125,14 +126,15 @@ let in_from_string : path -> step -> cin t = fun path step ->
     let ic = open_in path in
     {path;md;channel=In ic}
 
-(** [signature_of_file ?sg f] returns a signature that contains all the declarations in [f].
-    If a signature [sg] is given, then the declarations are append to [sg] *)
-let signature_of_file : ?sg:Signature.t -> path -> Signature.t = fun ?sg file ->
+(** [signature_of_file f] returns a signature that contains all the declarations in [f]. *)
+let signature_of_file : path -> Signature.t = fun file ->
   let ic = open_in file in
   let md = md_of_path file in
   let entries = Parser.Parse_channel.parse md ic in
   close_in ic;
-  Entry.to_signature file ?sg entries
+  let _ = EE.init file in
+  List.iter SB.handle_entry entries;
+  SB.get_data ()
 
 (** [fmt_of_file out_file] returns the formatter associated to an [out_file] *)
 let fmt_of_file : cout t -> Format.formatter = fun file ->
@@ -162,6 +164,7 @@ let export : path -> step -> unit = fun in_path step ->
   match step with
   | `Checking ->
     let entries = Parser.Parse_channel.parse in_file.md (in_channel_of_file in_file) in
+    (* TODO: comment this, only equality constraints are exported?!? *)
     let filter = function
       | Entry.Rules(_,r::_) ->
         begin
@@ -172,8 +175,9 @@ let export : path -> step -> unit = fun in_path step ->
       | _ -> true
     in
     let entries = List.filter filter entries in
-    let sg = Entry.to_signature in_file.path entries in
-    Signature.export sg
+    let _ = EE.init in_file.path in
+    List.iter SB.handle_entry entries;
+    Signature.export (SB.get_data ())
   | _ ->
     let sg = signature_of_file in_file.path in
     Signature.export sg

@@ -1,5 +1,5 @@
 (** Main file *)
-
+include    Common.Import
 module C = Common.Constraints
 module E = Elaboration.Elaborate
 module F = Common.Files
@@ -9,10 +9,8 @@ module O = Common.Oracle
 module U = Common.Universes
 
 let _ =
-  (* For debugging purposes, it is better to see error messages in SNF *)
-  Errors.errors_in_snf := false;
   (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
-  Signature.unsafe := true
+  Signature.fail_on_symbol_not_found := true
 
 (** Direct the control flow of Universo. The control flow of Universo can be sum up in 4 steps:
     1) Elaborate the files to replace universes by variables
@@ -65,9 +63,9 @@ let check : string -> unit = fun in_path ->
     if List.mem elab_dep deps then deps else elab_dep::deps
   in
   F.add_requires (F.fmt_of_file env.out_file) requires_mds;
-  Signature.unsafe := false; (* For this step, we want the real type checker *)
+  Signature.fail_on_symbol_not_found := false; (* For this step, we want the real type checker *)
   List.iter (Checking.Checker.mk_entry env) entries;
-  Signature.unsafe := true;
+  Signature.fail_on_symbol_not_found := true;
   Signature.export env.sg;
   C.flush ();
   F.close file;
@@ -192,12 +190,12 @@ let _ =
     if !mode = Simplify then
        simplify files
   with
-  | Env.EnvError(l,e) -> Errors.fail_env_error l e
+  | Env.EnvError(md,l,e) -> Errors.fail_env_error(md,l,e)
   | Signature.SignatureError e ->
-     Errors.fail_env_error Basic.dloc (Env.EnvErrorSignature e)
+     Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorSignature e)
   | Typing.TypingError e ->
-    Errors.fail_env_error Basic.dloc (Env.EnvErrorType e)
+    Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorType e)
   | Cmd.Cmd_error(Misc(s)) ->
-    Errors.fail_exit (-1) Basic.dloc "%s@." s
+    Errors.fail_exit (-1) "" None (Some Basic.dloc) "%s@." s
   | Sys_error err -> Printf.eprintf "ERROR %s.\n" err; exit 1
   | Exit          -> exit 3

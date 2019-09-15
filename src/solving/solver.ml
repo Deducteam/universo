@@ -1,3 +1,4 @@
+include    Common.Import
 module F = Common.Files
 module L = Common.Log
 module O = Common.Oracle
@@ -5,7 +6,7 @@ module U = Common.Universes
 
 open Utils
 
-(** [from_rule pat rhs] add the assertion [pat = rhs] to Z3. *)
+(** [from_rule pat rhs] add the assertion [pat = rhs]. *)
 let from_rule : Rule.pattern -> Term.term -> U.cstr = fun pat right ->
   let left   = Rule.pattern_to_term pat in
   try (* the constraint is a predicate *)

@@ -1,3 +1,4 @@
+include    Common.Import
 module B = Basic
 module F = Common.Files
 module L = Common.Logic
@@ -94,7 +95,9 @@ let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
 let mk_theory : unit -> Signature.t = fun () ->
   let theory = F.get_theory () in
   let entries = Parser.Parse_channel.parse theory.md (F.in_channel_of_file theory) in
-  Entry.to_signature theory.path entries
+  let _ = EE.init theory.path in
+  List.iter SB.handle_entry entries;
+  SB.get_data ()
 
 (** [elab_signature f] returns the signature containing all the universes declaration associated to
     file [f] *)
@@ -163,8 +166,8 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
   let options = try Hashtbl.find config "solver" with _ -> [] in
   let find key default = try get_rhs @@ List.find (find_lhs key)   options with _ -> default  in
   let smt     = find "smt" "z3" in
-  let logic   = find "logic" "syn" in
-  let opt     = find "opt" "normal" in
+  let logic   = find "logic" "qfuf" in
+  let opt     = find "opt" "uf" in
   let (module SS) : (module Utils.SMTSOLVER) =
     if smt = "z3" then
       begin
