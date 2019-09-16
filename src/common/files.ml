@@ -6,6 +6,7 @@ module B  = Basic
 type path = string
 
 type cin
+
 type cout
 
 (** Gather out_channel and in_channel in a GADT for input and output files. In the case of an output file, we store also the formatter associated with. *)
@@ -68,6 +69,14 @@ let add_suffix : path -> string -> string = fun file suffix ->
 (** [add_dir dir file] prefix the filename [file] with the directory [dir] *)
 let add_dir : string -> string -> string = fun dir file ->
   dir ^ Filename.dir_sep ^ (Filename.basename file)
+
+let mk_dir : string option ref -> string -> unit = fun rf dir ->
+  begin
+    try
+      ignore(Unix.stat dir)
+    with _ -> Unix.mkdir dir 0o755
+  end;
+  rf := Some dir
 
 
 (** return the suffix according to the step [s] *)

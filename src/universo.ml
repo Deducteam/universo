@@ -114,7 +114,6 @@ let simplify : string list -> unit = fun in_paths ->
   let out_cfg = Cmd.output_meta_cfg () in
   List.iter (normalize_file out_cfg) in_paths
 
-
 (** [run_on_file file] process steps 1 and 2 (depending the mode selected on [file] *)
 let run_on_file file =
   match !mode with
@@ -130,7 +129,7 @@ let run_on_file file =
 
 let cmd_options =
   [ ( "-o"
-    , Arg.String (fun s -> F.output_directory := Some s; Basic.add_path s)
+    , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Basic.add_path s)
     , " (MANDATORY) Set the output directory" )
   ; ( "--theory"
     , Arg.String (fun s -> F.mk_theory s; U.md_theory := F.md_of_path s)
@@ -154,7 +153,7 @@ let cmd_options =
     , Arg.Unit (fun _ -> mode := JustSolve)
     , " only solves the constraints" )
   ; ( "--simplify"
-    , Arg.String (fun s -> mode := Simplify; F.simplify_directory := Some s)
+    , Arg.String (fun s -> mode := Simplify; F.mk_dir (F.simplify_directory) s)
     , " output is simplified so that only usual dk files remain" )
   ; ( "-I"
     , Arg.String Basic.add_path
