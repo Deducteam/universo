@@ -91,7 +91,7 @@ struct
 
   (** [check theory_of i] solves the current constraints with at most [i] universes. If no solution is found, [check] is called recursively on [i+1]. *)
   let rec check env i =
-    if i > env.max then failwith "No solution found";
+    if i > env.max then raise NoSolution;
     ZS.push solver;
     let theory = env.mk_theory i in
     if ZL.logic = `Qfuf then

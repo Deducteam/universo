@@ -6,11 +6,12 @@ module O = Common.Oracle
 module U = Common.Universes
 
 (** The path that contains the configuration file *)
-let config_path = ref ""
+let config_path = ref "universo_cfg.dk"
 
 let config = Hashtbl.create 11
 
 type cmd_error =
+  | ConfigurationFileNotFound of string
   | NoTargetSpecification
   | WrongConfiguration of Entry.entry
   | NoOutputSection
@@ -29,7 +30,9 @@ let sections =
   ; "end"]
 
 let parse_config : unit -> unit = fun () ->
-  let ic = open_in !config_path in
+  let ic =
+    try open_in !config_path with _ -> raise @@ (Cmd_error (ConfigurationFileNotFound !config_path))
+  in
   let md = Basic.mk_mident !config_path in
   let section = ref "" in
   let parameters = ref [] in
@@ -52,6 +55,7 @@ let parse_config : unit -> unit = fun () ->
   in
   Parser.Parse_channel.handle md mk_entry ic
 
+
 let elaboration_meta_cfg : unit -> Dkmeta.cfg = fun () ->
  let rules = try Hashtbl.find config "elaboration" with _ -> raise @@ Cmd_error NoElaborationSection in
  Dkmeta.meta_of_rules rules Dkmeta.default_config
@@ -59,6 +63,7 @@ let elaboration_meta_cfg : unit -> Dkmeta.cfg = fun () ->
 let output_meta_cfg : unit -> Dkmeta.cfg = fun () ->
   let rules = try Hashtbl.find config "output" with _ -> raise @@ Cmd_error NoOutputSection in
   Dkmeta.meta_of_rules rules Dkmeta.default_config
+
 
 
 let mk_constraints : unit -> (B.name, U.pred) Hashtbl.t = fun () ->

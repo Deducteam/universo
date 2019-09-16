@@ -90,3 +90,5 @@ sig
   (** [solve env] solves all the files parsed and returns a model as long as [i], the number of universes needed. As postconditions, [i >= env.minimum && i <= maximum]. Moreover forall [j < i], the solver did not found a solution. *)
   val solve : env -> int * model
 end
+
+exception NoSolution

@@ -21,6 +21,8 @@ let log_solver fmt = log yel fmt
 
 let log_univ   fmt = log gre fmt
 
+let error s = Format.eprintf "\027[31m%s\027[0m%!@." s
+
 (** [enable_flag str] actives flags present in [str] *)
 let enable_flag : string -> unit = fun str ->
   try Env.set_debug_mode str

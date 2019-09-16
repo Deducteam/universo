@@ -10,7 +10,7 @@ module U = Common.Universes
 
 let _ =
   (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
-  Signature.fail_on_symbol_not_found := true
+  Signature.fail_on_symbol_not_found := false;
 
 (** Direct the control flow of Universo. The control flow of Universo can be sum up in 4 steps:
     1) Elaborate the files to replace universes by variables
@@ -26,13 +26,13 @@ type execution_mode =
 
 
 (** By default, Universo go through all the steps *)
-let mode = Pervasives.ref Normal
+let mode = ref Normal
 
 (** [elaborate file] generates two new files [file'] and [file_univ].
     [file'] is the same as [file] except that all universes are replaced by fresh variables.
     [file_univ] contains the declaration of these variables. Everything is done modulo the logic. *)
 let elaborate : string  -> unit = fun in_path ->
-  L.log_univ "[CHECK] %s" (F.get_out_path in_path `Elaboration);
+  L.log_univ "[ELAB] %s" (F.get_out_path in_path `Elaboration);
   let in_file = F.in_from_string in_path `Input in
   let env = Cmd.to_elaboration_env in_file.path in
   let entries = P.parse in_file.md (F.in_channel_of_file in_file) in
@@ -63,9 +63,9 @@ let check : string -> unit = fun in_path ->
     if List.mem elab_dep deps then deps else elab_dep::deps
   in
   F.add_requires (F.fmt_of_file env.out_file) requires_mds;
-  Signature.fail_on_symbol_not_found := false; (* For this step, we want the real type checker *)
+  Signature.fail_on_symbol_not_found := true; (* For this step, we want the real type checker *)
   List.iter (Checking.Checker.mk_entry env) entries;
-  Signature.fail_on_symbol_not_found := true;
+  Signature.fail_on_symbol_not_found := false;
   Signature.export env.sg;
   C.flush ();
   F.close file;
@@ -197,5 +197,7 @@ let _ =
     Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorType e)
   | Cmd.Cmd_error(Misc(s)) ->
     Errors.fail_exit (-1) "" None (Some Basic.dloc) "%s@." s
-  | Sys_error err -> Printf.eprintf "ERROR %s.\n" err; exit 1
+  | Sys_error err -> Format.eprintf "ERROR %s.@." err; exit 1
   | Exit          -> exit 3
+  | Solving.Utils.NoSolution ->
+    L.error "Universo found no solution"

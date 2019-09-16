@@ -96,7 +96,7 @@ struct
       List.iter mk_entry entries
 
   (* List.iter S.add entries' *)
-
+  (* TODO: This should be factorized. the normalization should be done after solve and return a correct model *)
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
   let print_model meta model in_path  =
     let elab_file = F.in_from_string in_path `Elaboration in
@@ -143,5 +143,4 @@ struct
     L.log_solver "[NORMALIZE DONE]";
     SP.iter (fun p -> S.add (Pred p)) sp';
     S.solve env
-
 end
