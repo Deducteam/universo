@@ -27,8 +27,9 @@ struct
 
   let mk_univ : ctx -> U.univ -> t = fun ctx u ->
     match u with
+    | Sinf     -> failwith "sinf is not supported with LRA"
     | Var name -> mk_var ctx (mk_name name)
-    | Enum n -> to_int ctx n
+    | Enum n   -> to_int ctx n
 
   let mk_max : ctx -> t -> t -> t = fun ctx l r ->
     ZB.mk_ite ctx (ZA.mk_le ctx l r) r l

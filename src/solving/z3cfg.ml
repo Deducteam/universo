@@ -97,6 +97,8 @@ struct
     if ZL.logic = `Qfuf then
       mk_theory theory;
     register_vars !vars i;
+    if i = 3 then
+      Format.eprintf "%s@." (Z3.Solver.to_string solver);
     match ZS.check solver [] with
     | ZS.UNSATISFIABLE ->
       L.log_solver "[SOLVER] No solution found with %d universes" i;

@@ -21,8 +21,11 @@ let mk_enum ctx i =
 
 let mk_var ctx s = Z.Expr.mk_const_s ctx s (sort ctx)
 
+let mk_sinf ctx = Z.Expr.mk_const_s ctx ("Sinf") (sort ctx)
+
 (** [mk_univ ctx u] construct a Z3 expression from a universe. *)
 let mk_univ ctx = function
+  | U.Sinf  -> mk_sinf ctx
   | U.Var x -> mk_var ctx (mk_name x)
   | U.Enum i -> mk_enum ctx i
 

@@ -1,9 +1,7 @@
 - some dkos are generated at the root level, why?
 - 4 universes is not enough for the whole library but almost (39 files on 40).
 - One should understand why the function in vector_finset cannot be encoded in 3 universes.
-- use import_signature for theory file
 - Figure out how the solver can be speed up
-- having a smt2 problem
 - Clean code with new API
-- Clean configuration file, have a dedicated section for each logic which are indepenent from the solver
-- qfuf_specification should be optional
+- Have a better documentation
+- Document configuration file --> it should be optional

@@ -1,7 +1,8 @@
 include Import
 open Basic
 type univ =
-    Var of name
+  | Sinf
+  | Var of name
   | Enum of int
 
 
@@ -63,6 +64,7 @@ let rec term_of_level i =
 let term_of_univ u =
   let lc = Basic.dloc in
   match u with
+  | Sinf  -> sinf ()
   | Var n -> Term.mk_Const lc n
   | Enum i -> Term.mk_App (Term.mk_Const Basic.dloc (enum ())) (term_of_level i) []
 
@@ -137,6 +139,7 @@ exception Not_pred
 
 let extract_univ : Term.term -> univ = fun t ->
   match t with
+  | Term.Const _ when t = sinf () -> Sinf
   | Term.Const(_,n) -> Var n
   | Term.App (Term.Const(_,c),n,[]) when Basic.name_eq c (enum ()) ->
     Enum (extract_level n)

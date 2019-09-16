@@ -9,6 +9,8 @@ def output : Type.
 
 def qfuf_specification : Type.
     []  cts.Axiom cts.s1 cts.s2       --> cts.true.
+    []  cts.Axiom cts.s2 cts.sinf     --> cts.true.
+    []  cts.Axiom cts.s3 cts.sinf     --> cts.true.
 
     []  cts.Rule cts.s3 cts.s3 cts.s3 --> cts.true.
 
