@@ -1,4 +1,4 @@
-module B = Basic
+module B = Kernel.Basic
 module L = Common.Logic
 module U = Common.Universes
 module Z = Z3

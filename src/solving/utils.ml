@@ -1,3 +1,5 @@
+module B = Kernel.Basic
+
 (** This module declares all the types and signatures needed to implement an smt solver. *)
 
 type logic = [ `Qfuf | `Lra ]
@@ -23,7 +25,7 @@ sig
   val logic     : logic
 
   (** [mk_name n] returns a SMT string from a Dedukti name [n] *)
-  val mk_name   : Basic.name -> string
+  val mk_name   : B.name -> string
 
   (** [mk_var ctx s] returns a variable expression as to the name [s] *)
   val mk_var    : ctx -> string -> t
@@ -64,7 +66,7 @@ type env =
   }
 
 (** [model] is a function that associate to each fresh universe a concrete universe. *)
-type model = Basic.name -> Common.Universes.univ
+type model = B.name -> Common.Universes.univ
 
 (** An SMT solver is a solver specific to one SMT such as Z3 *)
 module type SMTSOLVER =

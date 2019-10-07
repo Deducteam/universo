@@ -1,3 +1,5 @@
+module Meta = Dkmeta
+module T = Kernel.Term
 module U = Universes
 
 type theory = (U.pred * bool) list
@@ -10,10 +12,10 @@ let rec enumerate : int -> U.univ list = fun i ->
     U.Enum (i-1)::(enumerate (i-1))
 
 (** [is_true meta p] check if the predicate [p] is true in the original theory. *)
-let is_true meta p =
+let is_true (meta:Meta.cfg) p =
   let t = U.term_of_pred p in
-  let t' = Dkmeta.mk_term meta t in
-  Term.term_eq (U.true_ ()) t'
+  let t' = Meta.mk_term meta t in
+  T.term_eq (U.true_ ()) t'
 
 (** [is_true_axiom meta s s'] check if the predicate [Axiom s s'] is true in the original theory. *)
 let is_true_axiom meta s s' =

@@ -1,16 +1,17 @@
 (** Main file *)
-include    Common.Import
+module B = Kernel.Basic
 module C = Common.Constraints
 module E = Elaboration.Elaborate
 module F = Common.Files
 module L = Common.Log
-module P = Parser.Parse_channel
+module P = Parsers.Parser
+module S = Kernel.Signature
 module O = Common.Oracle
 module U = Common.Universes
 
 let _ =
   (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
-  Signature.fail_on_symbol_not_found := false;
+  S.fail_on_symbol_not_found := false;
 
 (** Direct the control flow of Universo. The control flow of Universo can be sum up in 4 steps:
     1) Elaborate the files to replace universes by variables
@@ -33,9 +34,9 @@ let mode = ref Normal
     [file_univ] contains the declaration of these variables. Everything is done modulo the logic. *)
 let elaborate : string  -> unit = fun in_path ->
   L.log_univ "[ELAB] %s" (F.get_out_path in_path `Elaboration);
-  let in_file = F.in_from_string in_path `Input in
-  let env = Cmd.to_elaboration_env in_file.path in
-  let entries = P.parse in_file.md (F.in_channel_of_file in_file) in
+  let in_file = F.get_out_path in_path `Input in
+  let env = Cmd.to_elaboration_env in_file in
+  let entries = P.parse (P.input_from_file in_file) in
   (* This steps generates the fresh universe variables *)
   let entries' = List.map (E.mk_entry env) entries in
   (* Write the elaborated terms in the normal file (in the output directory) *)
@@ -43,8 +44,7 @@ let elaborate : string  -> unit = fun in_path ->
   let out_fmt = F.fmt_of_file out_file in
   (* The elaborated file depends on the out_sol_md file that contains solution. If the mode is JustElaborate, then this file is empty and import the declaration of the fresh universes *)
   F.add_requires out_fmt [F.md_of in_path `Elaboration; F.md_of in_path `Solution];
-  List.iter (Pp.print_entry out_fmt) entries';
-  F.close in_file;
+  List.iter (Api.Pp.Default.print_entry out_fmt) entries';
   F.close out_file;
   F.close env.file;
   F.export in_path `Elaboration
@@ -53,9 +53,8 @@ let elaborate : string  -> unit = fun in_path ->
     ASSUME also that the dependencies have been type checked before. *)
 let check : string -> unit = fun in_path ->
   L.log_univ "[CHECK] %s" (F.get_out_path in_path `Output);
-  let md = F.md_of_path in_path in
-  let file = F.in_from_string in_path `Output in
-  let entries = P.parse md (F.in_channel_of_file file) in
+  let file = F.get_out_path in_path `Output in
+  let input = P.input_from_file file in
   let env = Cmd.to_checking_env in_path in
   let requires_mds =
     let deps = C.get_deps () in
@@ -63,12 +62,22 @@ let check : string -> unit = fun in_path ->
     if List.mem elab_dep deps then deps else elab_dep::deps
   in
   F.add_requires (F.fmt_of_file env.out_file) requires_mds;
-  Signature.fail_on_symbol_not_found := true; (* For this step, we want the real type checker *)
-  List.iter (Checking.Checker.mk_entry env) entries;
-  Signature.fail_on_symbol_not_found := false;
-  Signature.export env.sg;
+  (* TODO: this should be internalize in dkmeta, if universo needs it there is an API problem with dkmeta *)
+  Kernel.Signature.fail_on_symbol_not_found := true; (* For this step, we want the real type checker *)
+  let universo_env = Cmd.to_checking_env in_path in
+  let module P =
+    struct
+      type t = unit
+
+      let handle_entry env entry = Checking.Checker.mk_entry universo_env env entry
+
+      let get_data () = ()
+    end
+  in
+  Api.Processor.handle_input input (module P);
+  S.fail_on_symbol_not_found := false;
+  Api.Env.export env.env;
   C.flush ();
-  F.close file;
   F.close env.out_file;
   F.export in_path `Checking;
   F.export in_path `Solution;
@@ -89,7 +98,7 @@ let solve : string list -> unit = fun in_paths ->
   List.iter (S.print_model (Cmd.output_meta_cfg ()) model) in_paths
 
 let simplify : string list -> unit = fun in_paths ->
-  Basic.Debug.enable_flag Dkmeta.D_meta;
+  B.Debug.enable_flag Dkmeta.D_meta;
   let normalize_file out_cfg in_path =
     let meta =
       let path = F.get_out_path in_path `Solution in
@@ -101,11 +110,10 @@ let simplify : string list -> unit = fun in_paths ->
     let md = F.md_of in_path `Output in
     let output = F.out_from_string in_path `Simplify in
     let fmt = F.fmt_of_file output in
-    (* FIXME: suppose that files does not contain any require *)
     let mk_entry e =
       match e with
-      | Entry.Require(_,_) -> ()
-      | e -> Format.fprintf fmt "%a@." Pp.print_entry (Dkmeta.mk_entry meta md e)
+      | Parsers.Entry.Require(_,_) -> ()
+      | e -> Format.fprintf fmt "%a@." Api.Pp.Default.print_entry (Dkmeta.mk_entry meta md e)
     in
     Parser.Parse_channel.handle md mk_entry input;
     F.close file;
@@ -129,7 +137,7 @@ let run_on_file file =
 
 let cmd_options =
   [ ( "-o"
-    , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Basic.add_path s)
+    , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Files.add_path s)
     , " (MANDATORY) Set the output directory" )
   ; ( "--theory"
     , Arg.String (fun s -> F.mk_theory s; U.md_theory := F.md_of_path s)
@@ -156,7 +164,7 @@ let cmd_options =
     , Arg.String (fun s -> mode := Simplify; F.mk_dir (F.simplify_directory) s)
     , " output is simplified so that only usual dk files remain" )
   ; ( "-I"
-    , Arg.String Basic.add_path
+    , Arg.String Files.add_path
     , " DIR Add the directory DIR to the load path" )
   ]
 
@@ -167,7 +175,7 @@ let generate_empty_sol_file : string -> unit = fun in_path ->
   let check_md = F.md_of_path (F.get_out_path in_path `Checking) in
   let oc = open_out sol_file in
   let fmt = Format.formatter_of_out_channel oc in
-  Format.fprintf fmt "#REQUIRE %a.@.@." Pp.print_mident check_md;
+  Format.fprintf fmt "#REQUIRE %a.@.@." Api.Pp.Default.print_mident check_md;
   close_out oc
 
 let _ =
@@ -189,13 +197,13 @@ let _ =
     if !mode = Simplify then
        simplify files
   with
-  | Env.EnvError(md,l,e) -> Errors.fail_env_error(md,l,e)
-  | Signature.SignatureError e ->
-     Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorSignature e)
-  | Typing.TypingError e ->
-    Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorType e)
+  (* | Env.EnvError(md,l,e) -> Errors.fail_env_error(md,l,e)
+   * | Signature.SignatureError e ->
+   *    Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorSignature e)
+   * | Typing.TypingError e ->
+   *   Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorType e) *)
   | Cmd.Cmd_error(Misc(s)) ->
-    Errors.fail_exit (-1) "" None (Some Basic.dloc) "%s@." s
+    Errors.fail_exit ~code:"-1" ~file:"" None "%s@." s
   | Sys_error err -> Format.eprintf "ERROR %s.@." err; exit 1
   | Exit          -> exit 3
   | Solving.Utils.NoSolution ->

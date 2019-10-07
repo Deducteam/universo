@@ -1,8 +1,11 @@
+module B = Kernel.Basic
+module T = Kernel.Term
+
 module type LRA_REIFICATION =
 sig
-  val axiom_specification : string list * Term.term
-  val rule_specification  : string list * Term.term
-  val cumul_specification : string list * Term.term
+  val axiom_specification : string list * T.term
+  val rule_specification  : string list * T.term
+  val cumul_specification : string list * T.term
 end
 
 type z = Z
@@ -48,19 +51,19 @@ module MakeLraSpecif(Lra : LRA_REIFICATION) : LRA_SPECIFICATION =
 struct
 
   (* FIXME: exception handle *)
-  let rec reify : type c b. c -> (string * b) list -> (c,b) k -> Term.term -> b =
+  let rec reify : type c b. c -> (string * b) list -> (c,b) k -> T.term -> b =
     fun ctx env k t ->
     let reify' = reify ctx env k in
     let mk_op0 (op:(_,'z) op) = match k.mk op with Zero f -> f in
     let mk_op1 op a = match k.mk op with One f -> f (reify' a) in
     let mk_op2 op a b = match k.mk op with Two f -> f (reify' a) (reify' b) in
     let mk_op3 op a b c = match k.mk op with Three f -> f (reify' a) (reify' b) (reify' c) in
-    let is_cst s n = Basic.ident_eq (Basic.id n) (Basic.mk_ident s) in
+    let is_cst s n = B.ident_eq (B.id n) (B.mk_ident s) in
     match t with
     | DB(_,a,_) ->
       begin
         try
-          List.assoc (Basic.string_of_ident a) env
+          List.assoc (B.string_of_ident a) env
         with Not_found -> failwith "Wrong configuration pattern for rule"
       end
     | Const(_,n) ->

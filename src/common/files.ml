@@ -1,6 +1,6 @@
-include     Import
-module B  = Basic
-
+module B  = Kernel.Basic
+module S  = Kernel.Signature
+module P  = Parsers.Parser
 
 (** path to a file *)
 type path = string
@@ -89,17 +89,14 @@ let suffix_of_step : step -> string = function
   | `Output -> normal_suffix
 
 (** [md_of_file f] returns the [mident] of the file [f] *)
-let md_of_path : path -> Basic.mident = fun path ->
-  Basic.mk_mident (Filename.basename path)
+let md_of_path : path -> B.mident = fun path ->
+  B.mk_mident (Filename.basename path)
 
-let theory : cin t option ref = ref None
+let theory : string option ref = ref None
 
-let mk_theory : path -> unit = fun path ->
-  let md = md_of_path path in
-  let ic = open_in path in
-  theory := Some {path;md;channel=In ic}
+let mk_theory : path -> unit = fun path -> theory := Some path
 
-let get_theory : unit -> cin t = fun () ->
+let get_theory : unit -> string = fun () ->
   match !theory with
   | None -> failwith "Theory not given"
   | Some t -> t
@@ -136,14 +133,8 @@ let in_from_string : path -> step -> cin t = fun path step ->
     {path;md;channel=In ic}
 
 (** [signature_of_file f] returns a signature that contains all the declarations in [f]. *)
-let signature_of_file : path -> Signature.t = fun file ->
-  let ic = open_in file in
-  let md = md_of_path file in
-  let entries = Parser.Parse_channel.parse md ic in
-  close_in ic;
-  let _ = EE.init file in
-  List.iter SB.handle_entry entries;
-  SB.get_data ()
+let signature_of_file : path -> S.t = fun file ->
+  Api.Processor.handle_files [file] (module Api.Processor.SignatureBuilder)
 
 (** [fmt_of_file out_file] returns the formatter associated to an [out_file] *)
 let fmt_of_file : cout t -> Format.formatter = fun file ->
@@ -166,27 +157,32 @@ let md_of : path -> step -> B.mident = fun in_path step ->
   md_of_path (get_out_path in_path step)
 
 let add_requires : Format.formatter ->  B.mident list -> unit = fun fmt mds ->
-  List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Pp.print_mident md)  mds
+  List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Api.Pp.Default.print_mident md)  mds
 
 let export : path -> step -> unit = fun in_path step ->
-  let in_file = in_from_string in_path step in
-  match step with
-  | `Checking ->
-    let entries = Parser.Parse_channel.parse in_file.md (in_channel_of_file in_file) in
-    (* TODO: comment this, only equality constraints are exported?!? *)
-    let filter = function
-      | Entry.Rules(_,r::_) ->
-        begin
-          match r.pat with
-          | Rule.Pattern(_,_,[]) -> true
-          | _ -> false
-        end
-      | _ -> true
-    in
-    let entries = List.filter filter entries in
-    let _ = EE.init in_file.path in
-    List.iter SB.handle_entry entries;
-    Signature.export (SB.get_data ())
-  | _ ->
-    let sg = signature_of_file in_file.path in
-    Signature.export sg
+  let out_file = get_out_path in_path step in
+  let is_eq_rule r =
+    let open Kernel.Rule in
+    match r.pat with | Pattern(_,_,[]) -> true | _ -> false
+  in
+  let module P = struct
+    type t = unit
+
+    let handle_entry env entry =
+      match step,entry with
+      (* TODO: don't remember why only equality constraints are exported *)
+      | `Checking, Parsers.Entry.Rules(_,r::_) when is_eq_rule r ->
+        Api.Processor.SignatureBuilder.handle_entry env entry
+      | `Checking, _ -> ()
+      | _, _ ->
+        Api.Processor.SignatureBuilder.handle_entry env entry
+
+    let get_data () = ()
+  end
+  in
+  let hook_after env exn =
+    match exn with
+    | None -> Api.Env.export env
+    | Some (env, lc, e) -> Api.Env.fail_env_error env lc e
+  in
+  Api.Processor.handle_files [out_file] ~hook_after (module P)

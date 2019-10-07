@@ -1,4 +1,4 @@
-module D = Basic.Debug
+module D = Kernel.Basic.Debug
 
 type D.flag += D_universo
 let _ = D.register_flag D_universo "Universo"
@@ -25,5 +25,5 @@ let error s = Format.eprintf "\027[31m%s\027[0m%!@." s
 
 (** [enable_flag str] actives flags present in [str] *)
 let enable_flag : string -> unit = fun str ->
-  try Env.set_debug_mode str
-  with Env.DebugFlagNotRecognized c -> if c = 's' then D.enable_flag D_universo
+  try Api.Env.set_debug_mode str
+  with Api.Env.DebugFlagNotRecognized c -> if c = 's' then D.enable_flag D_universo

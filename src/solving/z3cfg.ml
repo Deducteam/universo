@@ -1,4 +1,4 @@
-module B = Basic
+module B = Kernel.Basic
 module L = Common.Log
 module U = Common.Universes
 module Z = Z3
@@ -106,7 +106,7 @@ struct
       match ZS.get_model solver with
       | None -> assert false
       | Some model ->
-        let model (cst:Basic.name) : U.univ =
+        let model (cst:B.name) : U.univ =
           let var = ZL.mk_name cst in
           ZL.solution_of_var ctx i model var
         in

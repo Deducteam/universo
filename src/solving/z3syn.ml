@@ -1,4 +1,4 @@
-module B = Basic
+module B = Kernel.Basic
 module L = Common.Logic
 module O = Common.Oracle
 module U = Common.Universes

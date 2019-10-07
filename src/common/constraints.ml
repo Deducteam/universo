@@ -1,7 +1,11 @@
-include    Import
-module B = Basic
+
+module B = Kernel.Basic
 module F = Files
+module R = Kernel.Rule
+module S = Kernel.Signature
+module T = Kernel.Term
 module U = Universes
+
 
 type t =
   {
@@ -17,13 +21,13 @@ type print_cstrs =
     rule: (U.univ * U.univ * U.univ) list;
   }
 
-let dummy_name = Rule.Gamma(false, B.mk_name (B.mk_mident "dummy") (B.mk_ident "dummy"))
+let dummy_name = R.Gamma(false, B.mk_name (B.mk_mident "dummy") (B.mk_ident "dummy"))
 
 (* FIXME: copy/paste from checker.ml *)
 let add_rule  sg vl vr =
-  let pat = Rule.Pattern(Basic.dloc,vl,[]) in
-  let rhs = Term.mk_Const Basic.dloc vr in
-  let rule = Rule.(
+  let pat = R.Pattern(B.dloc,vl,[]) in
+  let rhs = T.mk_Const B.dloc vr in
+  let rule = R.(
       {
         ctx = [];
         pat;
@@ -31,18 +35,18 @@ let add_rule  sg vl vr =
         name=dummy_name;
       })
   in
-  Signature.add_rules sg  [Rule.to_rule_infos rule]
+  S.add_rules sg  [R.to_rule_infos rule]
 
 let print_rule pp fmt (l,r) =
   Format.fprintf fmt "@.[] %a --> %a" pp l pp r
 
 let print_eq_var fmt (l,r) =
-  Format.fprintf fmt "%a.@." (print_rule Pp.print_name) (l,r)
+  Format.fprintf fmt "%a.@." (print_rule Api.Pp.Default.print_name) (l,r)
 
 let print_predicate fmt p =
   let l' = U.term_of_pred p in
   let r' = U.true_ () in
-  Format.fprintf fmt "%a.@." (print_rule Pp.print_term) (l', r')
+  Format.fprintf fmt "%a.@." (print_rule Api.Pp.Default.print_term) (l', r')
 
 (** [mk_var_cstre env f l r] add the constraint [l =?= r]. Call f on l and r such that
     l >= r. *)
@@ -51,8 +55,8 @@ let mk_var_cstr f l r =
   let get_number s =
     int_of_string (String.sub s 1 (String.length s - 1))
   in
-  let il = Basic.string_of_ident @@ Basic.id l in
-  let ir = Basic.string_of_ident @@ Basic.id r in
+  let il = B.string_of_ident @@ B.id l in
+  let ir = B.string_of_ident @@ B.id r in
   let nl = get_number il in
   let nr = get_number ir in
   if nl = 0 && nr = 0 then
@@ -75,8 +79,9 @@ let mk_cstr env f cstr =
     true
   | U.EqVar(l,r) ->
     let (l,r) = mk_var_cstr f l r in
-    add_rule env.meta.sg l r;
-    if not (List.mem (Basic.md r) !deps) then deps := (Basic.md r)::!deps;
+    let sg = Api.Env.get_signature env.meta.env in
+    add_rule sg l r;
+    if not (List.mem (B.md r) !deps) then deps := (B.md r)::!deps;
     Format.fprintf fmt "%a@." print_eq_var (l,r);
     true
 
