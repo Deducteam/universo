@@ -102,21 +102,21 @@ let simplify : string list -> unit = fun in_paths ->
   let normalize_file out_cfg in_path =
     let meta =
       let path = F.get_out_path in_path `Solution in
-      let md = F.md_of in_path `Solution in
-      Dkmeta.meta_of_file path ~md out_cfg
+      Dkmeta.meta_of_files ~cfg:out_cfg [path]
     in
-    let file = F.in_from_string in_path `Output in
-    let input = F.in_channel_of_file file in
-    let md = F.md_of in_path `Output in
+    let file = F.get_out_path in_path `Output in
+    let input = P.input_from_file file in
+    let env = Api.Env.init input in
     let output = F.out_from_string in_path `Simplify in
     let fmt = F.fmt_of_file output in
     let mk_entry e =
       match e with
       | Parsers.Entry.Require(_,_) -> ()
-      | e -> Format.fprintf fmt "%a@." Api.Pp.Default.print_entry (Dkmeta.mk_entry meta md e)
+      | e ->
+        Format.fprintf fmt "%a@." Api.Pp.Default.print_entry (Dkmeta.mk_entry env meta e)
     in
-    Parser.Parse_channel.handle md mk_entry input;
-    F.close file;
+    P.handle input mk_entry;
+    P.close input;
     F.close output
   in
   let out_cfg = Cmd.output_meta_cfg () in
@@ -137,7 +137,7 @@ let run_on_file file =
 
 let cmd_options =
   [ ( "-o"
-    , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Files.add_path s)
+    , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Api.Files.add_path s)
     , " (MANDATORY) Set the output directory" )
   ; ( "--theory"
     , Arg.String (fun s -> F.mk_theory s; U.md_theory := F.md_of_path s)
@@ -164,7 +164,7 @@ let cmd_options =
     , Arg.String (fun s -> mode := Simplify; F.mk_dir (F.simplify_directory) s)
     , " output is simplified so that only usual dk files remain" )
   ; ( "-I"
-    , Arg.String Files.add_path
+    , Arg.String Api.Files.add_path
     , " DIR Add the directory DIR to the load path" )
   ]
 
@@ -203,7 +203,7 @@ let _ =
    * | Typing.TypingError e ->
    *   Errors.fail_env_error(None,Basic.dloc, Env.EnvErrorType e) *)
   | Cmd.Cmd_error(Misc(s)) ->
-    Errors.fail_exit ~code:"-1" ~file:"" None "%s@." s
+    Api.Errors.fail_exit ~code:"-1" ~file:"" None "%s@." s
   | Sys_error err -> Format.eprintf "ERROR %s.@." err; exit 1
   | Exit          -> exit 3
   | Solving.Utils.NoSolution ->
