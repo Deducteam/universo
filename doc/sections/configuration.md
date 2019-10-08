@@ -19,7 +19,7 @@ Only the section `constraints` is optional. Depending the logic you used for the
 
 # Meta rewrite rules
 
-Most of the rules specified in the configuration file will be used as **meta** rewrite rules. In other word, these rules will be used to compute. To do this, Universo uses another tool called `Dkmeta` which is a wrapper around the `Dedukti` rewrite engine. Mainly this tool compute the strong normal form of a term according to some meta rules and prints the result. In the case of Universo, the terms are printed in a new file depending on the current step. Hence meta rewrite rules for elaboration are printed in the file `<output>/A.dk` if the module `<input>/A` was given as input where `<output>` is the directory given with the option `-o`.
+Most of the rules specified in the configuration file will be used as **meta** rewrite rules. In other word, these rules will be used to compute. To do this, Universo uses another tool called [Dkmeta](https://github.com/Deducteam/dkmeta) which is a wrapper around the `Dedukti` rewrite engine. Mainly this tool compute the strong normal form of a term according to some meta rules and prints the result. In the case of Universo, the terms are printed in a new file depending on the current step. Hence meta rewrite rules for elaboration are printed in the file `<output>/A.dk` if the module `<input>/A` was given as input where `<output>` is the directory given with the option `-o`.
 
 In practice meta rules are simple and hence, the SNF is linear to compute.
 
@@ -43,11 +43,11 @@ Any rewrite rules is allowed in this sections. Hence, the user might introduce o
 
 ## Output
 
-Universo only knows sorts which are natural numbers such as `cic.enum (cic.usucc cic.uzero)`. The purpose of the output section is to translate these universes to the intented one (`cic.type`, `cic.kind`, ...). This section contains meta rewrite rules that maps Universos universes to the user's ones.
+Universo only knows sorts which are natural numbers such as `cic.enum (cic.usucc cic.uzero)`. The purpose of the output section is to translate these universes to the intented one (`cic.type`, `cic.kind`, ...). This section contains meta rewrite rules that maps Universo universes to the user's ones.
 
 ## Constraints
 
-The solution found by Universo might noe be the one intented. For example, without additional constraints, Universo might say that `nat` is a proposition. To avoid such behavior, additional constraints can be added. For example, to enforce that `nat` from the matita's arithmetic library lives in `type`, one may add the constraint:
+The solution found by Universo might not be the one intented. For example, without additional constraints, Universo might say that `nat` is a proposition. To avoid such behavior, additional constraints can be added. For example, to enforce that `nat` from the matita's arithmetic library lives in `type`, one may add the constraint:
 
 ``` dedukti
 [] matita_arithmetics_nat.nat     --> cic.Cumul (cic.enum (cic.usucc cic.uzero)) cic.var.
@@ -56,7 +56,7 @@ The solution found by Universo might noe be the one intented. For example, witho
 Notice that:
 
 - the left-hand side should be the complete name of the constant
-- the right-ahdn side is a constraint (eithor Axiom, Rule or Cumul).
+- the right-hand side is a constraint (eithor Axiom, Rule or Cumul).
 - cic.var denotes the sort of the constant
 
 
