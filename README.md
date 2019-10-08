@@ -16,9 +16,9 @@ Dependencies and compilation
 Compiling Universo is not standard (yet). It requires:
 
 - Dune
-- Using Dedukti on branch `typing-functor` (soon Dedukti 2.7)
-- Using Dkmeta (compiled for the branch above)
+- Using Dedukti on branch
+- Using Dkmeta
 
 The branch will eventually be merge soon and eventually Universo will be released on `opam`.
 
-To compile Universo, just use `make`. Then you can choose to install Universo with `make install` or simply use `dune exec -- lambdapi`.
+To compile Universo, just use `make`. Then you can choose to install Universo with `make install` or simply use `dune exec -- universo`.
