@@ -88,10 +88,6 @@ let suffix_of_step : step -> string = function
   | `Simplify
   | `Output -> normal_suffix
 
-(** [md_of_file f] returns the [mident] of the file [f] *)
-let md_of_path : path -> B.mident = fun path ->
-  B.mk_mident (Filename.basename path)
-
 let theory : string option ref = ref None
 
 let mk_theory : path -> unit = fun path -> theory := Some path
@@ -120,7 +116,7 @@ let get_out_path : path -> step -> path = fun path step ->
 (** [from_string f s] returns the filename that corresponds to the step [s] for file [f] *)
 let out_from_string : path -> step -> cout t = fun path step ->
     let path = get_out_path path step in
-    let md = md_of_path path in
+    let md = P.md_of_file path in
     let oc = open_out path in
     let fmt = Format.formatter_of_out_channel oc in
     {path;md;channel=Out(oc,fmt)}
@@ -128,7 +124,7 @@ let out_from_string : path -> step -> cout t = fun path step ->
 (** [from_string f s] returns the filename that corresponds to the step [s] for file [f] *)
 let in_from_string : path -> step -> cin t = fun path step ->
     let path = get_out_path path step in
-    let md = md_of_path path in
+    let md = P.md_of_file path in
     let ic = open_in path in
     {path;md;channel=In ic}
 
@@ -154,7 +150,7 @@ let close : type a. a t -> unit = fun file ->
 
 (** [md_of path step] returns the mident associated to the Universo file [file] for step [step]. *)
 let md_of : path -> step -> B.mident = fun in_path step ->
-  md_of_path (get_out_path in_path step)
+  P.md_of_file (get_out_path in_path step)
 
 let add_requires : Format.formatter ->  B.mident list -> unit = fun fmt mds ->
   List.iter (fun md -> Format.fprintf fmt "#REQUIRE %a.@." Api.Pp.Default.print_mident md)  mds

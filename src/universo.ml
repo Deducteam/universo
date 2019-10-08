@@ -11,6 +11,7 @@ module U = Common.Universes
 
 let _ =
   (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
+  (* TODO: This should be a matter of dkmeta not Universo *)
   S.fail_on_symbol_not_found := false;
 
 (** Direct the control flow of Universo. The control flow of Universo can be sum up in 4 steps:
@@ -140,7 +141,7 @@ let cmd_options =
     , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Api.Files.add_path s)
     , " (MANDATORY) Set the output directory" )
   ; ( "--theory"
-    , Arg.String (fun s -> F.mk_theory s; U.md_theory := F.md_of_path s)
+    , Arg.String (fun s -> F.mk_theory s; Format.eprintf "oops: %a" Api.Pp.Default.print_mident (P.md_of_file s); U.md_theory := P.md_of_file s)
     , " (MANDATORY) Theory file" )
   ; ( "--config"
     , Arg.String  (fun s -> Cmd.config_path := s)
@@ -172,7 +173,7 @@ let cmd_options =
     This is necessary when universo is used with another mode than the Normal one (see elaboration). *)
 let generate_empty_sol_file : string -> unit = fun in_path ->
   let sol_file = F.get_out_path in_path `Solution in
-  let check_md = F.md_of_path (F.get_out_path in_path `Checking) in
+  let check_md = P.md_of_file (F.get_out_path in_path `Checking) in
   let oc = open_out sol_file in
   let fmt = Format.formatter_of_out_channel oc in
   Format.fprintf fmt "#REQUIRE %a.@.@." Api.Pp.Default.print_mident check_md;

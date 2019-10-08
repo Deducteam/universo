@@ -45,7 +45,7 @@ let fresh_uvar : F.cout F.t -> unit -> T.term =
   let uvar = B.mk_name file.md id in
   let uterm = T.mk_Const B.dloc uvar in
   let sort_type =
-    let md_theory = Parsers.Parser.md_of_file (F.get_theory ()) in
+    let md_theory = !U.md_theory in
     T.mk_Const B.dloc (B.mk_name md_theory (B.mk_ident "Sort")) in
   begin
     Format.fprintf (F.fmt_of_file file) "%a@."

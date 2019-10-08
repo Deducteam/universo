@@ -20,7 +20,6 @@ let md_theory = ref @@ B.mk_mident ""
 
 let md_univ = ref (B.mk_mident "")
 
-
 let pvar  () = B.mk_name !md_theory (B.mk_ident "var")
 
 let sort  () = B.mk_name !md_theory (B.mk_ident "Sort")
