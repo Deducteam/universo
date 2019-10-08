@@ -1,3 +1,0 @@
-[] matita_arithmetics_nat.nat     --> cic.Cumul (cic.type (cic.z)) universo.var.
-[] matita_basics_bool.bool        --> cic.Cumul (cic.type (cic.z)) universo.var.
-[] matita_basics_lists_list.list  --> cic.Cumul (cic.type (cic.z)) universo.var.
