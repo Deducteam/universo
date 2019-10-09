@@ -1,4 +1,5 @@
 module B = Kernel.Basic
+module C = Common.Constraints
 module E = Parsers.Entry
 module F = Common.Files
 module L = Common.Log
@@ -76,6 +77,9 @@ struct
     Api.Processor.handle_files [elab_file] (module P);
     F.close sol_file
 
+  let print_model meta model files =
+    List.iter (print_model meta model) files
+
   let solve = S.solve
 end
 
@@ -116,13 +120,12 @@ struct
   (* List.iter S.add entries' *)
   (* TODO: This should be factorized. the normalization should be done after solve and return a correct model *)
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
-  let print_model meta_output model in_path  =
+  let print_model meta_constraints meta_output model in_path  =
     let elab_file = F.get_out_path in_path `Elaboration in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
     let md_theory = P.md_of_file (F.get_theory ()) in
     F.add_requires fmt [F.md_of in_path `Elaboration; md_theory];
-    let meta_constraints = Dkmeta.meta_of_files [F.get_out_path in_path `Checking] in
     let module P =
     struct
 
@@ -150,6 +153,12 @@ struct
     in
     Api.Processor.handle_files [elab_file] (module P);
     F.close sol_file
+
+  let print_model meta model files =
+    let cstr_files = List.map (fun file -> F.get_out_path file `Checking) files in
+    let meta_constraints = Dkmeta.meta_of_files cstr_files in
+    List.iter (print_model meta_constraints meta model) files
+
 
   let solve solver_env =
     let meta = {Dkmeta.default_config with env = env} in

@@ -78,7 +78,7 @@ struct
   let solution_of_var : ctx -> int -> Z.Model.model -> string -> U.univ =
     fun ctx _ model var ->
     match Z.Model.get_const_interp_e model (mk_var ctx var) with
-    | None -> assert false
+    | None ->  Format.eprintf "%s@." var; assert false
     | Some e ->
       let v = Big_int.int_of_big_int (ZI.get_big_int e) in
       U.Enum v

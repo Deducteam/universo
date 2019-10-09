@@ -99,7 +99,7 @@ let solve : string list -> unit = fun in_paths ->
   L.log_univ "[SOLVING CONSTRAINTS...]";
   let i,model = S.solve env in
   L.log_univ "[SOLVED] Solution found with %d universes." i;
-  List.iter (S.print_model (Cmd.output_meta_cfg ()) model) in_paths
+  S.print_model (Cmd.output_meta_cfg ()) model in_paths
 
 let simplify : string list -> unit = fun in_paths ->
   B.Debug.enable_flag Dkmeta.D_meta;

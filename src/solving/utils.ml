@@ -87,7 +87,7 @@ sig
   val parse : Common.Files.path -> unit
 
   (** [print_model meta model file] prints the model into the solution file associated to [file]. Universes are translated to terms via the [meta] rules. *)
-  val print_model : Dkmeta.cfg -> model -> Common.Files.path -> unit
+  val print_model : Dkmeta.cfg -> model -> Common.Files.path list -> unit
 
   (** [solve env] solves all the files parsed and returns a model as long as [i], the number of universes needed. As postconditions, [i >= env.minimum && i <= maximum]. Moreover forall [j < i], the solver did not found a solution. *)
   val solve : env -> int * model

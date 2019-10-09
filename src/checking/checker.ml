@@ -96,7 +96,9 @@ struct
           are_convertible sg a b &&
           are_convertible sg l t
         else
+          (* TODO: One should handle one more case with Cumul. Currentl Cumul is assumed being linear but it is hackish because it assumes a theory file where the order of rules matter. In particular, having Cumul linear forces to have the non linear rule for Subtype first. Otherwise, the system is not confluent. However, having Cumul non linear requires to add more cases here. Non linearity should be also handled in matching_test function. *)
           false
+
 
   and are_convertible_lst sg : (T.term * T.term) list -> bool = function
     | [] -> true
@@ -139,6 +141,7 @@ module rec RE : Kernel.Reduction.S = MakeRE(RE)
 
 module Typing = Kernel.Typing.Make(RE)
 
+(** [check_user_constraints table name t] checks whether the user has added constraints on the onstant [name] and if so, add this constraint. In [t], every universo variable (md.var) are replaced by the sort associated to the constant [name]. *)
 let check_user_constraints : (B.name, U.pred) Hashtbl.t -> B.name -> T.term -> unit =
   fun constraints name ty ->
     let get_uvar ty =
