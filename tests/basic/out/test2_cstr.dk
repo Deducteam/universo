@@ -1,0 +1,45 @@
+#REQUIRE test2_univ.
+
+(; ex ;)
+
+[] cts.Rule test2_univ.?1 test2_univ.?2 test2_univ.?3 --> cts.true.
+
+
+[] cts.Axiom test2_univ.?4 cts.sinf --> cts.true.
+
+
+[] cts.Axiom test2_univ.?5 cts.sinf --> cts.true.
+
+
+[] cts.Cumul test2_univ.?4 test2_univ.?5 --> cts.true.
+
+
+[] cts.Axiom test2_univ.?6 test2_univ.?7 --> cts.true.
+
+
+[] test2_univ.?7 --> test2_univ.?4.
+
+
+[] test2_univ.?5 --> test2_univ.?1.
+
+
+[] cts.Axiom test2_univ.?8 cts.sinf --> cts.true.
+
+
+[] cts.Axiom test2_univ.?9 cts.sinf --> cts.true.
+
+
+[] cts.Cumul test2_univ.?8 test2_univ.?9 --> cts.true.
+
+
+[] cts.Axiom test2_univ.?10 test2_univ.?11 --> cts.true.
+
+
+[] test2_univ.?11 --> test2_univ.?8.
+
+
+[] test2_univ.?9 --> test2_univ.?2.
+
+
+[] test2_univ.?3 --> test2_univ.?0.
+

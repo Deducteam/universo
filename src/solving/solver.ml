@@ -116,12 +116,13 @@ struct
   (* List.iter S.add entries' *)
   (* TODO: This should be factorized. the normalization should be done after solve and return a correct model *)
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
-  let print_model meta model in_path  =
+  let print_model meta_output model in_path  =
     let elab_file = F.get_out_path in_path `Elaboration in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
     let md_theory = P.md_of_file (F.get_theory ()) in
     F.add_requires fmt [F.md_of in_path `Elaboration; md_theory];
+    let meta_constraints = Dkmeta.meta_of_files [F.get_out_path in_path `Checking] in
     let module P =
     struct
 
@@ -130,9 +131,8 @@ struct
       let handle_entry env =
         let (module Printer) = Api.Env.get_printer env in
         let find =
-          let meta = {Dkmeta.default_config with env = env} in
           fun name ->
-            match Dkmeta.mk_term meta (T.mk_Const B.dloc name) with
+            match Dkmeta.mk_term meta_constraints (T.mk_Const B.dloc name) with
             | T.Const(_,name) -> name
             | _ -> assert false
         in
@@ -141,7 +141,7 @@ struct
           let name = B.mk_name (Api.Env.get_name env) id in
           let sol = model (find name) in
           let rhs = U.term_of_univ sol in
-          let rhs' = Dkmeta.mk_term meta rhs in
+          let rhs' = Dkmeta.mk_term meta_output rhs in
           Format.fprintf fmt "[] %a --> %a.@." Printer.print_name name Printer.print_term rhs'
         | _ -> ()
 

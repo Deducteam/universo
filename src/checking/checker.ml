@@ -175,7 +175,7 @@ let mk_entry : t -> Api.Env.t -> Parsers.Entry.entry -> unit = fun universo_env 
   in
   match e with
   | Decl(lc,id,st,ty) ->
-    L.log_check "[CHECK] %a" P.print_ident id;
+    L.log_check "[CHECKING] %a" P.print_ident id;
     check_user_constraints universo_env.constraints (B.mk_name (F.md_of universo_env.in_path `Output) id) ty;
     Format.fprintf (F.fmt_of_file universo_env.out_file) "@.(; %a ;)@." P.print_ident id;
     begin
@@ -184,7 +184,7 @@ let mk_entry : t -> Api.Env.t -> Parsers.Entry.entry -> unit = fun universo_env 
         | s -> raise (Kernel.Typing.Typing_error (Kernel.Typing.SortExpected (ty,[],s)))
     end
   | Def(lc,id,opaque,mty,te) ->
-    L.log_check "[CHECK] %a" P.print_ident id;
+    L.log_check "[CHECKING] %a" P.print_ident id;
     Format.fprintf (F.fmt_of_file universo_env.out_file) "@.(; %a ;)@." P.print_ident id;
     let open Rule in
     begin

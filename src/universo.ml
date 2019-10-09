@@ -53,19 +53,18 @@ let elaborate : string  -> unit = fun in_path ->
 (** [check file] type checks the file [file] and write the generated constraints in the file [file_cstr]. ASSUME that [file_univ] has been generated previously.
     ASSUME also that the dependencies have been type checked before. *)
 let check : string -> unit = fun in_path ->
-  L.log_univ "[CHECK] %s" (F.get_out_path in_path `Output);
+  L.log_univ "[CHECKING] %s" (F.get_out_path in_path `Output);
   let file = F.get_out_path in_path `Output in
-  let input = P.input_from_file file in
-  let env = Cmd.to_checking_env in_path in
+  let universo_env = Cmd.to_checking_env in_path in
   let requires_mds =
     let deps = C.get_deps () in
     let elab_dep = F.md_of in_path `Elaboration in
     if List.mem elab_dep deps then deps else elab_dep::deps
   in
-  F.add_requires (F.fmt_of_file env.out_file) requires_mds;
+  F.add_requires (F.fmt_of_file universo_env.out_file) requires_mds;
   (* TODO: this should be internalize in dkmeta, if universo needs it there is an API problem with dkmeta *)
-  Kernel.Signature.fail_on_symbol_not_found := true; (* For this step, we want the real type checker *)
-  let universo_env = Cmd.to_checking_env in_path in
+  (* For this step, we want the real type checker *)
+  Kernel.Signature.fail_on_symbol_not_found := true;
   let module P =
     struct
       type t = unit
@@ -75,11 +74,15 @@ let check : string -> unit = fun in_path ->
       let get_data () = ()
     end
   in
-  Api.Processor.handle_input input (module P);
+  let hook_before env =
+    let sg = Api.Env.get_signature env in
+    S.import_signature sg (Cmd.mk_theory ())
+  in
+  Api.Processor.handle_files ~hook_before [file] (module P);
   S.fail_on_symbol_not_found := false;
-  Api.Env.export env.env;
+  Api.Env.export universo_env.env;
   C.flush ();
-  F.close env.out_file;
+  F.close universo_env.out_file;
   F.export in_path `Checking;
   F.export in_path `Solution;
   F.export in_path `Output
@@ -141,7 +144,7 @@ let cmd_options =
     , Arg.String (fun s -> F.mk_dir (F.output_directory) s; Api.Files.add_path s)
     , " (MANDATORY) Set the output directory" )
   ; ( "--theory"
-    , Arg.String (fun s -> F.mk_theory s; Format.eprintf "oops: %a" Api.Pp.Default.print_mident (P.md_of_file s); U.md_theory := P.md_of_file s)
+    , Arg.String (fun s -> F.mk_theory s; U.md_theory := P.md_of_file s)
     , " (MANDATORY) Theory file" )
   ; ( "--config"
     , Arg.String  (fun s -> Cmd.config_path := s)

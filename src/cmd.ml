@@ -116,18 +116,14 @@ let elab_signature : string -> S.t = fun in_path ->
 (** [to_checking_env f] returns the type checking environement for the file [f] *)
 let to_checking_env : string -> Checking.Checker.t = fun in_path ->
   (* FIXME: UGLY, rework to match the new API *)
-  let theory_signature = mk_theory () in
-  let md = B.mk_mident (Filename.basename in_path) in
-  let env = Api.Env.init (P.input_from_string md "") in
-  let sg = Api.Env.get_signature env in
-  S.import_signature sg theory_signature;
-  S.import_signature sg (elab_signature in_path);
+  let out = F.get_out_path in_path `Output in
+  let env = Api.Env.init (P.input_from_file out) in
   let constraints = mk_constraints () in
   let out_file = F.out_from_string in_path `Checking in
   { env; in_path; meta_out=output_meta_cfg (); constraints; out_file}
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
-let mk_theory : unit -> int -> O.theory = fun () ->
+let mk_smt_theory : unit -> int -> O.theory = fun () ->
   try
     let rules = Hashtbl.find config "qfuf_specification" in
     let meta = Dkmeta.meta_of_rules rules (output_meta_cfg ()) in
@@ -204,6 +200,6 @@ let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env = fun 
   let min         = int_of_string (find "minimum" "1") in
   let max         = int_of_string (find "maximum" "6") in
   let print       = find "print" "false" = "true" in
-  let mk_theory   = mk_theory () in
+  let mk_theory   = mk_smt_theory () in
   let env = {min;max;print;mk_theory} in
   (module S:Utils.SOLVER), env
