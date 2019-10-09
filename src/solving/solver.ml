@@ -23,7 +23,7 @@ let from_rule : R.pattern -> T.term -> U.cstr = fun pat right ->
     let right' = Elaboration.Var.name_of_uvar right in
     U.EqVar(left',right')
 
-module Make(S:SMTSOLVER) : SOLVER =
+module Make(Solver:SMTSOLVER) : SOLVER =
 struct
 
   (** [parse meta s] parses a constraint file. *)
@@ -46,7 +46,7 @@ struct
       in
       let cstr_file = F.get_out_path in_path `Checking in
       let cstrs = Api.Processor.handle_files [cstr_file] (module P) in
-      List.iter S.add cstrs
+      List.iter Solver.add cstrs
 
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
   let print_model meta model in_path =
@@ -80,7 +80,7 @@ struct
   let print_model meta model files =
     List.iter (print_model meta model) files
 
-  let solve = S.solve
+  let solve = Solver.solve
 end
 
 (** Performance are bad with LRA *)

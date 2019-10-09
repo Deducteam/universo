@@ -50,9 +50,11 @@ let subtype () = B.mk_name !md_theory (B.mk_ident "SubType")
 
 let forall () = B.mk_name !md_theory (B.mk_ident "forall")
 
+let sinf () = B.mk_name !md_theory (B.mk_ident "sinf")
+
 let true_ () = T.mk_Const B.dloc (B.mk_name !md_theory (B.mk_ident "true"))
 
-let sinf () = T.mk_Const B.dloc (B.mk_name !md_theory (B.mk_ident "sinf"))
+
 
 let rec term_of_level i =
   assert (i>=0);
@@ -64,7 +66,7 @@ let rec term_of_level i =
 let term_of_univ u =
   let lc = B.dloc in
   match u with
-  | Sinf  -> sinf ()
+  | Sinf  -> T.mk_Const lc (sinf ())
   | Var n -> T.mk_Const lc n
   | Enum i -> T.mk_App (T.mk_Const B.dloc (enum ())) (term_of_level i) []
 
@@ -139,7 +141,7 @@ exception Not_pred
 
 let extract_univ : T.term -> univ = fun t ->
   match t with
-  | T.Const _ when t = sinf () -> Sinf
+  | T.Const(_,n) when n = sinf () -> Sinf
   | T.Const(_,n) -> Var n
   | T.App (T.Const(_,c),n,[]) when B.name_eq c (enum ()) ->
     Enum (extract_level n)
