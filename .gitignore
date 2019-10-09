@@ -9,8 +9,7 @@ _build/
 *.dko
 *.dep
 .depend
-experiments/**/output/*.dk
-meta/**/*.dk
+tests/**/out
 
 
 # Editor temporary files.
@@ -19,11 +18,3 @@ meta/**/*.dk
 .\#*
 *.bak
 *.baki
-
-# LaTeX files
-*.aux
-*.log
-*.pdf
-*.pyg
-*.thm
-LaTeX/
