@@ -211,4 +211,4 @@ let _ =
   | Sys_error err -> Format.eprintf "ERROR %s.@." err; exit 1
   | Exit          -> exit 3
   | Solving.Utils.NoSolution ->
-    L.error "Universo found no solution"
+    L.error "Universo found no solution"; exit 2

@@ -27,7 +27,7 @@ struct
 
   let mk_univ : ctx -> U.univ -> t = fun ctx u ->
     match u with
-    | Sinf     -> failwith "sinf is not supported with LRA"
+    | Sinf     -> to_int ctx (-1)
     | Var name -> mk_var ctx (mk_name name)
     | Enum n   -> to_int ctx n
 
@@ -48,6 +48,7 @@ struct
     | L.Zero  ctx -> L.Zero (to_int ctx 0)
 
     | L.Succ ctx  -> L.One (fun a -> ZA.mk_add ctx [a; to_int ctx 1])
+    | L.Minus ctx -> L.One (fun a -> ZA.mk_unary_minus ctx a)
 
     | L.Eq   ctx  -> L.Two (ZB.mk_eq ctx)
     | L.Max  ctx  -> L.Two (mk_max ctx)

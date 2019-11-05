@@ -18,6 +18,8 @@ type ('a,_) op =
 
   | Succ  : 'a -> ('a,(z s)) op
 
+  | Minus : 'a -> ('a, (z s)) op
+
   | Eq    : 'a -> ('a,((z s) s)) op
   | Max   : 'a -> ('a,((z s) s)) op
   | IMax  : 'a -> ('a,((z s) s)) op
@@ -51,6 +53,7 @@ module MakeLraSpecif(Lra : LRA_REIFICATION) : LRA_SPECIFICATION =
 struct
 
   (* FIXME: exception handle *)
+  (* FIXME: reify should be called once, not on every constraint *)
   let rec reify : type c b. c -> (string * b) list -> (c,b) k -> T.term -> b =
     fun ctx env k t ->
     let reify' = reify ctx env k in
@@ -78,8 +81,10 @@ struct
     | App(Const(_,n),a,[]) ->
       if is_cst "succ" n then
         mk_op1 (Succ ctx) a
-        else
-          failwith "Wrong configuration pattern for rule"
+      else if is_cst "minus" n then
+        mk_op1 (Minus ctx) a
+      else
+        failwith "Wrong configuration pattern for rule"
     | App(Const(_,n),l,[r]) ->
       if is_cst "eq" n then
         mk_op2 (Eq ctx) l r
