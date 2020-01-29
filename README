@@ -16,7 +16,7 @@ By default, Universo tries to minimize the number of Universes needed, but it ca
 Compiling Universo is not standard (yet). It requires:
 
 - Dune
-- Using Dedukti on branch `typing-functor`
+- Using Dedukti on branch `functor-typing`
 - Using Dkmeta (compiled for the branch above)
 
 The branch will eventually be merge soon and eventually universo will be released on `opam`.
