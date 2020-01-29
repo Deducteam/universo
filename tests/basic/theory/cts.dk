@@ -98,11 +98,10 @@ def prod' : s1 : Sort -> s2 : Sort -> s3 : Sort ->
 
 
 (;-------------------------  Subtyping ----------------------------;)
-[a]                SubType _ _ a a --> true.
 [s1, s2]           SubType _  _  (univ' s1 _)     (univ' s2 _ )        --> Cumul s1 s2
 [s1,s2,s2',a,b,b'] SubType _  _ (prod' s1 s2 _ a b) (prod' _ s2' _ a b') -->
                   forall s1 a (x => SubType s2 s2' (b x) (b' x)).
-
+[a]          SubType _ _ a a --> true.
 
 (;---------------------------  Casts  -----------------------------;)
 
@@ -162,6 +161,7 @@ def cast' : s : Sort -> s' : Sort ->
 
 [s1,s2,A,B,a] cast' s1 _ A (cast' _ _ (univ' s2 _) _ B) a --> cast' s1 s2 A B a.
 
+(; specification for the tests ;)
 s1 : Sort.
 
 s2 : Sort.
