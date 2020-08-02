@@ -28,8 +28,6 @@ let log_univ fmt = log gre fmt
 let error s = Format.eprintf "\027[31m%s\027[0m%!@." s
 
 (** [enable_flag str] actives flags present in [str] *)
-let enable_flag : string -> unit =
- fun str ->
-  try Api.Env.set_debug_mode str
-  with Api.Env.DebugFlagNotRecognized c ->
-    if c = 's' then D.enable_flag debug_flag
+let enable_flag : string -> unit = fun str -> Api.Env.set_debug_mode str
+
+let enable_universo_flag : unit -> unit = fun () -> D.enable_flag debug_flag

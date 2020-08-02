@@ -172,7 +172,7 @@ let cmd_options =
       Arg.String (fun s -> Cmd.config_path := s),
       " (MANDATORY) Configuration file" );
     ( "-l",
-      Arg.Unit (fun () -> L.enable_flag "s"),
+      Arg.Unit (fun () -> L.enable_universo_flag ()),
       " Active the debug flag specific to universo" );
     ( "-d",
       Arg.String L.enable_flag,
