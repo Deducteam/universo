@@ -4,11 +4,14 @@ _build/
 *.docdir
 .merlin
 *.install
+universo
 
 # Dedukti files.
 *.dko
+*.dep
 .depend
-experiments/**/*.dk
+tests/**/out
+
 
 # Editor temporary files.
 *~
@@ -16,10 +19,3 @@ experiments/**/*.dk
 .\#*
 *.bak
 *.baki
-
-# LaTeX files
-*.aux
-*.log
-*.pdf
-*.pyg
-*.thm

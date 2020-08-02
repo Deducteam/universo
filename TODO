@@ -1,4 +1,7 @@
-- checker.ml suppose that the second argument is a sort. One can make that generic using rewrite rules
+- some dkos are generated at the root level, why?
 - 4 universes is not enough for the whole library but almost (39 files on 40).
 - One should understand why the function in vector_finset cannot be encoded in 3 universes.
-- Enrich Makefile's rule so that we do not type check many many times the same files.
+- Figure out how the solver can be speed up
+- Clean code with new API
+- Have a better documentation
+- Document configuration file --> it should be optional

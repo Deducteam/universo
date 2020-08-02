@@ -1,98 +1,218 @@
-module B = Basic
+module B = Kernel.Basic
+module E = Parsers.Entry
 module F = Common.Files
+module L = Common.Logic
+module M = Meta.Dkmeta
+module O = Common.Oracle
+module P = Parsers.Parser
+module R = Kernel.Rule
+module S = Kernel.Signature
+module T = Kernel.Term
 module U = Common.Universes
 
-(** The path to the rewrite rules mapping universes from the original theory to the one of Universo *)
-let compat_theory = ref ""
+(** The path that contains the configuration file *)
+let config_path = ref "universo_cfg.dk"
 
-(** The path to the rewrite rules mapping constructors of universes to pre-universe variable *)
-let compat_input  = ref ""
+let config = Hashtbl.create 11
 
-(** The path to the rewrite rules mapping universo construction to the one of the theory *)
-let compat_output = ref ""
+type cmd_error =
+  | ConfigurationFileNotFound of string
+  | NoTargetSpecification
+  | WrongConfiguration of E.entry
+  | NoOutputSection
+  | NoElaborationSection
+  | Misc of string
 
-(** The path to the rewrite rules that contains additional constraints for some identifiers *)
-let constraints_path = ref ""
+exception Cmd_error of cmd_error
 
-let mk_constraints : Dkmeta.cfg -> (B.name, U.pred) Hashtbl.t = fun meta ->
-  let ic = open_in !constraints_path in
-  let md = F.md_of_path !constraints_path in
+let sections =
+  [
+    "elaboration";
+    "output";
+    "constraints";
+    "solver";
+    "lra_specification";
+    "qfuf_specification";
+    "end";
+  ]
+
+let parse_config : unit -> unit =
+ fun () ->
+  let module P = struct
+    type t = unit
+
+    let section = ref ""
+
+    let parameters = ref []
+
+    let handle_entry env =
+      let (module Printer) = Api.Env.get_printer env in
+      let check_section s = List.mem s sections in
+      function
+      | E.Decl (_, id, _, _, _) when check_section (B.string_of_ident id) ->
+          if !section <> "" then (
+            Hashtbl.add config !section (List.rev !parameters);
+            parameters := [] );
+          section := B.string_of_ident id
+      | E.Rules (_, rs) -> parameters := rs @ !parameters
+      | _ as e ->
+          raise
+          @@ Cmd_error
+               (Misc
+                  (Format.asprintf
+                     "Configuration file (entry not recognized): %a"
+                     Printer.print_entry e))
+
+    let get_data _ = ()
+  end in
+  Api.Processor.T.handle_files [ !config_path ] (module P)
+
+let elaboration_meta_cfg : unit -> M.cfg =
+ fun () ->
+  let rules =
+    try Hashtbl.find config "elaboration"
+    with _ -> raise @@ Cmd_error NoElaborationSection
+  in
+  M.meta_of_rules rules M.default_config
+
+let output_meta_cfg : unit -> M.cfg =
+ fun () ->
+  let rules =
+    try Hashtbl.find config "output"
+    with _ -> raise @@ Cmd_error NoOutputSection
+  in
+  M.meta_of_rules rules M.default_config
+
+let mk_constraints : unit -> (B.name, U.pred) Hashtbl.t =
+ fun () ->
   let table = Hashtbl.create 11 in
-  let mk_rule : Rule.untyped_rule -> unit = fun r ->
-    let open Rule in
-    let name = match r.pat with
-      | Rule.Pattern(_,name,[]) -> name
+  let mk_rule : R.partially_typed_rule -> unit =
+   fun r ->
+    let name =
+      match r.pat with
+      | R.Pattern (_, name, []) -> name
       | _ -> failwith "Constraints are not in correct format"
     in
-    let pred = try U.extract_pred (Dkmeta.mk_term meta r.rhs)
+    (* let pred = try U.extract_pred (M.mk_term meta r.rhs) *)
+    let pred =
+      try U.extract_pred r.rhs
       with U.Not_pred -> failwith "Constraints are not in correct format"
     in
     Hashtbl.add table name pred
   in
-  let mk_entry = function
-    | Entry.Rules(_,rs) ->
-      List.iter mk_rule rs
-    | _ -> failwith "Constraints are not in correct format"
-  in
-  Parser.Parse_channel.handle md mk_entry ic;
+  (try List.iter mk_rule (Hashtbl.find config "constraints") with _ -> ());
   table
 
 (** [add_rules sg rs] add the rewrite rules [rs] to the signature [sg] *)
 let add_rules sg rs =
   (* Several rules might be bound to different constant *)
-  let add_rule sg r =
-    Signature.add_rules sg [(Rule.to_rule_infos r)]
-  in
+  let add_rule sg r = S.add_rules sg [ R.to_rule_infos r ] in
   List.iter (add_rule sg) rs
 
-  (** Signature that contains a generic theory of universes for Universo. Imperative features of Dedukti forces us to generate this signature for each file otherwise, this signature would contain too many declarations *)
-let universo () =
-  F.signature_of_file "encodings/universo.dk"
-
-(** [theory_sort ()] returns the type of universes in the original theory *)
-let theory_sort : unit -> Term.term = fun () ->
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
-  let sort = Term.mk_Const B.dloc U.sort in
-  (* compat_output (universo.sort) --> <theory>.sort *)
-  Dkmeta.mk_term meta sort
-
 (** [to_elaboration_env f] generates a fresh environement to elaborate file [f]. *)
-let to_elaboration_env : F.path -> Elaboration.Elaborate.t = fun in_path ->
+let to_elaboration_env : F.path -> Elaboration.Elaborate.t =
+ fun in_path ->
   let file = F.out_from_string in_path `Elaboration in
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_input in
-  let theory_sort = theory_sort () in
-  {file; theory_sort; meta}
+  { file; meta = elaboration_meta_cfg () }
 
-(** [mk_theory meta] returns a signature that corresponds to the original where universes of universo have been plugged in. This allows us to type check as if we were in the original theory but Universo can recognize easily a universe. *)
-let mk_theory : Dkmeta.cfg -> Signature.t = fun meta ->
-  let ic = open_in !F.theory in
-  let md = F.md_of_path !F.theory in
-  let entries = Parser.Parse_channel.parse md ic in
-  let sg = universo () in
-  (* The line below does the main trick: it normalizes every entry of the original theory with the universes of Universo *)
-  let entries' = List.map (Dkmeta.mk_entry meta md) entries in
-  let sg = Entry.to_signature !F.theory ~sg entries' in
-  (* We include the compat theory so that the type checker transforms automatically a universe from the original theory to the one of Universo. *)
-  F.signature_of_file ~sg !compat_theory
+(** [mk_theory ()] returns the theory used by universo. *)
+let mk_theory : unit -> S.t =
+ fun () ->
+  Api.Processor.(
+    handle_files [ F.get_theory () ] Api.Processor.SignatureBuilder)
 
-(** [elab_signature f] returns the signature containing all the universes declaration associated to
-    file [f] *)
-let elab_signature : string -> Signature.t = fun in_path ->
-  F.signature_of_file (F.get_out_path in_path `Elaboration)
+(* (\** [elab_signature f] returns the signature containing all the universes declaration associated to *)
+(*     file [f] *\) *)
+(* let elab_signature : string -> S.t = fun in_path -> *)
+(*   F.signature_of_file (F.get_out_path in_path `Elaboration) *)
 
 (** [to_checking_env f] returns the type checking environement for the file [f] *)
-let to_checking_env : string -> Checking.Checker.t = fun in_path ->
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_theory in
-  let theory_signature = mk_theory meta in
-  let sg = Signature.make (Filename.basename in_path) in
-  Signature.import_signature sg theory_signature;
-  Signature.import_signature sg (elab_signature in_path);
-  let meta_out = Dkmeta.meta_of_file Dkmeta.default_config !compat_output in
-  let constraints = mk_constraints meta in
-  { sg; in_path; meta_out; constraints}
+let to_checking_env : string -> Checking.Checker.t =
+ fun in_path ->
+  (* FIXME: UGLY, rework to match the new API *)
+  let out = F.get_out_path in_path `Output in
+  let env = Api.Env.init (P.input_from_file out) in
+  let constraints = mk_constraints () in
+  let out_file = F.out_from_string in_path `Checking in
+  { env; in_path; meta_out = output_meta_cfg (); constraints; out_file }
 
 (** [theory_meta f] returns the meta configuration that allows to elaborate a theory for the SMT solver *)
-let theory_meta : unit -> Dkmeta.cfg = fun () ->
-  let open Dkmeta in
-  let meta = Dkmeta.meta_of_file Dkmeta.default_config !compat_theory in
-  {sg=mk_theory meta; beta=true;encoding=None;meta_rules=None}
+let mk_smt_theory : unit -> int -> O.theory =
+ fun () ->
+  try
+    let rules = Hashtbl.find config "qfuf_specification" in
+    let meta = M.meta_of_rules rules (output_meta_cfg ()) in
+    O.mk_theory meta
+  with Not_found -> raise @@ Cmd_error NoTargetSpecification
+
+let find_predicate s r =
+  match r.R.pat with
+  | Pattern (_, n', _) -> B.string_of_ident (B.id n') = s
+  | _ -> false
+
+let get_lra_specification_config : string -> string list * T.term =
+ fun s ->
+  try
+    let rs = Hashtbl.find config "lra_specification" in
+    let r = List.find (find_predicate s) rs in
+    let to_string = function
+      | R.Var (_, id, _, _) -> B.string_of_ident id
+      | _ -> assert false
+    in
+    match r.pat with
+    | R.Pattern (_, _, l) -> (List.map to_string l, r.rhs)
+    | _ -> assert false
+  with _ -> raise @@ Cmd_error (Misc "Wrong solver specification")
+
+let mk_lra_reification : unit -> (module L.LRA_REIFICATION) =
+ fun () ->
+  ( module struct
+    let axiom_specification = get_lra_specification_config "axiom"
+
+    let rule_specification = get_lra_specification_config "rule"
+
+    let cumul_specification = get_lra_specification_config "cumul"
+  end )
+
+let mk_solver : unit -> (module Solving.Utils.SOLVER) * Solving.Utils.env =
+ fun () ->
+  let open Solving in
+  let get_rhs (r : R.partially_typed_rule) =
+    match r.rhs with
+    | T.Const (_, n) -> B.string_of_ident (B.id n)
+    | _ -> raise @@ Cmd_error (WrongConfiguration (E.Rules (B.dloc, [ r ])))
+  in
+  let find_lhs opt r =
+    match r.R.pat with
+    | Pattern (_, n, _) -> B.string_of_ident (B.id n) = opt
+    | _ -> false
+  in
+  let options = try Hashtbl.find config "solver" with _ -> [] in
+  let find key default =
+    try get_rhs @@ List.find (find_lhs key) options with _ -> default
+  in
+  let smt = find "smt" "z3" in
+  let logic = find "logic" "qfuf" in
+  let opt = find "opt" "uf" in
+  let (module SS : Utils.SMTSOLVER) =
+    if smt = "z3" then
+      let open Z3cfg in
+      if logic = "lra" then
+        let (module R : L.LRA_REIFICATION) = mk_lra_reification () in
+        (module Make (Arith (L.MakeLraSpecif (R))))
+      else if logic = "qfuf" then (module Make (Syn))
+      else raise @@ Cmd_error (Misc "Wrong solver specification: logic")
+    else raise @@ Cmd_error (Misc "Wrong solver specification: smt")
+  in
+  let (module S : Utils.SOLVER) =
+    if opt = "uf" then (module Solver.MakeUF (SS))
+    else if opt = "normal" then (module Solver.Make (SS))
+    else raise @@ Cmd_error (Misc "Wrong solver specification: opt")
+  in
+  let open Utils in
+  let min = int_of_string (find "minimum" "1") in
+  let max = int_of_string (find "maximum" "6") in
+  let print = find "print" "false" = "true" in
+  let mk_theory = mk_smt_theory () in
+  let env = { min; max; print; mk_theory } in
+  ((module S : Utils.SOLVER), env)

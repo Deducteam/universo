@@ -1,3 +1,4 @@
 (library
         (name common)
-        (libraries dkmeta dedukti))
+	(public_name universo.common)
+        (libraries dkmeta dedukti.api dedukti.kernel))

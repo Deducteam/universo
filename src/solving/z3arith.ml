@@ -1,67 +1,84 @@
-module B = Basic
+module B = Kernel.Basic
+module L = Common.Logic
 module U = Common.Universes
-module Z = Z3cfg
-module ZA = Z.Arithmetic
-module ZB = Z.Boolean
+module ZA = Z3.Arithmetic
+module ZB = Z3.Boolean
 module ZI = ZA.Integer
 
-type t = Z.Expr.expr
+module Make (Spec : L.LRA_SPECIFICATION) = struct
+  type t = Z3.Expr.expr
 
-let mk_name : B.name -> string = fun name ->
-  B.string_of_mident (B.md name) ^ (B.string_of_ident (B.id name))
+  type smt_model = Z3.Model.model
 
-let int_sort = ZI.mk_sort Z.ctx
+  type ctx = Z3.context
 
-let mk_var  : string -> t = fun s ->
-  Z.Expr.mk_const_s Z.ctx s int_sort
+  let logic = `Lra
 
-let to_int : int -> t = fun i -> ZI.mk_numeral_i Z.ctx i
+  let mk_name : B.name -> string =
+   fun name -> B.string_of_mident (B.md name) ^ B.string_of_ident (B.id name)
 
-let mk_prop : t = to_int 0
+  let int_sort ctx = ZI.mk_sort ctx
 
-let mk_set : t = to_int 1
+  let mk_var : ctx -> string -> t =
+   fun ctx s -> Z3.Expr.mk_const_s ctx s (int_sort ctx)
 
-let mk_type : int -> t = fun i -> to_int (i+1)
+  let to_int : ctx -> int -> t = fun ctx i -> ZI.mk_numeral_i ctx i
 
-let mk_univ : U.univ -> t = function
-  | Var cst -> mk_var (mk_name cst)
-  | Prop -> mk_prop
-  | Set -> mk_set
-  | Type(i) -> mk_type i
+  let mk_univ : ctx -> U.univ -> t =
+   fun ctx u ->
+    match u with
+    | Sinf -> to_int ctx (-1)
+    | Var name -> mk_var ctx (mk_name name)
+    | Enum n -> to_int ctx n
 
-let mk_axiom : t -> t -> t = fun l r ->
-  ZB.mk_ite Z.ctx (ZB.mk_eq Z.ctx l mk_prop)
-    (ZB.mk_eq Z.ctx (ZA.mk_add Z.ctx [l;(to_int 1)]) r)
-    (ZB.mk_eq Z.ctx (ZA.mk_add Z.ctx [l;(to_int 1)]) r)
+  let mk_max : ctx -> t -> t -> t =
+   fun ctx l r -> ZB.mk_ite ctx (ZA.mk_le ctx l r) r l
 
-let mk_cumul : t -> t -> t = fun l r -> ZA.mk_le Z.ctx l r
+  let mk_imax : ctx -> t -> t -> t =
+   fun ctx l r ->
+    ZB.mk_ite ctx
+      (ZB.mk_eq ctx r (to_int ctx 0))
+      (to_int ctx 0) (mk_max ctx l r)
 
-let mk_max : t -> t -> t = fun l r ->
-  ZB.mk_ite Z.ctx (ZA.mk_le Z.ctx l r) r l
+  let mk : type a. (ctx, a) L.op -> (a, t) L.arrow =
+   fun op ->
+    match op with
+    | L.True ctx -> L.Zero (ZB.mk_true ctx)
+    | L.False ctx -> L.Zero (ZB.mk_false ctx)
+    | L.Zero ctx -> L.Zero (to_int ctx 0)
+    | L.Succ ctx -> L.One (fun a -> ZA.mk_add ctx [ a; to_int ctx 1 ])
+    | L.Minus ctx -> L.One (fun a -> ZA.mk_unary_minus ctx a)
+    | L.Eq ctx -> L.Two (ZB.mk_eq ctx)
+    | L.Max ctx -> L.Two (mk_max ctx)
+    | L.IMax ctx -> L.Two (mk_imax ctx)
+    | L.Le ctx -> L.Two (ZA.mk_le ctx)
+    | L.Ite ctx -> L.Three (ZB.mk_ite ctx)
 
-let mk_rule : t -> t -> t -> t = fun x y z ->
-  ZB.mk_ite Z.ctx (ZB.mk_eq Z.ctx y mk_prop)
-    (ZB.mk_eq Z.ctx z mk_prop)
-    (ZB.mk_eq Z.ctx z (mk_max x y))
-(*    (ZB.mk_ite Z.ctx (ZB.mk_eq Z.ctx x mk_prop)
-       (ZB.mk_and Z.ctx [ZB.mk_eq Z.ctx y mk_prop; ZB.mk_eq Z.ctx z mk_prop])
-       (ZB.mk_eq Z.ctx z (mk_max x y))) *)
+  let mk = { L.mk }
 
-let mk_bounds : bool -> string -> int -> t = fun predicative var i ->
-  let var = mk_var var in
-  if predicative then
-    ZB.mk_and Z.ctx [ZA.mk_le Z.ctx (to_int 1) var; ZA.mk_lt Z.ctx var (to_int i)]
-  else
-    ZB.mk_and Z.ctx [ZA.mk_le Z.ctx (to_int 0) var; ZA.mk_lt Z.ctx var (to_int i)]
+  let mk_axiom = Spec.mk_axiom mk
 
-let solution_of_var : int -> Z.Model.model -> string -> U.univ option = fun _ model var ->
-  match Z.Model.get_const_interp_e model (mk_var var) with
-  | None -> assert false
-  | Some e ->
-    let i = Big_int.int_of_big_int (ZI.get_big_int e) in
-    if i = 0 then
-      Some U.Prop
-    else if i = 1 then
-      Some (U.Type 0)
-    else
-      Some (U.Type (i - 1))
+  let mk_rule = Spec.mk_rule mk
+
+  let mk_cumul = Spec.mk_cumul mk
+
+  let mk_bounds ctx string up =
+    let right =
+      if up > 0 then ZA.mk_le ctx (mk_var ctx string) (to_int ctx (up - 1))
+      else ZB.mk_true ctx
+    in
+    let left = ZA.mk_le ctx (to_int ctx 0) (mk_var ctx string) in
+    ZB.mk_and ctx [ left; right ]
+
+  let solution_of_var : ctx -> int -> Z3.Model.model -> string -> U.univ =
+   fun ctx _ model var ->
+    match Z3.Model.get_const_interp_e model (mk_var ctx var) with
+    | None ->
+        Format.eprintf "%s@." var;
+        assert false
+    | Some e ->
+        let v = Z.to_int (ZI.get_big_int e) in
+        U.Enum v
+
+  let mk_theory = false
+end

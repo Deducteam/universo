@@ -1,199 +1,253 @@
-module B = Basic
+module B = Kernel.Basic
+module C = Common.Constraints
 module F = Common.Files
 module L = Common.Log
-module V = Elaboration.Var
+module M = Meta.Dkmeta
+module P = Api.Pp.Default
+module S = Kernel.Signature
+module T = Kernel.Term
 module U = Common.Universes
-module C = Common.Constraints
+module V = Elaboration.Var
 
-type t =
-  {
-    sg:Signature.t;
-    (** The current signature used for type checking *)
-    in_path:F.path;
-    (** path of the original file that should be typed checked *)
-    meta_out:Dkmeta.cfg;
-    (** Meta configuration to translate back universes of Universo to the original theory universes *)
-    constraints: (B.name, U.pred) Hashtbl.t
-    (** additional user constraints *)
-  }
+type t = {
+  env : Api.Env.t;  (** The current environement used for type checking *)
+  in_path : F.path;
+      (** path of the original file that should be typed checked *)
+  meta_out : M.cfg;
+      (** Meta configuration to translate back universes of Universo to the original theory universes *)
+  constraints : (B.name, U.pred) Hashtbl.t;  (** additional user constraints *)
+  out_file : F.cout F.t;  (** File were constraints are written *)
+}
 
-(** Only used as default value for [global_env] *)
-let default : t = {sg          = Signature.make "";
-                   in_path     = "";
-                   meta_out    = Dkmeta.default_config;
-                   constraints = Hashtbl.create 11}
+(* This is a reference because we have to use it in the Reduction Engine *)
 
 (** [globel_env] is a reference to the current type checking environment. *)
-(* This is a reference because we have to use it in the Reduction Engine and we have no control over
-   the interface *)
-let global_env : t ref = ref default
+let global_env : t option ref = ref None
 
+let get = function
+  | None -> failwith "Environment not initialized"
+  | Some env -> env
 
-module RE : Reduction.RE =
+let of_global_env env = { C.file = env.out_file; C.meta = env.meta_out }
+
+module MakeRE (Conv : Kernel.Reduction.ConvChecker) : Kernel.Reduction.S =
 struct
-  open Basic
+  module rec R : Kernel.Reduction.S =
+    Kernel.Reduction.Make (Conv) (Kernel.Matching.Make (R))
+
+  module Rule = Kernel.Rule
+  include R
 
   (** Name for rules that reduce variables. Names are irrelevant for Universo. *)
-  let dummy_name = Rule.Gamma(false, mk_name (mk_mident "dummy") (mk_ident "dummy"))
+  let dummy_name =
+    Rule.Gamma (false, B.mk_name (B.mk_mident "dummy") (B.mk_ident "dummy"))
+
+  (* FIXME: this rules are not exported hence redundant rules might be added when the current module is      impoted somewhere else *)
 
   (** [add_rule vl vr] add to the current signature the rule that maps [vl] to [vr]. *)
-  (* FIXME: this rules are not exported hence redudant rule might be added when the current module is      impoted somewhere else *)
-  let rec add_rule  vl vr =
-    let pat = Rule.Pattern(Basic.dloc,vl,[]) in
-    let rhs = Term.mk_Const Basic.dloc vr in
-    let rule = Rule.(
-        {
-          ctx = [];
-          pat;
-          rhs;
-          name=dummy_name;
-        })
-    in
-    Signature.add_rules !global_env.sg  [Rule.to_rule_infos rule]
-  and whnf sg t =
-    Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Whnf sg t
-  and snf sg t =
-    Reduction.default_reduction ~conv_test:are_convertible ~match_test:matching_test Reduction.Snf sg t
+  let rec add_rule vl vr =
+    let pat = Rule.Pattern (B.dloc, vl, []) in
+    let rhs = T.mk_Const B.dloc vr in
+    let rule = Rule.{ ctx = []; pat; rhs; name = dummy_name } in
+    let sg = Api.Env.get_signature (get !global_env).env in
+    S.add_rules sg [ Rule.to_rule_infos rule ]
 
   and univ_conversion l r =
-    if Term.term_eq l r then (* should not happen *)
-      true
-    else
-        (* If two universes should be equal, then we add the constraint [l =?= r] AND a rule that
-           makes [l] convertible to [r]. Order matters and is handled by the module U. *)
-        if V.is_uvar l && V.is_uvar r then
-          C.mk_cstr add_rule (U.EqVar(V.name_of_uvar l, V.name_of_uvar r))
-          (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
-          (* FIXME: we should not rely so tighly to the behavior of Dedukti. Moreover, I don't know how this behavior can be extended to other theories *)
-        else if (Term.term_eq U.true_ l) then
-          C.mk_cstr add_rule (U.Pred(U.extract_pred r))
-          (* Encoding of cumulativity uses the rule lift s s a --> a. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. This quite ugly to be so dependent of that rule, but I have found no nice solution to resolve that one. *)
-        else if U.is_lift' l && not (U.is_lift' r) then
-          let s1,s2 = U.extract_lift' l in
-          (* We have to compute there whnf because lift' s s' is already a whnf but not s and s' *)
-          let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in
-          if Reduction.are_convertible !global_env.sg s1 s2 then
-            true
-          else (
-            assert (V.is_uvar s1 && V.is_uvar s2);
-            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2)))
-        else if not (U.is_lift' l) && (U.is_lift' r) then
-          let s1,s2 = U.extract_lift' r in
-          let s1,s2 = whnf !global_env.sg s1, whnf !global_env.sg s2 in
-          if Reduction.are_convertible !global_env.sg s1 s2 then
-            true
-          else (
-            assert (V.is_uvar s1 && V.is_uvar s2);
-            C.mk_cstr add_rule (U.EqVar(V.name_of_uvar s1, V.name_of_uvar s2)))
-        else
-          false
-
-  and are_convertible_lst sg : (Term.term * Term.term) list -> bool = function
-    | [] -> true
-    | (l,r)::lst ->
-      if Term.term_eq l r then are_convertible_lst sg lst
+    let sg = Api.Env.get_signature (get !global_env).env in
+    if T.term_eq l r then true
+    else if
+      (* If two universes should be equal, then we add the constraint [l =?= r] AND a rule that
+         makes [l] convertible to [r]. Order matters and is handled by the module U. *)
+      V.is_uvar l && V.is_uvar r
+    then
+      C.mk_cstr
+        (of_global_env (get !global_env))
+        add_rule
+        (U.EqVar (V.name_of_uvar l, V.name_of_uvar r))
+    else if V.is_uvar l && U.is_enum r then (
+      let r = U.extract_univ r in
+      ignore
+        (C.mk_cstr
+           (of_global_env (get !global_env))
+           add_rule
+           (U.Pred (U.Cumul (Var (V.name_of_uvar l), r))));
+      C.mk_cstr
+        (of_global_env (get !global_env))
+        add_rule
+        (U.Pred (U.Cumul (r, Var (V.name_of_uvar l)))) )
+    else if V.is_uvar r && U.is_enum l then (
+      let l = U.extract_univ l in
+      ignore
+        (C.mk_cstr
+           (of_global_env (get !global_env))
+           add_rule
+           (U.Pred (U.Cumul (Var (V.name_of_uvar r), l))));
+      C.mk_cstr
+        (of_global_env (get !global_env))
+        add_rule
+        (U.Pred (U.Cumul (l, Var (V.name_of_uvar r))))
+      (* The witness of a universe constraint is always I. It's type should should be convertible to true. Knowing Dedukti behavior, the expected type is the left one (true) and the right one is the predicate to satisfy *)
+      )
+    else if T.term_eq (U.true_ ()) l then
+      if U.is_subtype r then
+        let s = U.extract_subtype r in
+        are_convertible sg (U.true_ ()) s
+      else if U.is_forall r then
+        let s = U.extract_forall r in
+        are_convertible sg (U.true_ ()) s
       else
-        begin
-          let l',r' = whnf sg l, whnf sg r in
-          if univ_conversion l' r' then
-            are_convertible_lst sg lst
-          else
-            are_convertible_lst sg (Reduction.conversion_step (l',r') lst)
-        end
+        C.mk_cstr
+          (of_global_env (get !global_env))
+          add_rule
+          (U.Pred (U.extract_pred r))
+        (* Encoding of cumulativity uses the rule cast _ _ A A t --> t. Hence, sometimes [lift ss a =?= a]. This case is not capture by the cases above. This quite ugly to be so dependent of that rule, but I have found no nice solution to resolve that one. *)
+    else if U.is_cast' l && not (U.is_cast' r) then
+      let _, _, a, b, t = U.extract_cast' l in
+      are_convertible sg a b && are_convertible sg t r
+    else if (not (U.is_cast' l)) && U.is_cast' r then
+      let _, _, a, b, t = U.extract_cast' r in
+      are_convertible sg a b && are_convertible sg l t
+    else
+      (* TODO: One should handle one more case with Cumul. Currentl Cumul is assumed being linear but it is hackish because it assumes a theory file where the order of rules matter. In particular, having Cumul linear forces to have the non linear rule for Subtype first. Otherwise, the system is not confluent. However, having Cumul non linear requires to add more cases here. Non linearity should be also handled in matching_test function. *)
+      false
+
+  and are_convertible_lst sg : (T.term * T.term) list -> bool = function
+    | [] -> true
+    | (l, r) :: lst ->
+        if T.term_eq l r then are_convertible_lst sg lst
+        else
+          (*Format.printf "l:%a@." Pp.print_term l;
+            Format.printf "r:%a@." Pp.print_term r; *)
+          let l', r' = (whnf sg l, whnf sg r) in
+          (* Format.printf "l':%a@." Pp.print_term l';
+             Format.printf "r':%a@." Pp.print_term r'; *)
+          if univ_conversion l' r' then are_convertible_lst sg lst
+          else are_convertible_lst sg (R.conversion_step sg (l', r') lst)
 
   and are_convertible sg t1 t2 =
-    try are_convertible_lst sg [(t1,t2)]
-    with Reduction.NotConvertible -> false
+    try are_convertible_lst sg [ (t1, t2) ]
+    with Kernel.Reduction.Not_convertible -> false
 
-  and matching_test r sg t1 t2 =
-    if Term.term_eq t1 t2 then
-      true
+  and constraint_convertibility _cstr r sg t1 t2 =
+    if T.term_eq t1 t2 then true
     else
       match r with
-      | Rule.Gamma(_,rn) ->
-        (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a. *)
-        (* FIXME: this is a bug of dkmeta that rule names are not preserved *)
-        if (md rn) = F.md_of_path !F.theory  then
-          false
-        else
-          are_convertible sg t1 t2
-      | Rule.Delta(_) ->
-        are_convertible sg t1 t2
-      | Rule.Beta -> assert false
+      | Rule.Gamma (_, rn) ->
+          (* We need to avoid non linear rule of the theory otherwise we may produce inconsistent constraints: lift s s' a should not always reduce to a.*)
+          if B.string_of_ident (B.id rn) = "id_cast" then false
+          else are_convertible sg t1 t2
+      | _ -> are_convertible sg t1 t2
 end
 
-module T = Typing.Make(RE)
+module rec RE : Kernel.Reduction.S = MakeRE (RE)
 
-let check_user_constraints : (B.name, U.pred) Hashtbl.t -> B.name -> Term.term -> unit =
-  fun constraints name ty ->
-    let get_uvar ty =
-      match ty with
-      (* this line higly depends on the encoding :'( *)
-      | Term.App(_, (Term.Const(_,name) as t) ,_) when V.is_uvar t -> name
-      | _ -> assert false
+module Typing = Kernel.Typing.Make (RE)
+
+(** [check_user_constraints table name t] checks whether the user has added constraints on the onstant [name] and if so, add this constraint. In [t], every universo variable (md.var) are replaced by the sort associated to the constant [name]. *)
+let check_user_constraints :
+    (B.name, U.pred) Hashtbl.t -> B.name -> T.term -> unit =
+ fun constraints name ty ->
+  let get_uvar ty =
+    match ty with
+    | T.App (_, (T.Const (_, name) as t), _) when V.is_uvar t -> name
+    | _ -> assert false
+  in
+  if Hashtbl.mem constraints name then
+    let pred = Hashtbl.find constraints name in
+    let uvar = get_uvar ty in
+    let replace_univ : U.univ -> U.univ = function
+      | Var _ -> Var uvar
+      | _ as t -> t
     in
-    if Hashtbl.mem constraints name then
-      let pred = Hashtbl.find constraints name in
-      let uvar = get_uvar ty in
-      let replace_univ : U.univ -> U.univ =
-        function
-        | Var _ -> Var uvar
-        | _ as t -> t
-      in
-      let replace : U.pred -> U.pred =
-        function
-        | Axiom(s,s') -> Axiom(replace_univ s, replace_univ s')
-        | Cumul(s,s') -> Cumul(replace_univ s, replace_univ s')
-        | Rule(s,s',s'') -> Rule(replace_univ s, replace_univ s', replace_univ s'')
-      in
-      ignore(C.mk_cstr (fun _ -> assert false) (U.Pred (replace pred)))
+    let replace : U.pred -> U.pred = function
+      | Axiom (s, s') -> Axiom (replace_univ s, replace_univ s')
+      | Cumul (s, s') -> Cumul (replace_univ s, replace_univ s')
+      | Rule (s, s', s'') ->
+          Rule (replace_univ s, replace_univ s', replace_univ s'')
+    in
+    ignore
+      (C.mk_cstr
+         (of_global_env (get !global_env))
+         (fun _ -> assert false)
+         (U.Pred (replace pred)))
+
+(* TODO: universo_env and env should be only one *)
 
 (** [mk_entry env e] type checks the entry e in the same way then dkcheck does. However, the convertibility tests is hacked so that we can add constraints dynamically while type checking the term. This is really close to what is done with typical ambiguity in Coq. *)
-let mk_entry : t -> Entry.entry -> unit = fun env e ->
-  let open Entry in
-  let open Term in
-  global_env := env;
+let mk_entry : t -> Api.Env.t -> Parsers.Entry.entry -> unit =
+ fun universo_env env e ->
+  let module E = Parsers.Entry in
+  let module Rule = Kernel.Rule in
+  global_env := Some universo_env;
+  let sg = Api.Env.get_signature universo_env.env in
   let _add_rules rs =
     let ris = List.map Rule.to_rule_infos rs in
-    Signature.add_rules env.sg ris
+    S.add_rules sg ris
   in
   match e with
-  | Decl(lc,id,st,ty) ->
-    L.log_check "[CHECK] %a" Pp.print_ident id;
-    check_user_constraints env.constraints (Basic.mk_name (F.md_of env.in_path `Output) id) ty;
-    (* Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id; *)
-    begin
-      match T.inference env.sg ty with
-      | Kind | Type _ -> Signature.add_declaration env.sg lc id st ty
-      | s -> raise (Typing.TypingError (Typing.SortExpected (ty,[],s)))
-    end
-  | Def(lc,id,opaque,mty,te) ->
-    L.log_check "[CHECK] %a" Pp.print_ident id;
-    (* Format.fprintf env.check_fmt "@.(; %a ;)@." Pp.print_ident id; *)
-    let open Rule in
-    begin
-      let ty = match mty with
-        | None -> T.inference env.sg te
-        | Some ty -> T.checking env.sg te ty; ty
+  | Decl (lc, id, sc, st, ty) -> (
+      L.log_check "[CHECKING] %a" P.print_ident id;
+      check_user_constraints universo_env.constraints
+        (B.mk_name (F.md_of universo_env.in_path `Output) id)
+        ty;
+      Format.fprintf
+        (F.fmt_of_file universo_env.out_file)
+        "@.(; %a ;)@." P.print_ident id;
+      match Typing.inference sg ty with
+      | Kind | Type _ -> S.add_declaration sg lc id sc st ty
+      | s ->
+          raise
+            (Kernel.Typing.Typing_error (Kernel.Typing.SortExpected (ty, [], s)))
+      )
+  | Def (lc, id, sc, opaque, mty, te) -> (
+      L.log_check "[CHECKING] %a" P.print_ident id;
+      Format.fprintf
+        (F.fmt_of_file universo_env.out_file)
+        "@.(; %a ;)@." P.print_ident id;
+      let open Rule in
+      let ty =
+        match mty with
+        | None -> Typing.inference sg te
+        | Some ty ->
+            Typing.checking sg te ty;
+            ty
       in
       match ty with
-      | Kind -> raise (Env.EnvError (lc, Env.KindLevelDefinition id))
+      | Kind ->
+          raise
+            (Api.Env.Env_error
+               ( env,
+                 lc,
+                 Kernel.Typing.Typing_error Kernel.Typing.KindIsNotTypable ))
       | _ ->
-        if opaque then Signature.add_declaration env.sg lc id Signature.Static ty
-        else
-          let _ = Signature.add_declaration env.sg lc id Signature.Definable ty in
-          let cst = Basic.mk_name (F.md_of !global_env.in_path `Output) id in
-          let rule =
-            { name= Delta(cst) ;
-              ctx = [] ;
-              pat = Pattern(lc, cst, []);
-              rhs = te ;
-            }
-          in
-          _add_rules [rule]
-    end
-  | Rules(_,rs) ->
-    let _ = List.map (T.check_rule env.sg) rs in
-    _add_rules rs
+          if opaque then S.add_declaration sg lc id sc S.Static ty
+          else
+            let _ = S.add_declaration sg lc id sc (S.Definable T.Free) ty in
+            let cst =
+              B.mk_name (F.md_of (get !global_env).in_path `Output) id
+            in
+            let rule =
+              {
+                name = Delta cst;
+                ctx = [];
+                pat = Pattern (lc, cst, []);
+                rhs = te;
+              }
+            in
+            _add_rules [ rule ] )
+  | Rules (_, rs) ->
+      let open Rule in
+      let _ =
+        List.map
+          (fun (r : partially_typed_rule) ->
+            Format.fprintf
+              (F.fmt_of_file universo_env.out_file)
+              "@.(; %a ;)@." Rule.pp_rule_name r.name;
+            Typing.check_rule sg r)
+          rs
+      in
+      _add_rules rs
   | Require _ -> () (* FIXME: How should we handle a Require command? *)
-  | _ -> assert false (* other commands are not supported by this is only by lazyness. *)
+  | _ -> assert false
+
+(* other commands are not supported by this is only by lazyness. *)

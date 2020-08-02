@@ -1,179 +1,171 @@
+module B = Kernel.Basic
+module C = Common.Constraints
+module E = Parsers.Entry
 module F = Common.Files
 module L = Common.Log
+module M = Meta.Dkmeta
 module O = Common.Oracle
+module P = Parsers.Parser
+module R = Kernel.Rule
+module S = Kernel.Signature
+module T = Kernel.Term
 module U = Common.Universes
+open Utils
 
-(** [model] is a function that associate to each fresh universe a concrete universe. *)
-type model = Basic.name -> U.univ
-
-(** [is_predicative] says if the solution should live in a predicative theory. *)
-type is_predicative = bool
-
-(** Signature for an abstract solver *)
-module type SOLVER =
-sig
-  (** [add pred] add the predicate [cstr] to the solver  *)
-  val add   : U.cstr -> unit
-
-  (** [solve mk_theory] call the solver and returns the mimimum number of universes needed to solve the constraints as long as the model. The theory used by solver depends on the number of universes needed. Hence one needs to provide a function [mk_theory] that builds a theory when at most [i] are used.*)
-  val solve   : O.theory_maker -> is_predicative -> int * model
-
-end
-
-(** A concrete implementation of a solver using Z3 with non interpreted symbol functions for universes *)
-module Z3Syn : Z3cfg.ALGEBRAIC = Z3syn
-
-module Z3Arith : Z3cfg.ALGEBRAIC = Z3arith
-
-module type S =
-sig
-  val parse : Dkmeta.cfg -> F.path -> unit
-
-  val print_model : Dkmeta.cfg -> model -> F.path -> unit
-
-  val solve : O.theory_maker -> is_predicative -> int * model
-end
-
-
-(** [from_rule pat rhs] add the assertion [pat = rhs] to Z3. *)
-let from_rule : Rule.pattern -> Term.term -> U.cstr = fun pat right ->
-  let left   = Rule.pattern_to_term pat in
+(** [from_rule pat rhs] add the assertion [pat = rhs]. *)
+let from_rule : R.pattern -> T.term -> U.cstr =
+ fun pat right ->
+  let left = R.pattern_to_term pat in
   try (* the constraint is a predicate *)
-    U.Pred (U.extract_pred left)
+      U.Pred (U.extract_pred left)
   with U.Not_pred ->
     (* the constraint is en equality between variables *)
     let left' = Elaboration.Var.name_of_uvar left in
     let right' = Elaboration.Var.name_of_uvar right in
-    U.EqVar(left',right')
+    U.EqVar (left', right')
 
-module Make(S:SOLVER) : S =
-struct
-
+module Make (Solver : SMTSOLVER) : SOLVER = struct
   (** [parse meta s] parses a constraint file. *)
-  let parse : Dkmeta.cfg -> string -> unit =
-    fun meta in_path ->
-      let md_elab = F.md_of in_path `Elaboration in
-      let md_check = F.md_of in_path `Checking in
-      (* meta transform the constraints to universos constraints *)
-      let mk_entry = function
-        | Entry.Rules(_,rs) -> List.map (fun (r:Rule.untyped_rule) -> from_rule r.pat r.rhs) rs
-        | Entry.Require _ -> []
+  let parse : string -> unit =
+   fun in_path ->
+    let module P = struct
+      type t = U.cstr list
+
+      let cstrs = ref []
+
+      let handle_entry _ = function
+        | E.Rules (_, rs) ->
+            cstrs :=
+              List.map
+                (fun (r : R.partially_typed_rule) -> from_rule r.pat r.rhs)
+                rs
+              :: !cstrs
+        | E.Require _ -> ()
         | _ -> assert false
-      in
-      let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
-      let cstr_file = F.in_from_string in_path `Checking in
-      let entries = Parser.Parse_channel.parse md_check (F.in_channel_of_file cstr_file) in
-      let entries' = List.flatten (List.map mk_entry entries) in
-      List.iter S.add entries'
+
+      let get_data _ = List.flatten !cstrs
+    end in
+    let cstr_file = F.get_out_path in_path `Checking in
+    let cstrs = Api.Processor.T.handle_files [ cstr_file ] (module P) in
+    List.iter Solver.add cstrs
 
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
   let print_model meta model in_path =
-    let elab_file = F.in_from_string in_path `Elaboration in
-    (* extract declarations from [file_univ] *)
-    let mk_entry = function
-      | Entry.Decl(_,id,_,_) -> Some(Basic.mk_name elab_file.md id)
-      | Entry.Require _ -> None
-      | _ -> assert false
-    in
-    let entries = Parser.Parse_channel.parse elab_file.md (F.in_channel_of_file elab_file) in
+    let elab_file = F.get_out_path in_path `Elaboration in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
-    F.add_requires fmt [F.md_of in_path `Elaboration; F.md_of_path !F.theory];
-    let print_rule e =
-      match mk_entry e with
-      | None -> ()
-      | Some name ->
-        let sol = model name in
-        let rhs = U.term_of_univ sol in
-        (* Solution is translated back to the original theory *)
-        let rhs' = Dkmeta.mk_term meta rhs in
-        (* Solution is encoded as rewrite rules to make the files type check. *)
-        Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
-    in
-    List.iter print_rule entries;
-    F.close_in elab_file;
-    F.close_out sol_file
+    let md_theory = P.md_of_file (F.get_theory ()) in
+    F.add_requires fmt [ F.md_of in_path `Elaboration; md_theory ];
+    let module P = struct
+      type t = unit
 
-  let solve = S.solve
+      let handle_entry env =
+        let (module Printer) = Api.Env.get_printer env in
+        function
+        | E.Decl (_, id, _, _, _) ->
+            let name = B.mk_name (Api.Env.get_name env) id in
+            let sol = model name in
+            let rhs = U.term_of_univ sol in
+            let rhs' = M.mk_term meta rhs in
+            Format.fprintf fmt "[] %a --> %a.@." Printer.print_name name
+              Printer.print_term rhs'
+        | _ -> ()
+
+      let get_data _ = ()
+    end in
+    Api.Processor.T.handle_files [ elab_file ] (module P);
+    F.close sol_file
+
+  let print_model meta model files = List.iter (print_model meta model) files
+
+  let solve = Solver.solve
 end
 
 (** Performance are bad with LRA *)
-module MakeUF(S:SOLVER) : S =
-struct
+module MakeUF (Solver : SMTSOLVER) : SOLVER = struct
+  module SP = Set.Make (struct
+    type t = U.pred
 
-  module SP = Set.Make(struct type t = U.pred let compare = compare end)
+    let compare = compare
+  end)
 
-  let sg = Signature.make "solver"
+  let env = Api.Env.init (P.input_from_string (B.mk_mident "solver") "")
 
   let sp = ref SP.empty
 
-  let mk_rule : Rule.untyped_rule -> unit = fun r ->
+  let mk_rule : R.partially_typed_rule -> unit =
+   fun r ->
+    let sg = Api.Env.get_signature env in
     match from_rule r.pat r.rhs with
-    | U.EqVar _ -> Signature.add_rules sg [(Rule.to_rule_infos r)]
+    | U.EqVar _ -> S.add_rules sg [ R.to_rule_infos r ]
     | U.Pred p -> sp := SP.add p !sp
 
   (** [parse meta s] parses a constraint file. *)
-  let parse : Dkmeta.cfg -> string -> unit =
-    fun meta in_path ->
-      let md_elab = F.md_of in_path `Elaboration in
-      let md_check = F.md_of in_path `Checking in
-      (* meta transform the constraints to universos constraints *)
-      let mk_entry = function
-        | Entry.Rules(_,rs) -> List.iter mk_rule rs
-        | Entry.Require _ -> ()
+  let parse : string -> unit =
+   fun in_path ->
+    let module P = struct
+      type t = unit
+
+      let handle_entry _ = function
+        | E.Rules (_, rs) -> List.iter mk_rule rs
+        | E.Require _ -> ()
         | _ -> assert false
-      in
-      let mk_entry e = mk_entry (Dkmeta.mk_entry meta md_elab e) in
-      let cstr_file = F.in_from_string in_path `Checking in
-      let entries = Parser.Parse_channel.parse md_check (F.in_channel_of_file cstr_file) in
-      List.iter mk_entry entries
+
+      let get_data _ = ()
+    end in
+    let cstr_file = F.get_out_path in_path `Checking in
+    Api.Processor.T.handle_files [ cstr_file ] (module P)
 
   (* List.iter S.add entries' *)
+  (* TODO: This should be factorized. the normalization should be done after solve and return a correct model *)
 
   (** [print_model meta model f] print the model associated to the universes elaborated in file [f]. Each universe are elaborated to the original universe theory thanks to the dkmeta [meta] configuration. *)
-  let print_model meta model in_path  =
-    let elab_file = F.in_from_string in_path `Elaboration in
-    (* extract declarations from [file_univ] *)
-    let mk_entry = function
-      | Entry.Decl(_,id,_,_) -> Some(Basic.mk_name elab_file.md id)
-      | Entry.Require _ -> None
-      | _ -> assert false
-    in
-    let find =
-      let meta = {Dkmeta.default_config with sg = sg} in
-      fun name ->
-        match Dkmeta.mk_term meta (Term.mk_Const Basic.dloc name) with
-        | Term.Const(_,name) -> name
-        | _ -> assert false
-    in
-    let entries = Parser.Parse_channel.parse elab_file.md (F.in_channel_of_file elab_file) in
+  let print_model meta_constraints meta_output model in_path =
+    let elab_file = F.get_out_path in_path `Elaboration in
     let sol_file = F.out_from_string in_path `Solution in
     let fmt = F.fmt_of_file sol_file in
-    F.add_requires fmt [F.md_of in_path `Elaboration; F.md_of_path !F.theory];
-    let print_rule e =
-      match mk_entry e with
-      | None -> ()
-      | Some name ->
-        let sol = model (find name) in
-        let rhs = U.term_of_univ sol in
-        (* Solution is translated back to the original theory *)
-        let rhs' = Dkmeta.mk_term meta rhs in
-        (* Solution is encoded as rewrite rules to make the files type check. *)
-        Format.fprintf fmt "[] %a --> %a.@." Pp.print_name name Pp.print_term rhs'
-    in
-    List.iter print_rule entries;
-    F.close_in elab_file;
-    F.close_out sol_file
+    let md_theory = P.md_of_file (F.get_theory ()) in
+    F.add_requires fmt [ F.md_of in_path `Elaboration; md_theory ];
+    let module P = struct
+      type t = unit
 
-  let solve mk_theory =
-    let meta = {Dkmeta.default_config with sg = sg} in
-    let normalize : U.pred -> U.pred = fun p ->
-      U.extract_pred (Dkmeta.mk_term meta (U.term_of_pred p))
+      let handle_entry env =
+        let (module Printer) = Api.Env.get_printer env in
+        let find name =
+          match M.mk_term meta_constraints (T.mk_Const B.dloc name) with
+          | T.Const (_, name) -> name
+          | _ -> assert false
+        in
+        function
+        | E.Decl (_, id, _, _, _) ->
+            let name = B.mk_name (Api.Env.get_name env) id in
+            let sol = model (find name) in
+            let rhs = U.term_of_univ sol in
+            let rhs' = M.mk_term meta_output rhs in
+            Format.fprintf fmt "[] %a --> %a.@." Printer.print_name name
+              Printer.print_term rhs'
+        | _ -> ()
+
+      let get_data _ = ()
+    end in
+    Api.Processor.T.handle_files [ elab_file ] (module P);
+    F.close sol_file
+
+  let print_model meta model files =
+    let cstr_files =
+      List.map (fun file -> F.get_out_path file `Checking) files
+    in
+    let meta_constraints = M.meta_of_files cstr_files in
+    List.iter (print_model meta_constraints meta model) files
+
+  let solve solver_env =
+    let meta = { M.default_config with env } in
+    let normalize : U.pred -> U.pred =
+     fun p -> U.extract_pred (M.mk_term meta (U.term_of_pred p))
     in
     L.log_solver "[NORMALIZE CONSTRAINTS...]";
     let sp' = SP.map normalize !sp in
     L.log_solver "[NORMALIZE DONE]";
-    SP.iter (fun p -> S.add (Pred p)) sp';
-    S.solve mk_theory
-
+    SP.iter (fun p -> Solver.add (Pred p)) sp';
+    Solver.solve solver_env
 end
