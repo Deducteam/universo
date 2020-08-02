@@ -115,7 +115,7 @@ def cast' : s : Sort -> s' : Sort ->
 
 (;---------------------  Canonicity rules -------------------------;)
 
-[A,t] cast' _ _ A A t --> t.
+{id_cast} [A,t] cast' _ _ A A t --> t.
 
 [s, s', a, c, t]
   cast' _ s' _ c (cast' s _ a _ t) -->
