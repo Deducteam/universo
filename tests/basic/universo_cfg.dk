@@ -8,6 +8,7 @@ def output : Type.
     [] cts.enum (cts.usucc (cts.usucc cts.uzero))    --> cts.s3.
 
 def qfuf_specification : Type.
+
     []  cts.Axiom cts.s1 cts.s2       --> cts.true.
     []  cts.Axiom cts.s2 cts.sinf     --> cts.true.
     []  cts.Axiom cts.s3 cts.sinf     --> cts.true.
@@ -16,5 +17,9 @@ def qfuf_specification : Type.
 
     []  cts.Cumul cts.s2 cts.s3       --> cts.true.
     [a] cts.Cumul a a                 --> cts.true.
+
+def solver : Type.
+    [] minimum --> 3.
+    [] maximum --> 3.
 
 def end : Type.
