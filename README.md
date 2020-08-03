@@ -1,7 +1,14 @@
 Universo: A tool to play with universes
 =======================================
 
-Universo is a Dedukti tool that translates (whenever it is possible) a judgment written in one Cumulative Type System (CTS) specifcation to another. How it works is really similar to "Typical ambiguity":
+Universo is a tool for Dedukti that translates (whenever it is possible) a judgment as a proof written in one Cumulative Type System (CTS) specifcation into another CTS specification.
+
+Possible applications are:
+- Minimization of universes
+- Make proofs predicative
+- interoperability between CTS
+
+How it works is really similar to "Typical ambiguity":
 
 1. First, terms are elaborated
 2. Terms are type checked generating constraints.
@@ -16,9 +23,7 @@ Dependencies and compilation
 Compiling Universo is not standard (yet). It requires:
 
 - Dune
-- Using Dedukti on branch
-- Using Dkmeta
-
-The branch will eventually be merge soon and eventually Universo will be released on `opam`.
+- Using Dedukti on master branch
+- Using Dkmeta on master branch
 
 To compile Universo, just use `make`. Then you can choose to install Universo with `make install` or simply use `dune exec -- universo`.
