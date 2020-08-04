@@ -5,16 +5,11 @@ module C = Common.Constraints
 module E = Elaboration.Elaborate
 module F = Common.Files
 module L = Common.Log
-module M = Meta.Dkmeta
+module M = Dkmeta
 module P = Parsers.Parser
 module S = Kernel.Signature
 module O = Common.Oracle
 module U = Common.Universes
-
-let _ =
-  (* Dedukti option to avoid problems with signatures and rewriting on static symbols. *)
-  (* TODO: This should be a matter of dkmeta not Universo *)
-  S.fail_on_symbol_not_found := false
 
 (** Direct the control flow of Universo. The control flow of Universo can be sum up in 4 steps:
     1) Elaborate the files to replace universes by variables
@@ -68,9 +63,6 @@ let check : string -> unit =
     if List.mem elab_dep deps then deps else elab_dep :: deps
   in
   F.add_requires (F.fmt_of_file universo_env.out_file) requires_mds;
-  (* TODO: this should be internalize in dkmeta, if universo needs it there is an API problem with dkmeta *)
-  (* For this step, we want the real type checker *)
-  Kernel.Signature.fail_on_symbol_not_found := true;
   let module P = struct
     type t = unit
 
@@ -93,7 +85,6 @@ let check : string -> unit =
       }
   in
   Api.Processor.T.handle_files ~hook [ file ] (module P);
-  S.fail_on_symbol_not_found := false;
   Api.Env.export universo_env.env;
   C.flush ();
   F.close universo_env.out_file;

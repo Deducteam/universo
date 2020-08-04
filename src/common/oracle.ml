@@ -1,4 +1,4 @@
-module M = Meta.Dkmeta
+module M = Dkmeta
 module T = Kernel.Term
 module U = Universes
 

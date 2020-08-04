@@ -4,7 +4,7 @@ module R = Kernel.Rule
 module S = Kernel.Signature
 module T = Kernel.Term
 module U = Universes
-module M = Meta.Dkmeta
+module M = Dkmeta
 
 type t = { file : F.cout F.t; meta : M.cfg }
 

@@ -1,5 +1,5 @@
 module B = Kernel.Basic
-module M = Meta.Dkmeta
+module M = Dkmeta
 
 (** This module declares all the types and signatures needed to implement an smt solver. *)
 
